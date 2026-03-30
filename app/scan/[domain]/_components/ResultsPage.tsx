@@ -411,7 +411,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
             </div>
 
             {r.summary && (
-              <p className="text-center text-sm text-muted-foreground max-w-md leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed w-full border-t border-border/50 pt-4 mt-1">
                 {r.summary}
               </p>
             )}

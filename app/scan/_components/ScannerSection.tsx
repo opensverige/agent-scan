@@ -16,6 +16,15 @@ const SCAN_STEPS = [
   "Kan en dev bygga mot dig?",
 ];
 
+// Rotating thoughts shown while Claude analyses — never claims to be exact
+const CLAUDE_THOUGHTS = [
+  "Läser sajten...",
+  "Tolkar innehållet...",
+  "Väger branschkontext...",
+  "Formulerar analys...",
+  "Sista polering...",
+];
+
 const DEMO_CHIPS = ["fortnox.se", "visma.net", "bokio.se", "spotify.com"];
 
 const CSS = `
@@ -54,6 +63,8 @@ export default function ScannerSection() {
   const [domain, setDomain] = useState("");
   const [scanStep, setScanStep] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [thinkingIdx, setThinkingIdx] = useState(0);
+  const [showThinking, setShowThinking] = useState(false);
   const rafRef = useRef<number>(0);
 
   const startProgressAnim = useCallback((ms: number) => {
@@ -80,10 +91,21 @@ export default function ScannerSection() {
     setState("scanning");
     setScanStep(0);
     setProgress(0);
+    setThinkingIdx(0);
+    setShowThinking(false);
+
+    // After checks complete, show the "Claude thinking" phase
+    const showThinkingTimer = setTimeout(() => setShowThinking(true), 4500);
+
+    // Rotate through thinking phrases every 2.5 s
+    const thinkingInterval = setInterval(() => {
+      setThinkingIdx(i => (i + 1) % CLAUDE_THOUGHTS.length);
+    }, 2500);
 
     const timers = [
       setTimeout(() => setScanStep(1), 1000),
       setTimeout(() => setScanStep(2), 2000),
+      showThinkingTimer,
     ];
     const stopAnim = startProgressAnim(4000);
     const start = Date.now();
@@ -103,6 +125,7 @@ export default function ScannerSection() {
 
       if (res.ok) {
         const data: ScanResult = await res.json();
+        clearInterval(thinkingInterval);
         setProgress(100);
         setTimeout(() => {
           try {
@@ -115,6 +138,7 @@ export default function ScannerSection() {
       }
     } catch {
       timers.forEach(clearTimeout);
+      clearInterval(thinkingInterval);
       stopAnim();
       setState("idle");
     }
@@ -211,21 +235,22 @@ export default function ScannerSection() {
     <div>
       <style>{CSS}</style>
       <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
-        Skannar {domain}, vänta...
+        {showThinking ? `Claude analyserar ${domain}...` : `Skannar ${domain}, vänta...`}
       </div>
       <div
         className="px-6 pt-16 pb-16 max-w-[580px] mx-auto"
         style={{ animation: `ss-fadeup 0.35s ${EASE} both` }}
       >
         <div className="text-sm text-muted-foreground mb-8">
-          Kollar <span className="font-mono text-foreground font-semibold">{domain}</span>...
+          Kollar <span className="font-mono text-foreground font-semibold">{domain}</span>
         </div>
 
+        {/* Scan steps */}
         <div className="flex flex-col gap-3.5 mb-8">
           {SCAN_STEPS.map((step, i) => (
             <div key={i} className="flex items-center gap-3">
               <div className="w-5 h-5 flex items-center justify-center shrink-0">
-                {i < scanStep ? (
+                {showThinking || i < scanStep ? (
                   <span
                     className="font-mono text-sm text-success font-bold"
                     style={{ animation: `ss-checkin 0.2s ${EASE} both` }}
@@ -244,13 +269,40 @@ export default function ScannerSection() {
               <span
                 className={cn(
                   "text-sm transition-colors duration-300",
-                  i <= scanStep ? "text-foreground font-semibold" : "text-muted-foreground"
+                  showThinking || i <= scanStep ? "text-foreground font-semibold" : "text-muted-foreground"
                 )}
               >
                 {step}
               </span>
             </div>
           ))}
+
+          {/* Claude thinking row — fades in after checks are done */}
+          <div
+            className={cn(
+              "flex items-center gap-3 transition-opacity duration-500",
+              showThinking ? "opacity-100" : "opacity-0 pointer-events-none"
+            )}
+          >
+            <div className="w-5 h-5 flex items-center justify-center shrink-0">
+              <div
+                className="w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full"
+                style={{ animation: "ss-spin 0.7s linear infinite" }}
+              />
+            </div>
+            <div className="flex items-baseline gap-2 min-w-0">
+              <span className="font-mono text-[10px] font-bold tracking-widest text-primary shrink-0">
+                AI
+              </span>
+              <span
+                key={thinkingIdx}
+                className="text-sm text-foreground font-semibold"
+                style={{ animation: `ss-fadeup 0.3s ${EASE} both` }}
+              >
+                {CLAUDE_THOUGHTS[thinkingIdx]}
+              </span>
+            </div>
+          </div>
         </div>
 
         <Progress value={progress} className="h-[3px] rounded-sm" />
