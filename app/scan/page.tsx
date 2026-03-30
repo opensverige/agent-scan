@@ -1,0 +1,83 @@
+// app/scan/page.tsx
+import type { Metadata } from "next";
+import { Separator } from "@/components/ui/separator";
+import Nav from "./_components/Nav";
+import ScannerSection from "./_components/ScannerSection";
+import IntegrationVote from "./_components/IntegrationVote";
+import CTA from "./_components/CTA";
+
+export const metadata: Metadata = {
+  title: "Hur agent-redo är ditt företag?",
+  description:
+    "Vi scannar din sajt och visar vad AI-agenter ser — GDPR, EU AI Act och teknisk tillgänglighet. Gratis. Öppet.",
+  openGraph: {
+    images: [
+      {
+        url: "https://agent.opensverige.se/api/og?domain=dittforetag.se&score=7&status=Partial",
+        width: 1200,
+        height: 630,
+        alt: "AI Readiness Scanner — agent.opensverige",
+      },
+    ],
+  },
+};
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "Vad är AI-readiness?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "AI-readiness mäter hur väl en webbplats är konfigurerad för att hittas, förstås och användas av AI-agenter. Det inkluderar tekniska faktorer som robots.txt, llms.txt, API-tillgänglighet och regulatorisk efterlevnad (GDPR, EU AI Act).",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Vad kollar scannern?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Scannern kontrollerar 11 kriterier i tre kategorier: Discovery (robots.txt, sitemap.xml, llms.txt), Compliance (GDPR, cookiehantering, AI-märkning) och Builder (API, OpenAPI-spec, API-dokumentation, MCP-server, sandbox).",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Kostar det något?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Nej, scannern är helt gratis och öppen källkod. Du kan scanna din sajt utan att registrera dig.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Vad är llms.txt?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "llms.txt är en textfil placerad på /llms.txt på din domän som beskriver din sajt för AI-system. Precis som robots.txt kommunicerar med sökmotorer kommunicerar llms.txt med stora språkmodeller och AI-agenter.",
+      },
+    },
+  ],
+};
+
+export default function ScanPage() {
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <Nav />
+      <ScannerSection />
+      <Separator className="max-w-[580px] mx-auto" />
+      <IntegrationVote />
+      <Separator className="max-w-[580px] mx-auto" />
+      <CTA />
+      <footer className="px-6 py-3.5 border-t border-border flex justify-between items-center font-mono text-[10px] text-muted-foreground flex-wrap gap-2">
+        <span>agent.opensverige.se</span>
+        <span>opensverige.se — öppen källkod</span>
+      </footer>
+    </>
+  );
+}

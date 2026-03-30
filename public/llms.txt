@@ -1,0 +1,44 @@
+# agent.opensverige — AI Readiness Scanner
+
+> Free, open-source tool that scans any website and reports how ready it is for AI agents. Built for Swedish businesses and developers.
+
+## What it does
+
+agent.opensverige scans a domain and checks 11 criteria across three categories:
+
+**Discovery** — Can AI agents find and index the site?
+- robots.txt allows AI crawlers (GPTBot, ClaudeBot, PerplexityBot, etc.)
+- sitemap.xml exists and is accessible
+- llms.txt file present for AI-readable site description
+
+**Compliance** — Does the site meet EU/Swedish regulatory expectations?
+- Privacy automation (GDPR-compliant data processing)
+- Cookie and bot handling
+- AI-generated content marking (EU AI Act transparency)
+
+**Builder** — Can developers build AI integrations on top of the site?
+- Public API exists
+- OpenAPI specification available
+- API documentation accessible
+- MCP (Model Context Protocol) server
+- Sandbox/test environment available
+
+## Score and badge
+
+Each scan produces a score out of 11 and a badge:
+- 9-11: AI-Ready (green)
+- 6-8: Partial (amber)
+- 0-5: Not ready (red)
+
+## Pages
+
+- Scanner: https://agent.opensverige.se/scan
+- API docs: https://agent.opensverige.se/api-docs
+- MCP integration: https://agent.opensverige.se/mcp
+
+## Part of opensverige
+
+agent.opensverige is a tool by opensverige — Sweden's open community for AI agent builders.
+- Community: https://opensverige.se
+- Discord: https://discord.gg/CSphbTk8En
+- Contact: info@opensverige.se
