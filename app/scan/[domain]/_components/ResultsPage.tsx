@@ -250,6 +250,7 @@ function BuilderAvatarStack({ urgency }: { urgency: "high" | "medium" | "low" })
             )}
             style={{ zIndex: i + 1 }}
           >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={src} alt="" width={40} height={40} className="h-full w-full object-cover" loading="lazy" decoding="async" />
           </span>
         ))}
