@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import type { ScanResult } from "@/lib/scan-types";
+import type { ApiScoreResult } from "@/lib/api-score";
 import { ApiScoreSection } from "./ApiScoreSection";
 import type { CheckResult } from "@/lib/checks";
 import { CHECK_DISPLAY_ORDER } from "@/lib/checks";
@@ -16,18 +17,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import {
   AlertTriangle, Calendar, Check, CheckCircle2, ChevronDown,
   Code2, FileText, Globe, Lock, RotateCcw, Search, Share2,
-  Shield, XCircle,
+  Shield, XCircle, Zap,
 } from "lucide-react";
-
-declare global {
-  interface Window {
-    Cal?: (...args: unknown[]) => void;
-  }
-}
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
@@ -37,21 +33,35 @@ const BADGE_CFG = {
   red:    { label: "INTE REDO",   ringColor: "hsl(var(--destructive))", badgeVariant: "destructive" as const },
 } as const;
 
+const API_BAND_RING: Record<string, string> = {
+  agent_ready: "hsl(var(--success))",
+  strong:      "hsl(var(--success))",
+  dev_ready:   "#c9a55a",
+  partial:     "#c9a55a",
+  not_ready:   "hsl(var(--destructive))",
+};
+
+const API_BADGE_CLASS: Record<string, string> = {
+  agent_ready: "bg-success/10 text-success border-success/30",
+  strong:      "bg-success/10 text-success border-success/30",
+  dev_ready:   "bg-amber-50 text-amber-800 border-amber-200",
+  partial:     "bg-amber-50 text-amber-800 border-amber-200",
+  not_ready:   "bg-destructive/10 text-destructive border-destructive/30",
+};
+
 const MARKETPLACE_SYSTEMS = [
   { name: "Fortnox", planned: 4 },
   { name: "Visma", planned: 2 },
   { name: "BankID", planned: 1 },
 ];
 
-/** Regulatory / source stat — soft yellow wash, AA contrast light + dark */
 const CONTEXT_STAT_BOX =
   "rounded-md border border-amber-200/60 bg-amber-50 px-3 py-2.5 dark:border-amber-800/45 dark:bg-amber-950/35";
 const CONTEXT_STAT_PRIMARY = "text-xs leading-relaxed mb-1 text-amber-950 dark:text-amber-50";
-const CONTEXT_STAT_SECONDARY =
-  "text-[11px] italic text-amber-900 dark:text-amber-200";
+const CONTEXT_STAT_SECONDARY = "text-[11px] italic text-amber-900 dark:text-amber-200";
 
 const RING_R = 60;
-const RING_CIRC = Math.round(2 * Math.PI * RING_R); // 377
+const RING_CIRC = Math.round(2 * Math.PI * RING_R);
 
 // ── Score Ring ──────────────────────────────────────────────────────────────
 
@@ -118,14 +128,12 @@ function FindingRow({ check, index }: { check: CheckResult; index: number }) {
       <AccordionTrigger className="hover:no-underline py-3 min-h-[44px]">
         <div className="flex items-center gap-3 text-left">
           <SeverityIcon result={check} />
-          <span className="text-sm font-medium">{check.label}</span>
+          <span className="text-base font-medium">{check.label}</span>
         </div>
       </AccordionTrigger>
       <AccordionContent>
         <div className="pl-8 pb-1 space-y-2.5">
-          {check.detail && (
-            <p className="text-sm text-muted-foreground">{check.detail}</p>
-          )}
+          {check.detail && <p className="text-sm text-muted-foreground">{check.detail}</p>}
           <div className={CONTEXT_STAT_BOX}>
             <p className={CONTEXT_STAT_PRIMARY}>{ctx.stat}</p>
             <p className={CONTEXT_STAT_SECONDARY}>— {ctx.source}</p>
@@ -136,9 +144,7 @@ function FindingRow({ check, index }: { check: CheckResult; index: number }) {
           </div>
           <p className="text-[10px] font-mono text-muted-foreground/55 leading-tight">
             <span className="capitalize">{check.category}</span>
-            <span className="text-muted-foreground/35 px-1.5" aria-hidden>
-              ·
-            </span>
+            <span className="text-muted-foreground/35 px-1.5" aria-hidden>·</span>
             <span className="capitalize">{check.severity}</span>
           </p>
         </div>
@@ -147,10 +153,57 @@ function FindingRow({ check, index }: { check: CheckResult; index: number }) {
   );
 }
 
-// ── Booking CTA logic ───────────────────────────────────────────────────────
+// ── Plan step card ──────────────────────────────────────────────────────────
 
-function getBookingCTA(score: number, domain: string) {
-  if (score <= 3) {
+function PlanCard({ text, index, priority }: { text: string; index: number; priority: "high" | "medium" | null }) {
+  return (
+    <Card className={cn("transition-all", index === 0 && "border-2 border-foreground")}>
+      <CardContent className="flex gap-4 items-start py-4 px-4">
+        <div className={cn(
+          "flex items-center justify-center w-8 h-8 rounded-full shrink-0 font-mono text-sm font-bold",
+          index === 0 ? "bg-foreground text-background" : "bg-muted text-muted-foreground"
+        )}>
+          {index + 1}
+        </div>
+        <p className="text-base font-semibold leading-relaxed flex-1 min-w-0 self-center" style={{ lineHeight: 1.6 }}>
+          {text}
+        </p>
+        {priority === "high" && (
+          <Badge variant="destructive" className="text-xs shrink-0">Kritisk</Badge>
+        )}
+        {priority === "medium" && (
+          <Badge className="text-xs shrink-0 bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100">Viktig</Badge>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Booking CTA ─────────────────────────────────────────────────────────────
+
+function getBookingCTA(
+  activeTab: "sajt" | "api",
+  siteScore: number,
+  apiScore: ApiScoreResult | null | undefined,
+  domain: string
+) {
+  if (activeTab === "api" && apiScore) {
+    if (apiScore.totalScore < 30) {
+      return {
+        headline: "Ditt API pratar inte med agenter.",
+        subtext: `En builder från communityn visar vad ${domain} behöver för att AI-agenter ska kunna koppla in sig.`,
+        buttonText: "Boka 15 min gratis med en builder →",
+        urgency: "high" as const,
+      };
+    }
+    return {
+      headline: "Ditt API har potential — men brister kvar.",
+      subtext: `Prata med en builder om hur ${domain} kan bli en plattform som agenter bygger mot.`,
+      buttonText: "Boka 15 min med en builder →",
+      urgency: "medium" as const,
+    };
+  }
+  if (siteScore <= 3) {
     return {
       headline: "AI-agenter ser er knappt.",
       subtext: `Builder från communityn hjälper ${domain} bli agent-redo.`,
@@ -158,7 +211,7 @@ function getBookingCTA(score: number, domain: string) {
       urgency: "high" as const,
     };
   }
-  if (score <= 6) {
+  if (siteScore <= 6) {
     return {
       headline: "Grund finns — fler steg kvar.",
       subtext: `En builder visar vad ${domain} behöver för agent-integration.`,
@@ -167,20 +220,15 @@ function getBookingCTA(score: number, domain: string) {
     };
   }
   return {
-    headline: "Du ligger före de flesta.",
-    subtext: `Nästa steg för ${domain} som plattform för agenter.`,
-    buttonText: "Boka 15 min gratis →",
+    headline: "Du ligger före de flesta. Vad är nästa steg?",
+    subtext: `Prata med en builder om vad agenter kan bygga mot ${domain}.`,
+    buttonText: "Boka samtal →",
     urgency: "low" as const,
   };
 }
 
-const BOOKING_BULLETS = [
-  "Personlig builder",
-  "Samma data som din scan",
-  "Konkreta nästa steg",
-] as const;
+const BOOKING_BULLETS = ["Personlig builder", "Samma data som din scan", "Konkreta nästa steg"] as const;
 
-/** Illustrativa porträtt — community builders (dekorativ grupp) */
 const BUILDER_AVATAR_URLS = [
   "https://randomuser.me/api/portraits/women/65.jpg",
   "https://randomuser.me/api/portraits/men/32.jpg",
@@ -189,34 +237,20 @@ const BUILDER_AVATAR_URLS = [
 ] as const;
 
 function BuilderAvatarStack({ urgency }: { urgency: "high" | "medium" | "low" }) {
-  const avatarBorder =
-    urgency === "high" ? "border-background" : "border-border";
   return (
-    <div
-      className="mt-4 flex justify-center"
-      role="img"
-      aria-label="Exempel på builders i communityn"
-    >
+    <div className="mt-4 flex justify-center" role="img" aria-label="Exempel på builders i communityn">
       <div className="flex items-center">
         {BUILDER_AVATAR_URLS.map((src, i) => (
           <span
             key={src}
             className={cn(
               "relative inline-block h-10 w-10 overflow-hidden rounded-full border-2 bg-muted shadow-sm",
-              avatarBorder,
+              urgency === "high" ? "border-background" : "border-border",
               i > 0 && "-ml-3"
             )}
             style={{ zIndex: i + 1 }}
           >
-            <img
-              src={src}
-              alt=""
-              width={40}
-              height={40}
-              className="h-full w-full object-cover"
-              loading="lazy"
-              decoding="async"
-            />
+            <img src={src} alt="" width={40} height={40} className="h-full w-full object-cover" loading="lazy" decoding="async" />
           </span>
         ))}
       </div>
@@ -224,18 +258,18 @@ function BuilderAvatarStack({ urgency }: { urgency: "high" | "medium" | "low" })
   );
 }
 
-function shortenPlanLine(text: string, maxChars: number): { display: string; full: string } {
-  const t = text.trim();
-  if (t.length <= maxChars) return { display: t, full: t };
-  return { display: `${t.slice(0, maxChars - 1).trimEnd()}…`, full: t };
-}
-
-// ── Step priority helper ────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function getStepPriority(i: number, criticalCount: number, importantCount: number): "high" | "medium" | null {
   if (criticalCount > 0 && i < Math.min(criticalCount, 3)) return "high";
   if (importantCount > 0 && i < criticalCount + Math.min(importantCount, 2)) return "medium";
   return null;
+}
+
+function getDefaultTab(data: ScanResult | null): "sajt" | "api" {
+  if (!data?.api_score) return "sajt";
+  const hasApi = data.checks.api_exists.pass || data.checks.openapi_spec.pass;
+  return hasApi && data.api_score.totalScore < 70 ? "api" : "sajt";
 }
 
 // ── Main Component ──────────────────────────────────────────────────────────
@@ -245,25 +279,29 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
   const [notFound, setNotFound] = useState(false);
   const [shared, setShared] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"sajt" | "api">(() => getDefaultTab(initialData));
 
   useEffect(() => {
     if (result) return;
     try {
       const stored = sessionStorage.getItem(`scan_${domain}`);
-      if (stored) { setResult(JSON.parse(stored) as ScanResult); return; }
+      if (stored) {
+        const parsed = JSON.parse(stored) as ScanResult;
+        setResult(parsed);
+        if (!initialData) setActiveTab(getDefaultTab(parsed));
+        return;
+      }
     } catch { /* ignore */ }
     setNotFound(true);
-  }, [domain, result]);
+  }, [domain, result, initialData]);
 
-  // ── Loading skeleton ────────────────────────────────────────────────────
+  // ── Loading ─────────────────────────────────────────────────────────────
   if (!result && !notFound) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
         <Card>
           <CardContent className="py-8 space-y-5">
-            <div className="flex justify-center">
-              <Skeleton className="h-[150px] w-[150px] rounded-full" />
-            </div>
+            <div className="flex justify-center"><Skeleton className="h-[150px] w-[150px] rounded-full" /></div>
             <div className="flex flex-col items-center gap-3">
               <Skeleton className="h-8 w-32" />
               <Skeleton className="h-4 w-48" />
@@ -277,21 +315,24 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
     );
   }
 
-  // ── Not found ──────────────────────────────────────────────────────────
+  // ── Not found ────────────────────────────────────────────────────────────
   if (notFound) {
     return (
       <div className="max-w-lg mx-auto px-6 py-20 text-center">
         <p className="font-mono text-sm text-muted-foreground mb-4">{domain}</p>
         <p className="text-base text-muted-foreground mb-8">Ingen scan hittad för den här domänen.</p>
-        <Button asChild>
-          <Link href="/scan">Scanna {domain} →</Link>
-        </Button>
+        <Button asChild><Link href="/scan">Scanna {domain} →</Link></Button>
       </div>
     );
   }
 
   const r = result!;
   const cfg = BADGE_CFG[r.badge];
+
+  const hasApi = !!(r.api_score && (r.checks.api_exists.pass || r.checks.openapi_spec.pass));
+  const apiScore: ApiScoreResult | null = hasApi ? r.api_score! : null;
+  const apiRingColor = apiScore ? (API_BAND_RING[apiScore.band] ?? "hsl(var(--muted))") : "hsl(var(--muted))";
+  const apiBadgeClass = apiScore ? (API_BADGE_CLASS[apiScore.band] ?? "") : "";
 
   const allChecks = CHECK_DISPLAY_ORDER.map(id => r.checks[id]);
   const failedCritical = allChecks.filter(c => !c.pass && c.severity === "critical");
@@ -305,21 +346,24 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
   };
 
   const allFailed = [...failedCritical, ...failedImportant, ...failedInfo];
-  const topFindings = allFailed.slice(0, 5);
+  const topSiteFindings = allFailed.slice(0, 5);
 
   const defaultOpenSections: string[] = [];
   if (failedCritical.length > 0) defaultOpenSections.push("brister");
   else if (failedImportant.length > 0) defaultOpenSections.push("varningar");
 
-  const cta = getBookingCTA(r.score, domain);
+  const cta = getBookingCTA(activeTab, r.score, apiScore, domain);
 
   function handleShare() {
-    const statusEmoji = r.score <= 3 ? "🔴" : r.score <= 6 ? "🟡" : "🟢";
+    let text: string;
     const url = `https://agent.opensverige.se/scan/${domain}`;
-    const text =
-      `${statusEmoji} ${domain} fick ${r.score}/11 i AI-readiness.\n\n` +
-      `● ${sc.critical} brister ● ${sc.important} varningar ● ${passedChecks.length} ok\n\n` +
-      `Hur redo är din sajt för AI-agenter?\n${url}`;
+    if (activeTab === "api" && apiScore) {
+      const em = apiScore.totalScore < 30 ? "🔴" : apiScore.totalScore < 70 ? "🟡" : "🟢";
+      text = `${em} ${domain} fick ${apiScore.totalScore}/${apiScore.maxPossibleScore} i API agent-readiness.\n\n${apiScore.topBlockers.length} blockerare hittade.\n\nHur redo är ditt API? → ${url}`;
+    } else {
+      const em = r.score <= 3 ? "🔴" : r.score <= 6 ? "🟡" : "🟢";
+      text = `${em} ${domain} fick ${r.score}/11 i AI-readiness.\n\n● ${sc.critical} brister ● ${sc.important} varningar ● ${passedChecks.length} ok\n\nHur redo är din sajt? → ${url}`;
+    }
     if (navigator.share) {
       navigator.share({ title: `${domain} — AI-beredskap`, text, url }).catch(() => {});
     } else if (navigator.clipboard) {
@@ -333,34 +377,11 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
     }
   }
 
-  function handleBooking() {
-    const topIssues = allFailed.slice(0, 3).map(c => c.label);
-    if (window.Cal) {
-      window.Cal("ui", {
-        styles: { branding: { brandColor: "#c4391a" } },
-        hideEventTypeDetails: false,
-      });
-      window.Cal("openModal", {
-        calLink: "opensverige/ai-readiness",
-        config: {
-          notes: `Scan: ${domain} — Score: ${r.score}/11\nBrister: ${topIssues.join(", ")}`,
-          name: domain,
-        },
-      });
-    } else {
-      window.open(
-        `https://cal.com/opensverige/ai-readiness?notes=${encodeURIComponent(`Scan: ${domain} - Score: ${r.score}/11`)}`,
-        "_blank",
-        "noopener,noreferrer"
-      );
-    }
-  }
-
   return (
     <div className="pb-20">
       <div className="max-w-2xl mx-auto px-4 space-y-5 pt-6">
 
-        {/* ── DEMO BANNER ────────────────────────────────────────── */}
+        {/* DEMO BANNER */}
         {r.isDemo && (
           <div className="rounded-lg border border-warning/30 bg-warning/5 px-4 py-2.5 flex items-start gap-3">
             <Badge variant="warning" className="shrink-0 mt-0.5">DEMO</Badge>
@@ -371,150 +392,236 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
         )}
 
         {/* ═══════════════════════════════════════════════════════
-            LAGER 1 — SCORECARD
+            SCORECARD — allt tab-beroende content inuti
         ═══════════════════════════════════════════════════════ */}
         <Card className="border-2 border-foreground/80 animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-3">
             <Badge variant="outline" className="font-mono text-[10px] tracking-widest w-fit">
               SCAN RESULTAT
             </Badge>
+            <CardTitle className="font-serif text-[clamp(20px,5vw,28px)] font-normal leading-[1.1] tracking-[-0.5px] mt-1">
+              Hur agent-redo<br />är ditt företag?
+            </CardTitle>
             <CardDescription className="font-mono">{domain}</CardDescription>
           </CardHeader>
 
-          <CardContent className="flex flex-col items-center gap-5 py-6">
-            <ScoreRing score={r.score} total={11} ringColor={cfg.ringColor} />
-
-            <Badge
-              variant={cfg.badgeVariant}
-              className="text-base px-5 py-1.5 font-mono font-bold tracking-wide"
-            >
-              {cfg.label}
-            </Badge>
-
-            <div className="flex gap-5 text-xs font-mono flex-wrap justify-center">
-              {sc.critical > 0 && (
-                <span className="flex items-center gap-1.5">
-                  <XCircle className="h-3.5 w-3.5 text-destructive" />
-                  {sc.critical} {sc.critical === 1 ? "brist" : "brister"}
-                </span>
-              )}
-              {sc.important > 0 && (
-                <span className="flex items-center gap-1.5">
-                  <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
-                  {sc.important} {sc.important === 1 ? "varning" : "varningar"}
-                </span>
-              )}
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5 text-success" />
-                {passedChecks.length} ok
-              </span>
+          <Tabs value={activeTab} onValueChange={v => setActiveTab(v as "sajt" | "api")} className="w-full">
+            <div className="px-6 pb-3">
+              <TabsList className="w-full h-11">
+                <TabsTrigger value="sajt" className="flex-1 font-mono text-xs gap-1.5 h-9">
+                  <Globe className="h-3.5 w-3.5" />
+                  Sajt
+                </TabsTrigger>
+                <TabsTrigger value="api" className="flex-1 font-mono text-xs gap-1.5 h-9" disabled={!hasApi}>
+                  <Code2 className="h-3.5 w-3.5" />
+                  API
+                  {!hasApi && <span className="ml-1 text-[10px] opacity-50">(ej hittat)</span>}
+                </TabsTrigger>
+              </TabsList>
             </div>
 
-            {r.summary && (
-              <p className="text-sm text-muted-foreground leading-relaxed w-full border-t border-border/50 pt-4 mt-1">
-                {r.summary}
-              </p>
-            )}
-          </CardContent>
+            {/* ── SAJT-TAB ─────────────────────────────────────── */}
+            <TabsContent value="sajt">
+              {/* Score + badge + breakdown + summary */}
+              <div className="px-6 flex flex-col items-center gap-5 pt-2 pb-6">
+                <ScoreRing score={r.score} total={11} ringColor={cfg.ringColor} />
 
-          <CardFooter className="flex flex-col gap-2 px-6 pb-6">
+                <Badge variant={cfg.badgeVariant} className="text-base px-5 py-1.5 font-mono font-bold tracking-wide">
+                  {cfg.label}
+                </Badge>
+
+                <div className="flex gap-5 text-xs font-mono flex-wrap justify-center">
+                  {sc.critical > 0 && (
+                    <span className="flex items-center gap-1.5">
+                      <XCircle className="h-3.5 w-3.5 text-destructive" />
+                      {sc.critical} {sc.critical === 1 ? "brist" : "brister"}
+                    </span>
+                  )}
+                  {sc.important > 0 && (
+                    <span className="flex items-center gap-1.5">
+                      <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                      {sc.important} {sc.important === 1 ? "varning" : "varningar"}
+                    </span>
+                  )}
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                    {passedChecks.length} ok
+                  </span>
+                </div>
+
+                {r.summary && (
+                  <p className="text-sm text-muted-foreground leading-relaxed w-full border-t border-border/50 pt-4 mt-1">
+                    {r.summary}
+                  </p>
+                )}
+              </div>
+
+              {/* Topphittar */}
+              {topSiteFindings.length > 0 && (
+                <>
+                  <Separator />
+                  <div className="px-6 py-5">
+                    <p className="font-mono text-[10px] font-bold tracking-widest text-muted-foreground mb-3">
+                      TOPPHITTAR
+                    </p>
+                    <Accordion type="multiple" className="space-y-2">
+                      {topSiteFindings.map((check, i) => (
+                        <FindingRow key={check.id} check={check} index={i} />
+                      ))}
+                    </Accordion>
+                    {allFailed.length > 5 && (
+                      <p className="text-xs text-muted-foreground font-mono mt-3 text-center">
+                        +{allFailed.length - 5} fler fynd i rapporten nedan
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* Steg-plan */}
+              {r.recommendations.length > 0 && (
+                <>
+                  <Separator />
+                  <div className="px-6 py-5">
+                    <h3 className="font-mono text-[10px] font-bold tracking-widest text-muted-foreground mb-1">
+                      DIN PLAN
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4">Viktigast först.</p>
+                    <div className="space-y-3">
+                      {r.recommendations.map((rec, i) => (
+                        <PlanCard
+                          key={i}
+                          text={rec}
+                          index={i}
+                          priority={getStepPriority(i, sc.critical, sc.important)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </TabsContent>
+
+            {/* ── API-TAB ──────────────────────────────────────── */}
+            <TabsContent value="api">
+              {apiScore ? (
+                <>
+                  {/* Score + badge + spec info */}
+                  <div className="px-6 flex flex-col items-center gap-5 pt-2 pb-6">
+                    <ScoreRing
+                      score={apiScore.totalScore}
+                      total={apiScore.maxPossibleScore}
+                      ringColor={apiRingColor}
+                    />
+
+                    <Badge className={cn("text-base px-5 py-1.5 font-mono font-bold tracking-wide border", apiBadgeClass)}>
+                      {apiScore.bandLabel}
+                    </Badge>
+
+                    {!apiScore.hasSpec && (
+                      <p className="text-sm text-muted-foreground text-center max-w-xs">
+                        API hittades men ingen OpenAPI-spec. Max möjlig poäng: {apiScore.maxPossibleScore}/100.
+                      </p>
+                    )}
+                    {apiScore.specFormat && (
+                      <p className="font-mono text-xs text-muted-foreground">
+                        {apiScore.specFormat === "openapi3" ? "OpenAPI 3.x" : "Swagger 2.0"} spec analyserad
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Blockerare */}
+                  {apiScore.topBlockers.length > 0 && (
+                    <>
+                      <Separator />
+                      <div className="px-6 py-5">
+                        <p className="font-mono text-[10px] font-bold tracking-widest text-muted-foreground mb-3">
+                          BLOCKERARE
+                        </p>
+                        <ul className="space-y-2">
+                          {apiScore.topBlockers.map((b, i) => (
+                            <li key={i} className="flex items-start gap-2.5">
+                              <XCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                              <span className="text-base text-foreground/80 leading-snug">{b}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Steg-plan API */}
+                  {apiScore.fastestFixes.length > 0 && (
+                    <>
+                      <Separator />
+                      <div className="px-6 py-5">
+                        <h3 className="font-mono text-[10px] font-bold tracking-widest text-muted-foreground mb-1">
+                          DIN PLAN — API
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-4">Så blir ditt API agent-redo.</p>
+                        <div className="space-y-3">
+                          {apiScore.fastestFixes.map((step, i) => (
+                            <PlanCard key={i} text={step} index={i} priority={null} />
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* OpenAPI-spec alert */}
+                  {!apiScore.hasSpec && (
+                    <div className="px-6 pb-6">
+                      <div className="rounded-md border border-amber-200/60 bg-amber-50 px-3 py-2.5">
+                        <p className="text-xs text-amber-900 leading-relaxed">
+                          <Zap className="inline h-3 w-3 mr-1 shrink-0" />
+                          Utan OpenAPI-spec kunde vi bara analysera {apiScore.maxPossibleScore} av 100 möjliga poäng.
+                          Publicera en spec på <code className="font-mono text-[10px]">/openapi.json</code> för fullständig analys.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="px-6 py-12 text-center">
+                  <Code2 className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                  <p className="font-medium mb-1">Inget publikt API hittat</p>
+                  <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                    Vi hittade ingen developer portal, OpenAPI-spec eller publika API-endpoints för {domain}.
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+
+          {/* Feedback-länk */}
+          <div className="text-center py-3 px-6">
+            <a
+              href="https://discord.gg/CSphbTk8En"
+              className="text-xs text-muted-foreground hover:text-foreground underline font-mono transition-colors"
+            >
+              Stämmer inte detta? Rapportera i vår Discord →
+            </a>
+          </div>
+
+          {/* Footer — tab-oberoende */}
+          <CardFooter className="flex flex-col gap-2 px-6 pb-6 border-t border-border/50 pt-4 mt-1">
             <Button className="w-full" size="lg" onClick={handleShare}>
               {shared
-                ? <><Check className="h-4 w-4" /> Kopierat</>
-                : <><Share2 className="h-4 w-4" /> Dela din score</>
+                ? <><Check className="h-4 w-4 mr-2" /> Kopierat</>
+                : <><Share2 className="h-4 w-4 mr-2" /> Dela din score</>
               }
             </Button>
             <Button variant="link" className="text-muted-foreground text-sm h-auto py-1" asChild>
-              <Link href="/scan">
-                <RotateCcw className="h-3.5 w-3.5" /> Scanna en annan sajt
-              </Link>
+              <Link href="/scan"><RotateCcw className="h-3.5 w-3.5 mr-1" /> Scanna en annan sajt</Link>
             </Button>
           </CardFooter>
         </Card>
 
         {/* ═══════════════════════════════════════════════════════
-            LAGER 2 — TOPPHITTAR
+            ALLT NEDAN: TAB-OBEROENDE
         ═══════════════════════════════════════════════════════ */}
-        {topFindings.length > 0 && (
-          <div>
-            <p className="font-mono text-[10px] font-bold tracking-widest text-muted-foreground mb-3 px-1">
-              TOPPHITTAR
-            </p>
-            <Accordion type="multiple" className="space-y-2">
-              {topFindings.map((check, i) => (
-                <FindingRow key={check.id} check={check} index={i} />
-              ))}
-            </Accordion>
-            {allFailed.length > 5 && (
-              <p className="text-xs text-muted-foreground font-mono mt-3 text-center">
-                +{allFailed.length - 5} fler fynd i rapporten nedan
-              </p>
-            )}
-          </div>
-        )}
 
-        {/* ═══════════════════════════════════════════════════════
-            LAGER 3 — STEG-FÖR-STEG PLAN (synlig)
-        ═══════════════════════════════════════════════════════ */}
-        {r.recommendations.length > 0 && (
-          <div className="mt-8">
-            <h3 className="font-mono text-xs font-bold tracking-widest text-muted-foreground mb-2">
-              DIN PLAN
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Viktigast först.
-            </p>
-
-            <div className="space-y-3">
-              {r.recommendations.map((rec, i) => {
-                const priority = getStepPriority(i, sc.critical, sc.important);
-                const { display, full } = shortenPlanLine(rec, 110);
-                return (
-                  <Card
-                    key={i}
-                    className={cn(
-                      "transition-all",
-                      i === 0 && "border-2 border-foreground"
-                    )}
-                  >
-                    <CardContent className="flex gap-4 items-start py-4 px-4">
-                      <div className={cn(
-                        "flex items-center justify-center w-8 h-8 rounded-full shrink-0 font-mono text-sm font-bold",
-                        i === 0
-                          ? "bg-foreground text-background"
-                          : "bg-muted text-muted-foreground"
-                      )}>
-                        {i + 1}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p
-                          className="text-sm font-semibold leading-snug"
-                          title={display !== full ? full : undefined}
-                        >
-                          {display}
-                        </p>
-                      </div>
-                      {priority === "high" && (
-                        <Badge variant="destructive" className="text-xs shrink-0">
-                          Kritisk
-                        </Badge>
-                      )}
-                      {priority === "medium" && (
-                        <Badge className="text-xs shrink-0 bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100">
-                          Viktig
-                        </Badge>
-                      )}
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ═══════════════════════════════════════════════════════
-            LAGER 4 — DYNAMISK CTA: CALENDAR BOOKING
-        ═══════════════════════════════════════════════════════ */}
+        {/* ── DYNAMISK CTA ─────────────────────────────────────── */}
         <Card className={cn(
           "mt-8",
           cta.urgency === "high" && "border-2 border-foreground bg-foreground text-background",
@@ -522,20 +629,13 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
           cta.urgency === "low" && "border"
         )}>
           <CardHeader className="text-center pb-2">
-            <CardTitle
-              className={cn(
-                "text-xl font-bold tracking-tight",
-                cta.urgency === "high" && "text-background"
-              )}
-            >
+            <CardTitle className={cn("text-xl font-bold tracking-tight", cta.urgency === "high" && "text-background")}>
               {cta.headline}
             </CardTitle>
-            <CardDescription
-              className={cn(
-                "max-w-md mx-auto text-base",
-                cta.urgency === "high" ? "text-background/85" : "text-muted-foreground"
-              )}
-            >
+            <CardDescription className={cn(
+              "max-w-md mx-auto text-base",
+              cta.urgency === "high" ? "text-background/85" : "text-muted-foreground"
+            )}>
               {cta.subtext}
             </CardDescription>
           </CardHeader>
@@ -558,8 +658,10 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
             <Button
               size="lg"
               variant={cta.urgency === "high" ? "secondary" : "default"}
-              onClick={handleBooking}
               className="px-8"
+              data-cal-link="gustaf-garnow-3u8eg5/opensverige"
+              data-cal-namespace="opensverige"
+              data-cal-config='{"layout":"month_view","useSlotsViewOnSmallScreen":"true"}'
             >
               <Calendar className="mr-2 h-4 w-4" />
               {cta.buttonText}
@@ -567,20 +669,16 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
 
             <BuilderAvatarStack urgency={cta.urgency} />
 
-            <p
-              className={cn(
-                "text-[11px] mt-3 opacity-70 max-w-xs",
-                cta.urgency === "high" ? "text-background/80" : "text-muted-foreground"
-              )}
-            >
+            <p className={cn(
+              "text-[11px] mt-3 opacity-70 max-w-xs",
+              cta.urgency === "high" ? "text-background/80" : "text-muted-foreground"
+            )}>
               Matchning med rätt builder i communityn.
             </p>
           </CardContent>
         </Card>
 
-        {/* ═══════════════════════════════════════════════════════
-            LAGER 5 — FULLSTÄNDIG RAPPORT (Collapsible)
-        ═══════════════════════════════════════════════════════ */}
+        {/* ── FULLSTÄNDIG RAPPORT ──────────────────────────────── */}
         <Collapsible open={reportOpen} onOpenChange={setReportOpen}>
           <CollapsibleTrigger asChild>
             <Button variant="outline" className="w-full font-mono justify-between min-h-[44px]">
@@ -703,9 +801,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="px-4 pb-4">
-                    <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
-                      {SEVERITY_CONTEXT.info.text}
-                    </p>
+                    <p className="text-xs text-muted-foreground mb-3 leading-relaxed">{SEVERITY_CONTEXT.info.text}</p>
                     <div className="space-y-2">
                       {failedInfo.map(check => (
                         <div key={check.id} className="flex items-start gap-2.5">
@@ -717,6 +813,23 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                         </div>
                       ))}
                     </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
+
+              {hasApi && apiScore && (
+                <AccordionItem value="api-detaljer" className="border rounded-lg">
+                  <AccordionTrigger className="px-4 hover:no-underline min-h-[44px]">
+                    <div className="flex items-center gap-3">
+                      <Code2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="font-medium text-sm">API-axlar (detaljer)</span>
+                      <Badge variant="outline" className="ml-1 text-[10px] font-mono">
+                        {apiScore.totalScore}/{apiScore.maxPossibleScore}
+                      </Badge>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4">
+                    <ApiScoreSection apiScore={apiScore} compact />
                   </AccordionContent>
                 </AccordionItem>
               )}
@@ -788,12 +901,8 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                         <div key={id} className="flex items-start gap-2.5">
                           <SeverityIcon result={check} size="h-4 w-4" />
                           <div className="flex-1 min-w-0">
-                            <p className={cn("text-sm", check.pass ? "text-muted-foreground" : "text-foreground")}>
-                              {check.label}
-                            </p>
-                            {!check.pass && (
-                              <p className="text-xs text-muted-foreground/70 mt-0.5">{CHECK_CONTEXT[id].action}</p>
-                            )}
+                            <p className={cn("text-sm", check.pass ? "text-muted-foreground" : "text-foreground")}>{check.label}</p>
+                            {!check.pass && <p className="text-xs text-muted-foreground/70 mt-0.5">{CHECK_CONTEXT[id].action}</p>}
                           </div>
                         </div>
                       );
@@ -806,9 +915,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
           </CollapsibleContent>
         </Collapsible>
 
-        {/* ═══════════════════════════════════════════════════════
-            LAGER 6 — BUILDER-PERSPEKTIV (teknisk data)
-        ═══════════════════════════════════════════════════════ */}
+        {/* ── BUILDER-PERSPEKTIV ───────────────────────────────── */}
         <Collapsible>
           <CollapsibleTrigger asChild>
             <Button variant="ghost" className="w-full justify-between font-mono text-xs text-muted-foreground">
@@ -822,75 +929,50 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
           <CollapsibleContent>
             <Card className="mt-2 bg-muted/30">
               <CardContent className="py-4 font-mono text-xs space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">API</span>
-                  <span>{r.checks.api_exists.pass ? "Hittad" : "Ej hittad"}</span>
-                </div>
-                <Separator />
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">OpenAPI spec</span>
-                  <span>{r.checks.openapi_spec.pass
-                    ? <span className="text-success">Finns</span>
-                    : "Saknas"
-                  }</span>
-                </div>
-                <Separator />
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">MCP-server</span>
-                  <span>{r.checks.mcp_server.pass
-                    ? <span className="text-success">Finns</span>
-                    : "Saknas"
-                  }</span>
-                </div>
-                <Separator />
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Developer docs</span>
-                  <span>{r.checks.api_docs.pass ? "Hittad" : "Ej hittad"}</span>
-                </div>
-                <Separator />
+                {[
+                  ["API",          r.checks.api_exists.pass  ? "Hittad"   : "Ej hittad"],
+                  ["OpenAPI spec", r.checks.openapi_spec.pass ? "Finns"   : "Saknas",    r.checks.openapi_spec.pass],
+                  ["MCP-server",   r.checks.mcp_server.pass  ? "Finns"    : "Saknas",    r.checks.mcp_server.pass],
+                  ["Developer docs",r.checks.api_docs.pass   ? "Hittad"   : "Ej hittad"],
+                ].map(([label, value, green], i) => (
+                  <div key={i}>
+                    {i > 0 && <Separator className="my-2" />}
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">{label}</span>
+                      <span className={green ? "text-success" : undefined}>{value}</span>
+                    </div>
+                  </div>
+                ))}
+                <Separator className="my-2" />
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">robots.txt</span>
-                  <span>{r.checks.robots_ok.pass
-                    ? <span className="text-success">Tillåter AI-crawlers</span>
-                    : <span className="text-destructive">Blockerar AI-crawlers</span>
-                  }</span>
+                  <span className={r.checks.robots_ok.pass ? "text-success" : "text-destructive"}>
+                    {r.checks.robots_ok.pass ? "Tillåter AI-crawlers" : "Blockerar AI-crawlers"}
+                  </span>
                 </div>
-                <Separator />
+                <Separator className="my-2" />
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">llms.txt</span>
-                  <span>{r.checks.llms_txt.pass
-                    ? <span className="text-success">Finns</span>
-                    : "Saknas"
-                  }</span>
+                  <span className={r.checks.llms_txt.pass ? "text-success" : undefined}>
+                    {r.checks.llms_txt.pass ? "Finns" : "Saknas"}
+                  </span>
                 </div>
               </CardContent>
             </Card>
           </CollapsibleContent>
         </Collapsible>
 
-        {/* ═══════════════════════════════════════════════════════
-            LAGER 6.5 — API AGENT-READINESS SCORE
-            (visas bara om API eller OpenAPI-spec hittades)
-        ═══════════════════════════════════════════════════════ */}
-        {r.api_score && (r.checks.api_exists.pass || r.checks.openapi_spec.pass) && (
-          <ApiScoreSection apiScore={r.api_score} />
-        )}
-
-        {/* ═══════════════════════════════════════════════════════
-            LAGER 7 — AVSLUTANDE CTAs
-        ═══════════════════════════════════════════════════════ */}
+        {/* ── AVSLUTANDE CTAs ──────────────────────────────────── */}
         <div className="mt-8 space-y-3">
           <Button onClick={handleShare} className="w-full" size="lg">
             <Share2 className="mr-2 h-4 w-4" />
             {shared ? "Kopierat!" : "Dela ditt resultat"}
           </Button>
-
           <Button variant="outline" className="w-full" size="lg" asChild>
             <a href="https://discord.gg/CSphbTk8En" target="_blank" rel="noopener noreferrer">
               250+ builders i Discord →
             </a>
           </Button>
-
           <div className="text-center">
             <Button variant="link" className="text-muted-foreground text-sm" asChild>
               <Link href="/scan">← Scanna en annan sajt</Link>
@@ -898,9 +980,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
           </div>
         </div>
 
-        {/* ═══════════════════════════════════════════════════════
-            AGENT-KATALOGEN — sekundär sektion (under avslutande CTA)
-        ═══════════════════════════════════════════════════════ */}
+        {/* ── AGENT-KATALOGEN ──────────────────────────────────── */}
         <Card className="mt-10 border-dashed bg-muted/20">
           <CardHeader className="text-center pb-2">
             <CardTitle className="font-mono text-xs font-bold tracking-widest text-muted-foreground">
@@ -919,13 +999,10 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
           </CardContent>
         </Card>
 
-        {/* ═══════════════════════════════════════════════════════
-            DISCLAIMER
-        ═══════════════════════════════════════════════════════ */}
+        {/* ── DISCLAIMER ──────────────────────────────────────── */}
         <p className="mt-12 text-[11px] text-muted-foreground text-center max-w-md mx-auto leading-relaxed">
           Det här är en teknisk observation, inte juridisk rådgivning.
-          Compliance-resultaten är generella och baseras inte på en granskning
-          av era specifika policier.
+          Compliance-resultaten är generella och baseras inte på en granskning av era specifika policier.
         </p>
 
       </div>

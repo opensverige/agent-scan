@@ -173,7 +173,7 @@ export default function ScannerSection() {
           </p>
 
           <div
-            className="flex gap-2 mb-2"
+            className="flex flex-col sm:flex-row gap-2 mb-2"
             style={{ animation: `ss-fadeup 0.5s ${EASE} 140ms both` }}
           >
             <div className="flex flex-1 items-center gap-2 bg-card border-2 border-border rounded-xl px-3.5 py-3 focus-within:border-primary/30 transition-colors duration-150">
@@ -194,7 +194,7 @@ export default function ScannerSection() {
               onClick={() => runScan(url)}
               disabled={!canSubmit}
               size="lg"
-              className="shrink-0"
+              className="w-full sm:w-auto shrink-0"
             >
               Scanna →
             </Button>

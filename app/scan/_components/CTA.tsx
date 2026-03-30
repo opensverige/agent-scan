@@ -1,7 +1,7 @@
 // app/scan/_components/CTA.tsx
 "use client";
 
-import { PixelBlock } from "./PixelBlock";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
 export default function CTA() {
@@ -28,7 +28,7 @@ export default function CTA() {
   return (
     <section className="py-12 px-6 pb-16 text-center max-w-[480px] mx-auto">
       <div className="flex justify-center mb-4">
-        <PixelBlock size={36} />
+        <Image src="/assets/logo_500x.png" alt="" width={36} height={36} className="rounded-sm" aria-hidden="true" />
       </div>
       <h2 className="font-serif text-[clamp(24px,5vw,36px)] font-normal leading-[1.15] tracking-[-0.5px] mb-2">
         250+ builders bygger redan.

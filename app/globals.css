@@ -155,7 +155,7 @@
   --secondary: 40 12% 95%;        /* #F2F1EE */
   --secondary-foreground: 0 0% 7%;
   --muted: 40 12% 95%;
-  --muted-foreground: 30 2% 44%;  /* #706F6C */
+  --muted-foreground: 30 7% 30%;  /* #4e4a46 — ~10:1 contrast on bg */
   --accent: 40 12% 93%;
   --accent-foreground: 0 0% 7%;
   --destructive: 0 84% 60%;       /* #ef4444 */

@@ -96,17 +96,31 @@ function AxisBar({ axis }: { axis: AxisScore }) {
 
 // ── Main component ─────────────────────────────────────────────────────────
 
-export function ApiScoreSection({ apiScore }: { apiScore: ApiScoreResult }) {
+export function ApiScoreSection({
+  apiScore,
+  compact = false,
+  showAxes = true,
+  className,
+}: {
+  apiScore: ApiScoreResult;
+  compact?: boolean;
+  showAxes?: boolean;
+  className?: string;
+}) {
   const cfg = BAND_CFG[apiScore.band];
-  const [detailOpen, setDetailOpen] = useState(false);
 
   return (
-    <section className="mt-8 border rounded-xl p-5 space-y-5 bg-background">
-      {/* Header */}
+    <section className={cn(
+      compact ? "space-y-5" : "mt-8 border rounded-xl p-5 space-y-5 bg-background",
+      className
+    )}>
+      {/* Header: ring + badge + spec info */}
       <div>
-        <p className="font-mono text-xs font-bold tracking-widest text-muted-foreground mb-3">
-          API AGENT-READINESS
-        </p>
+        {!compact && (
+          <p className="font-mono text-xs font-bold tracking-widest text-muted-foreground mb-3">
+            API AGENT-READINESS
+          </p>
+        )}
 
         <div className="flex items-center gap-5">
           <ApiScoreRing
@@ -132,12 +146,14 @@ export function ApiScoreSection({ apiScore }: { apiScore: ApiScoreResult }) {
         </div>
       </div>
 
-      {/* Axis bars */}
-      <div className="space-y-3">
-        {apiScore.axes.map(axis => (
-          <AxisBar key={axis.axis} axis={axis} />
-        ))}
-      </div>
+      {/* Axis bars — only in full/report view */}
+      {showAxes && (
+        <div className="space-y-3">
+          {apiScore.axes.map(axis => (
+            <AxisBar key={axis.axis} axis={axis} />
+          ))}
+        </div>
+      )}
 
       {/* Blockers */}
       {apiScore.topBlockers.length > 0 && (
@@ -173,7 +189,7 @@ export function ApiScoreSection({ apiScore }: { apiScore: ApiScoreResult }) {
         </div>
       )}
 
-      {/* No spec notice */}
+      {/* No spec alert */}
       {!apiScore.hasSpec && (
         <div className="rounded-md border border-amber-200/60 bg-amber-50 px-3 py-2.5">
           <p className="text-xs text-amber-900 leading-relaxed">
@@ -184,48 +200,47 @@ export function ApiScoreSection({ apiScore }: { apiScore: ApiScoreResult }) {
         </div>
       )}
 
-      {/* Per-axis details (expandable) */}
-      <Accordion type="single" collapsible>
-        <AccordionItem value="details" className="border-none">
-          <AccordionTrigger
-            className="py-0 text-[11px] font-mono text-muted-foreground hover:no-underline"
-            onClick={() => setDetailOpen(v => !v)}
-          >
-            Visa detaljer per axel
-          </AccordionTrigger>
-          <AccordionContent className="pt-3">
-            <div className="space-y-4">
-              {apiScore.axes.map(axis => (
-                <div key={axis.axis}>
-                  <p className="text-xs font-semibold mb-1.5">
-                    {axis.label}
-                    {axis.limited && <span className="ml-2 font-mono text-[10px] text-muted-foreground">(begränsad — saknar spec)</span>}
-                  </p>
-                  <div className="space-y-1 pl-1">
-                    {axis.checks.map((check, i) => (
-                      <div key={i} className="flex items-start gap-2">
-                        {check.score >= check.maxScore
-                          ? <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0 mt-0.5" />
-                          : check.score > 0
-                            ? <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
-                            : <XCircle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
-                        }
-                        <div className="flex-1 min-w-0">
-                          <span className="text-xs text-foreground/80">{check.name}</span>
-                          <span className="font-mono text-[10px] text-muted-foreground ml-2">{check.score}/{check.maxScore}</span>
-                          {check.detail && (
-                            <p className="text-[11px] text-muted-foreground/70 mt-0.5">{check.detail}</p>
-                          )}
+      {/* Per-axis details — only in full/report view */}
+      {showAxes && (
+        <Accordion type="single" collapsible>
+          <AccordionItem value="details" className="border-none">
+            <AccordionTrigger className="py-0 text-[11px] font-mono text-muted-foreground hover:no-underline">
+              Visa detaljer per axel
+            </AccordionTrigger>
+            <AccordionContent className="pt-3">
+              <div className="space-y-4">
+                {apiScore.axes.map(axis => (
+                  <div key={axis.axis}>
+                    <p className="text-xs font-semibold mb-1.5">
+                      {axis.label}
+                      {axis.limited && <span className="ml-2 font-mono text-[10px] text-muted-foreground">(begränsad — saknar spec)</span>}
+                    </p>
+                    <div className="space-y-1 pl-1">
+                      {axis.checks.map((check, i) => (
+                        <div key={i} className="flex items-start gap-2">
+                          {check.score >= check.maxScore
+                            ? <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0 mt-0.5" />
+                            : check.score > 0
+                              ? <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+                              : <XCircle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
+                          }
+                          <div className="flex-1 min-w-0">
+                            <span className="text-xs text-foreground/80">{check.name}</span>
+                            <span className="font-mono text-[10px] text-muted-foreground ml-2">{check.score}/{check.maxScore}</span>
+                            {check.detail && (
+                              <p className="text-[11px] text-muted-foreground/70 mt-0.5">{check.detail}</p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      )}
     </section>
   );
 }

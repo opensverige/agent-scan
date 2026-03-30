@@ -56,7 +56,7 @@ export const CHECK_CONTEXT: Record<CheckId, CheckContext> = {
   mcp_server: {
     stat: "75% av organisationer har redan hittat osanktionerade AI-verktyg i sina miljöer. MCP ger dig kontroll över hur agenter kopplar in sig.",
     source: "Gravitee, The AI Agent Governance Gap 2026",
-    action: "Publicera en MCP-server så att AI-agenter kan koppla in sig direkt i ditt system.",
+    action: "Vi hittade ingen MCP-koppling till den här domänen — agenter kan inte nå er direkt. Utforska om MCP är rätt steg för er integration.",
   },
   sandbox_available: {
     stat: "Bara 34% av organisationer anser att sin IT-infrastruktur är fullt anpassningsbar för AI-projekt. En sandbox sänker tröskeln för agent-utvecklare.",
