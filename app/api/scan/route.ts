@@ -40,6 +40,30 @@ function parseRobots(body: string): boolean {
   return true;
 }
 
+async function fetchApisGuruSpec(domain: string): Promise<string | null> {
+  try {
+    const listRes = await fetch(`https://api.apis.guru/v2/${domain}.json`, {
+      headers: { "User-Agent": "OpenSverige-Scanner/1.0" },
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!listRes.ok) return null;
+    const data = await listRes.json() as {
+      preferred?: string;
+      versions?: Record<string, { swaggerUrl?: string }>;
+    };
+    if (!data.versions) return null;
+    const preferredKey = data.preferred ?? Object.keys(data.versions)[0];
+    const specUrl = data.versions[preferredKey]?.swaggerUrl;
+    if (!specUrl) return null;
+    const specRes = await fetch(specUrl, {
+      headers: { "User-Agent": "OpenSverige-Scanner/1.0" },
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!specRes.ok) return null;
+    return (await specRes.text()).slice(0, 100_000);
+  } catch { return null; }
+}
+
 async function fetchSafe(url: string): Promise<{ status: number; body: string; contentType: string | null } | null> {
   try {
     const res = await fetch(url, {
@@ -248,12 +272,13 @@ export async function POST(req: NextRequest) {
 
   const firecrawlKey = process.env.FIRECRAWL_API_KEY;
 
-  // Run checks and Firecrawl in parallel
-  const [checkResult, firecrawlMarkdown] = await Promise.all([
+  // Run checks, Firecrawl, and apis.guru spec lookup in parallel
+  const [checkResult, firecrawlMarkdown, apisGuruSpec] = await Promise.all([
     runAllChecks(rawDomain),
     firecrawlKey
       ? fetchFirecrawlContent(rawDomain, firecrawlKey)
       : Promise.resolve(null),
+    fetchApisGuruSpec(rawDomain),
   ]);
 
   const { checks, liveChecks, builderData } = checkResult;
@@ -262,10 +287,12 @@ export async function POST(req: NextRequest) {
   const severity_counts = computeSeverityCounts(checks);
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  const shouldScoreApi = checks.api_exists.pass || checks.openapi_spec.pass;
+  const specRaw = builderData.specRaw ?? apisGuruSpec ?? null;
+  const shouldScoreApi = checks.api_exists.pass || checks.openapi_spec.pass || !!apisGuruSpec;
 
   // Run Claude analysis and API score in parallel.
   // API score uses Firecrawl to render JS-heavy developer portals if available.
+  // LLM extraction (claude-haiku) runs inside scoreApi when no spec is found.
   const [analysis, apiScore] = await Promise.all([
     apiKey
       ? analyzeWithClaude(rawDomain, liveChecks, builderData, apiKey, firecrawlMarkdown ?? undefined)
@@ -275,7 +302,12 @@ export async function POST(req: NextRequest) {
           const docsHtml = (firecrawlKey && builderData.developerPortalUrl)
             ? await firecrawlScrape(builderData.developerPortalUrl, firecrawlKey, 12_000)
             : builderData.docsHtml ?? null;
-          return scoreApi({ specRaw: builderData.specRaw ?? null, docsHtml, domain: rawDomain }).catch(() => null);
+          return scoreApi({
+            specRaw,
+            docsHtml,
+            domain: rawDomain,
+            anthropicApiKey: apiKey ?? undefined,
+          }).catch(() => null);
         })()
       : Promise.resolve(null),
   ]);

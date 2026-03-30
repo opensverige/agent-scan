@@ -37,4 +37,6 @@ export interface ApiScoreInput {
   /** HTML/text from developer portal page, if any probe found one */
   docsHtml: string | null;
   domain: string;
+  /** Anthropic API key for LLM-based signal extraction when no spec found */
+  anthropicApiKey?: string;
 }
