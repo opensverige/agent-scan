@@ -73,6 +73,10 @@ async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveCh
     ...BUILDER_PATHS.map(p => `${base}${p}`),
     `https://developer.${domain}`,
     `https://api.${domain}`,
+    `https://api.${domain}/docs`,
+    `https://api.${domain}/apidocs`,
+    `https://api.${domain}/reference`,
+    `https://developer.${domain}/docs`,
   ];
 
   const [robotsRes, sitemapRes, llmsRes, ...builderResults] = await Promise.all([
@@ -116,7 +120,13 @@ async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveCh
 
   let developerPortalUrl: string | undefined;
   const devHit = probeResults.find(p =>
-    p.status === 200 && (p.url.includes('/developer') || p.url.startsWith(`https://developer.`))
+    p.status === 200 && (
+      p.url.includes('/developer') ||
+      p.url.startsWith(`https://developer.`) ||
+      p.url.includes('/apidocs') ||
+      p.url.includes('/reference') ||
+      (p.url.startsWith(`https://api.`) && p.contentType?.includes('text/html'))
+    )
   );
   if (devHit) developerPortalUrl = devHit.url;
 
@@ -129,7 +139,8 @@ async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveCh
   const docsProbe = probeResults.find(p =>
     p.status === 200 &&
     p.contentType?.includes('text/html') &&
-    (p.url.includes('/developer') || p.url.includes('/docs'))
+    (p.url.includes('/developer') || p.url.includes('/docs') ||
+     p.url.includes('/apidocs') || p.url.includes('/reference'))
   );
 
   const builderData: BuilderProbeData = {

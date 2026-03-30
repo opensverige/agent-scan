@@ -32,7 +32,7 @@ export async function scoreQualityGates(
     detail: hasStatus ? "Status-sida hittad" : "Ingen status-sida hittad" });
 
   // 3. Sandbox (3p)
-  const hasSandbox = /sandbox|test environment|staging|testbed|playground/.test(docs);
+  const hasSandbox = /sandbox|test.?environment|staging|testbed|playground|test.?compan|demo.?env|testmilj|testbolag|developer.?portal|test.?account/.test(docs);
   checks.push({ name: "Sandbox / testmiljö", score: hasSandbox ? 3 : 0, maxScore: 3,
     detail: hasSandbox ? "Testmiljö nämnd i docs" : "Ingen testmiljö nämnd i docs" });
 

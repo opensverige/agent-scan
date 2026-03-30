@@ -48,10 +48,14 @@ export const BUILDER_PATHS = [
   '/api', '/api/v1', '/api/docs', '/developer', '/developers',
   '/docs', '/docs/api', '/openapi.json', '/openapi.yaml',
   '/swagger.json', '/swagger.yaml', '/api-docs',
+  '/apidocs', '/reference', '/doc', '/api/reference',
 ] as const;
 
 const OPENAPI_PATHS = new Set(['/openapi.json', '/openapi.yaml', '/swagger.json', '/swagger.yaml']);
-const API_DOC_PATHS = new Set(['/developer', '/developers', '/docs', '/api/docs', '/api-docs']);
+const API_DOC_PATHS = new Set([
+  '/developer', '/developers', '/docs', '/api/docs', '/api-docs',
+  '/apidocs', '/reference', '/doc', '/api/reference',
+]);
 
 // ── Discovery ─────────────────────────────────────────────
 

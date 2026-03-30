@@ -12,7 +12,7 @@ export function scoreAuthUsability(
   // 1. Auth method documented (1p)
   const secSchemes = (spec?.components as Record<string, unknown> | undefined)?.securitySchemes;
   const secDefs = spec?.securityDefinitions;
-  const hasAuthInDocs = /auth|api.?key|bearer|oauth|jwt/.test(docs);
+  const hasAuthInDocs = /auth|api.?key|bearer|oauth|jwt|access.?token|authorization.?code|refresh.?token/.test(docs);
   const hasAuth = !!(secSchemes ?? secDefs) || hasAuthInDocs;
   checks.push({ name: "Auth-metod dokumenterad", score: hasAuth ? 1 : 0, maxScore: 1,
     detail: hasAuth ? (secSchemes ?? secDefs ? "securitySchemes i spec" : "Auth-info i docs") : "Ingen auth-dokumentation" });
@@ -41,7 +41,7 @@ export function scoreAuthUsability(
     detail: hasM2M ? "M2M/client credentials auth hittad" : "Ingen M2M-auth dokumenterad" });
 
   // 3. Rate limits documented (1p)
-  const hasRateLimits = /rate.?limit|x-ratelimit|throttl|quota/.test(docs) ||
+  const hasRateLimits = /rate.?limit|x-ratelimit|throttl|quota|requests.?per|per.?second|per.?minute|calls.?per/.test(docs) ||
     (spec ? JSON.stringify(spec).toLowerCase().includes("x-ratelimit") : false);
   checks.push({ name: "Rate limits dokumenterade", score: hasRateLimits ? 1 : 0, maxScore: 1,
     detail: hasRateLimits ? "Rate limit-dokumentation hittad" : "Inga rate limits dokumenterade" });
