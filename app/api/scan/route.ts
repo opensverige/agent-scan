@@ -21,23 +21,29 @@ import { scoreApi } from "@/lib/api-score";
 
 const AI_AGENTS = ["gptbot", "claudebot", "anthropic-ai", "ccbot", "google-extended", "omgilibot"];
 
-function parseRobots(body: string): boolean {
-  const lines = body.toLowerCase().split("\n");
+function parseRobots(body: string): { allowed: boolean; sitemapUrl: string | null } {
+  const lines = body.split("\n");
   let groupUAs: string[] = [];
   let inGroup = false;
+  let blocked = false;
+  let sitemapUrl: string | null = null;
   for (const raw of lines) {
     const line = raw.trim();
-    if (line.startsWith("user-agent:")) {
-      const ua = line.replace("user-agent:", "").trim();
+    const lower = line.toLowerCase();
+    if (lower.startsWith("user-agent:")) {
+      const ua = lower.replace("user-agent:", "").trim();
       if (!inGroup) { groupUAs = [ua]; inGroup = true; }
       else { groupUAs.push(ua); }
-    } else if (line.startsWith("disallow:")) {
-      const path = line.replace("disallow:", "").trim();
-      if (path === "/" && groupUAs.some(ua => AI_AGENTS.includes(ua) || ua === "*")) return false;
+    } else if (lower.startsWith("disallow:")) {
+      const path = lower.replace("disallow:", "").trim();
+      if (path === "/" && groupUAs.some(ua => AI_AGENTS.includes(ua) || ua === "*")) blocked = true;
       inGroup = false;
+    } else if (lower.startsWith("sitemap:")) {
+      const url = line.slice(8).trim();
+      if (url) sitemapUrl = url;
     } else if (line === "") { groupUAs = []; inGroup = false; }
   }
-  return true;
+  return { allowed: !blocked, sitemapUrl };
 }
 
 async function fetchApisGuruSpec(domain: string): Promise<string | null> {
@@ -270,10 +276,13 @@ async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveCh
     ...builderUrls.map(url => fetchSafe(url).then(r => ({ url, ...r ?? { status: 0, body: "", contentType: null } } as ProbeResult))),
   ]);
 
-  const robotsAllowed = robotsRes?.status === 200 ? parseRobots(robotsRes.body) : false;
+  const robotsParsed = robotsRes?.status === 200 ? parseRobots(robotsRes.body) : { allowed: false, sitemapUrl: null };
+  const robotsAllowed = robotsParsed.allowed;
+  // Sitemap passes if /sitemap.xml returns 200, OR if robots.txt declares a Sitemap: URL
+  const sitemapExists = sitemapRes?.status === 200 || (robotsRes?.status === 200 && robotsParsed.sitemapUrl !== null);
   const liveChecks: LiveChecks = {
     robots: robotsAllowed,
-    sitemap: sitemapRes?.status === 200,
+    sitemap: sitemapExists,
     llms: llmsRes?.status === 200,
   };
 
@@ -286,7 +295,7 @@ async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveCh
 
   const checks: AllChecks = {
     robots_ok: checkRobots(robotsAllowed),
-    sitemap_exists: checkSitemap(sitemapRes?.status ?? 0),
+    sitemap_exists: checkSitemap(sitemapExists),
     llms_txt: checkLlms(llmsRes?.status ?? 0),
     privacy_automation: privacyCheck,
     cookie_bot_handling: cookieCheck,

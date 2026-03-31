@@ -77,12 +77,11 @@ export function checkRobots(allowed: boolean): CheckResult {
   };
 }
 
-export function checkSitemap(status: number): CheckResult {
-  const pass = status === 200;
+export function checkSitemap(exists: boolean): CheckResult {
   return {
     id: 'sitemap_exists',
-    pass,
-    label: pass
+    pass: exists,
+    label: exists
       ? 'Sitemap finns — agenter kan navigera'
       : 'Ingen sitemap — agenter kan inte navigera sajten',
     category: 'discovery',
