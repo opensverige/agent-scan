@@ -8,17 +8,20 @@ import CTA from "./_components/CTA";
 
 export const metadata: Metadata = {
   title: "Hur agent-redo är ditt företag?",
-  description:
-    "Vi scannar din sajt och visar vad AI-agenter ser — GDPR, EU AI Act och teknisk tillgänglighet. Gratis. Öppet.",
+  description: "Gratis AI-readiness scanner. 11 checks. Öppet.",
   openGraph: {
-    images: [
-      {
-        url: "https://agent.opensverige.se/api/og?domain=dittforetag.se&score=7&status=Partial",
-        width: 1200,
-        height: 630,
-        alt: "AI Readiness Scanner — agent.opensverige",
-      },
-    ],
+    title: "Hur agent-redo är ditt företag?",
+    description: "Gratis AI-readiness scanner — 11 checks. Öppet.",
+    url: "https://agent.opensverige.se",
+    siteName: "agent.opensverige",
+    type: "website",
+    images: [{ url: "https://agent.opensverige.se/assets/og-default.png", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Hur agent-redo är ditt företag?",
+    description: "Gratis AI-readiness scanner — agent.opensverige.se",
+    images: ["https://agent.opensverige.se/assets/og-default.png"],
   },
 };
 

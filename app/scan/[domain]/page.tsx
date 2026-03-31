@@ -64,7 +64,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const badgeLabel = data.badge === "green" ? "REDO" : data.badge === "yellow" ? "DELVIS REDO" : "INTE REDO";
   const sc = data.severity_counts;
   const description = `${domain} fick ${data.score}/11 i AI-readiness. ${sc.critical} brister, ${sc.important} varningar, ${data.score} ok. Scanna din sajt gratis.`;
-  const ogImageUrl = `https://agent.opensverige.se/api/og?domain=${encodeURIComponent(domain)}&score=${data.score}&status=${encodeURIComponent(badgeLabel)}`;
+  const ogImageUrl = `https://agent.opensverige.se/api/og?domain=${encodeURIComponent(domain)}&score=${data.score}&max=11&status=${encodeURIComponent(badgeLabel)}`;
 
   return {
     title: `${domain} — ${badgeLabel} (${data.score}/11) | agent.opensverige`,
