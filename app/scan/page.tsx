@@ -61,7 +61,12 @@ const faqSchema = {
   ],
 };
 
-export default function ScanPage() {
+interface PageProps {
+  searchParams: Promise<{ domain?: string }>;
+}
+
+export default async function ScanPage({ searchParams }: PageProps) {
+  const { domain } = await searchParams;
   return (
     <>
       <script
@@ -69,7 +74,7 @@ export default function ScanPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
       <Nav />
-      <ScannerSection />
+      <ScannerSection initialDomain={domain} />
       <Separator className="max-w-[580px] mx-auto" />
       <IntegrationVote />
       <Separator className="max-w-[580px] mx-auto" />

@@ -53,10 +53,10 @@ function isValidDomain(d: string): boolean {
   return /^[a-zA-Z0-9][a-zA-Z0-9.-]*\.[a-zA-Z]{2,}$/.test(d);
 }
 
-export default function ScannerSection() {
+export default function ScannerSection({ initialDomain }: { initialDomain?: string }) {
   const router = useRouter();
   const [state, setState] = useState<ScanState>("idle");
-  const [url, setUrl] = useState("");
+  const [url, setUrl] = useState(initialDomain ?? "");
   const [domain, setDomain] = useState("");
   const [activeMsgIdx, setActiveMsgIdx] = useState(0);
   const [progress, setProgress] = useState(0);

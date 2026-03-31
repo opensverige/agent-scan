@@ -16,7 +16,7 @@ async function getLatestScan(domain: string): Promise<ScanResult | null> {
   if (!url || !key) return null;
   try {
     const res = await fetch(
-      `${url}/rest/v1/scan_submissions?domain=eq.${encodeURIComponent(domain)}&order=scanned_at.desc&limit=1&select=badge,checks_passed,checks_json,claude_summary,recommendations`,
+      `${url}/rest/v1/scan_submissions?domain=eq.${encodeURIComponent(domain)}&order=scanned_at.desc&limit=1&select=badge,checks_passed,checks_json,claude_summary,recommendations,scanned_at`,
       {
         headers: { apikey: key, Authorization: `Bearer ${key}` },
         next: { revalidate: 60 },
@@ -29,6 +29,7 @@ async function getLatestScan(domain: string): Promise<ScanResult | null> {
       checks_json: AllChecks;
       claude_summary: string | null;
       recommendations: string[] | null;
+      scanned_at: string | null;
     }>;
     if (!rows.length) return null;
     const row = rows[0];
@@ -44,6 +45,7 @@ async function getLatestScan(domain: string): Promise<ScanResult | null> {
       severity_counts: computeSeverityCounts(row.checks_json),
       scan_id: null,
       isDemo: false,
+      scanned_at: row.scanned_at ?? new Date(0).toISOString(),
     };
   } catch { return null; }
 }

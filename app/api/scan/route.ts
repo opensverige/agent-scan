@@ -305,7 +305,12 @@ async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveCh
   ]);
 
   // ── Phase 2: resolve from phase 1 results ────────────────────────────────
-  const robotsParsed = robotsRes?.status === 200 ? parseRobots(robotsRes.body) : { allowed: false, sitemapUrl: null };
+  // RFC 9309: 404/absent = allow-all, 403 = deny-all, 200 = parse
+  const robotsParsed = robotsRes?.status === 200
+    ? parseRobots(robotsRes.body)
+    : robotsRes?.status === 403
+      ? { allowed: false, sitemapUrl: null }
+      : { allowed: true, sitemapUrl: null };
   const robotsAllowed = robotsParsed.allowed;
 
   // Sitemap: /sitemap.xml 200 OR /sitemap_index.xml 200 OR robots.txt declares a Sitemap: URL
@@ -435,7 +440,7 @@ async function checkRateLimits(ipHash: string): Promise<{ perIpOk: boolean; glob
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return { perIpOk: true, globalOk: true };
 
-  const dailyLimit = parseInt(process.env.DAILY_SCAN_LIMIT ?? "200", 10);
+  const dailyLimit = parseInt(process.env.DAILY_SCAN_LIMIT ?? "200", 10) || 200;
   const oneMinuteAgo = new Date(Date.now() - 60_000).toISOString();
   const dayStart = new Date();
   dayStart.setHours(0, 0, 0, 0);

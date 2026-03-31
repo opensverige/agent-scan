@@ -57,7 +57,11 @@ export const BUILDER_PATHS = [
   '/developers/docs', '/developers/api',
 ] as const;
 
-const OPENAPI_PATHS = new Set(['/openapi.json', '/openapi.yaml', '/swagger.json', '/swagger.yaml']);
+const OPENAPI_PATHS = new Set([
+  '/openapi.json', '/openapi.yaml', '/swagger.json', '/swagger.yaml',
+  '/v1/openapi.json', '/v2/openapi.json', '/v3/openapi.json',
+  '/v1/swagger.json', '/v2/swagger.json',
+]);
 const API_DOC_PATHS = new Set([
   '/developer', '/developers', '/docs', '/api/docs', '/api-docs',
   '/apidocs', '/reference', '/doc', '/api/reference',
@@ -138,8 +142,11 @@ export function complianceChecks(): [CheckResult, CheckResult, CheckResult] {
 // ── Builder (live probes) ──────────────────────────────────
 
 export function checkApiExists(probes: ProbeResult[]): CheckResult {
-  // 200 = confirmed; 429 = rate-limited; 401/403 = auth required — all prove API exists
-  const hit = probes.find(p => p.status === 200 || p.status === 429 || p.status === 401 || p.status === 403);
+  // 200/429 = confirmed; 401/403 only count if application/json (avoids Next.js auth HTML walls)
+  const hit = probes.find(p =>
+    p.status === 200 || p.status === 429 ||
+    ((p.status === 401 || p.status === 403) && p.contentType?.includes('application/json'))
+  );
   let path: string | undefined;
   try { path = hit ? new URL(hit.url).pathname : undefined; } catch { path = undefined; }
   return {
