@@ -621,7 +621,7 @@ export async function POST(req: NextRequest) {
   const shouldScoreApi = checks.api_exists.pass || checks.openapi_spec.pass || !!discoveredPortalUrl;
   const specRaw = builderData.specRaw ?? (shouldScoreApi ? apisGuruSpec : null) ?? null;
 
-  console.log(`[scan] domain=${rawDomain} shouldScore=${shouldScoreApi} portalUrl=${portalUrl ?? 'none'} hasSpec=${!!specRaw} docsHtmlLen=${builderData.docsHtml?.length ?? 0} hasFirecrawl=${!!firecrawlKey} hasExa=${!!process.env.EXA_API_KEY}`);
+  console.log(`[scan] domain=${rawDomain} shouldScore=${shouldScoreApi} portalUrl=${portalUrl ?? 'none'} hasSpec=${!!specRaw} docsHtmlLen=${builderData.docsHtml?.length ?? 0} hasFirecrawl=${!!firecrawlKey} hasExa=${!!process.env.EXA_API_KEY} hasAnthropicKey=${!!apiKey}`);
 
   // Determine the best Firecrawl target for developer docs:
   // - Known portal URL (from probes or discovery) — always use it

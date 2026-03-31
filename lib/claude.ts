@@ -104,7 +104,11 @@ Du har inte analyserat deras faktiska policies. Kommentera kort vad svenska för
       signal: AbortSignal.timeout(15_000),
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => '');
+      console.error(`[claude] API error ${res.status}: ${errBody.slice(0, 200)}`);
+      return null;
+    }
     const data = await res.json();
     const text: string = data.content?.[0]?.text ?? '';
     const cleaned = text.replace(/```json\n?/g, '').replace(/```/g, '').trim();
@@ -114,7 +118,8 @@ Du har inte analyserat deras faktiska policies. Kommentera kort vad svenska för
       parsed.agent_suggestions = DEFAULT_AGENT_SUGGESTIONS;
     }
     return parsed;
-  } catch {
+  } catch (err) {
+    console.error('[claude] analyzeWithClaude failed:', err instanceof Error ? err.message : String(err));
     return null;
   }
 }
