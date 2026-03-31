@@ -1,7 +1,7 @@
 // app/scan/_components/ScannerSection.tsx
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { ScanResult } from "@/lib/scan-types";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,6 @@ const MSG_DELAYS = [0, 2000, 4000, 6000, 8000];
 const DEMO_CHIPS = ["fortnox.se", "visma.net", "bokio.se", "spotify.com"];
 
 const CSS = `
-  @keyframes ss-spin { to { transform: rotate(360deg); } }
   @keyframes ss-fadeup {
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -44,6 +43,51 @@ const CSS = `
 `;
 
 const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
+
+// Swedish flag colours — blue + yellow, weighted toward blue to feel flag-like
+const SE_COLS = ["#006AA7", "#006AA7", "#006AA7", "#FECC02", "#FECC02", "#005B8E", "#F0C000", "#004F80"];
+
+function SwedishPixelLoader({ size = 20 }: { size?: number }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const c = ref.current;
+    if (!c) return;
+    const ctx = c.getContext("2d");
+    if (!ctx) return;
+    const g = 5;
+    const px = size / g;
+    const cells: string[] = Array.from({ length: g * g }, () =>
+      SE_COLS[Math.floor(Math.random() * SE_COLS.length)]
+    );
+    for (let j = 0; j < cells.length; j++) {
+      ctx.fillStyle = cells[j];
+      ctx.fillRect((j % g) * px, Math.floor(j / g) * px, px, px);
+    }
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let f: number;
+    function tick() {
+      for (let j = 0; j < cells.length; j++) {
+        if (Math.random() < 0.18) {
+          cells[j] = SE_COLS[Math.floor(Math.random() * SE_COLS.length)];
+          ctx!.fillStyle = cells[j];
+          ctx!.fillRect((j % g) * px, Math.floor(j / g) * px, px, px);
+        }
+      }
+      f = requestAnimationFrame(tick);
+    }
+    tick();
+    return () => cancelAnimationFrame(f);
+  }, [size]);
+  return (
+    <canvas
+      ref={ref}
+      width={size}
+      height={size}
+      aria-hidden="true"
+      style={{ imageRendering: "pixelated", display: "block", borderRadius: 2 }}
+    />
+  );
+}
 
 function cleanDomain(input: string): string {
   return input.trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "").toLowerCase();
@@ -281,10 +325,7 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
               >
                 <div className="w-5 h-5 flex items-center justify-center shrink-0">
                   {isCurrent ? (
-                    <div
-                      className="w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full"
-                      style={{ animation: "ss-spin 0.7s linear infinite" }}
-                    />
+                    <SwedishPixelLoader size={20} />
                   ) : (
                     <span
                       className="font-mono text-sm text-success font-bold"

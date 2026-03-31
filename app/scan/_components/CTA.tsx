@@ -27,8 +27,8 @@ export default function CTA() {
 
   return (
     <section className="py-12 px-6 pb-16 text-center max-w-[480px] mx-auto">
-      <div className="flex justify-center mb-4">
-        <Image src="/assets/logo_500x.png" alt="" width={36} height={36} className="rounded-sm" aria-hidden="true" />
+      <div className="flex justify-center mb-6">
+        <Image src="/assets/logo_500x.png" alt="" width={80} height={80} className="rounded-md" aria-hidden="true" />
       </div>
       <h2 className="font-serif text-[clamp(24px,5vw,36px)] font-normal leading-[1.15] tracking-[-0.5px] mb-2">
         250+ builders bygger redan.
