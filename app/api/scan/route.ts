@@ -82,9 +82,15 @@ async function firecrawlScrape(url: string, apiKey: string, maxChars = 8000): Pr
     // eslint-disable-next-line
     const { default: FirecrawlApp } = await import("@mendable/firecrawl-js");
     const app = new FirecrawlApp({ apiKey });
-    const result = await app.scrapeUrl(url, { formats: ["markdown"], onlyMainContent: true });
-    if (result.success && result.markdown) return result.markdown.slice(0, maxChars);
-    return null;
+    // Hard cap: the SDK has no externally enforced timeout — race against a 20s deadline
+    // so a hanging page cannot push the Lambda past Vercel's 60 s maxDuration.
+    const deadline = new Promise<null>(resolve => setTimeout(() => resolve(null), 20_000));
+    const result = await Promise.race([
+      app.scrapeUrl(url, { formats: ["markdown"], onlyMainContent: true }),
+      deadline,
+    ]);
+    if (!result || !("success" in result) || !result.success || !result.markdown) return null;
+    return result.markdown.slice(0, maxChars);
   } catch { return null; }
 }
 
@@ -298,8 +304,11 @@ export async function POST(req: NextRequest) {
   const severity_counts = computeSeverityCounts(checks);
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  const specRaw = builderData.specRaw ?? apisGuruSpec ?? null;
-  const shouldScoreApi = checks.api_exists.pass || checks.openapi_spec.pass || !!apisGuruSpec;
+  // apis.guru enriches the spec but does NOT trigger scoring on its own —
+  // probes must first confirm an API exists to avoid applying an unrelated
+  // spec to a site that shares a domain name with an indexed API.
+  const shouldScoreApi = checks.api_exists.pass || checks.openapi_spec.pass;
+  const specRaw = builderData.specRaw ?? (shouldScoreApi ? apisGuruSpec : null) ?? null;
 
   // Run Claude analysis and API score in parallel.
   // API score uses Firecrawl to render JS-heavy developer portals if available.
