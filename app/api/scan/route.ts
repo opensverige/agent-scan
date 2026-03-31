@@ -441,11 +441,14 @@ export async function POST(req: NextRequest) {
   const shouldScoreApi = checks.api_exists.pass || checks.openapi_spec.pass || !!discoveredPortalUrl;
   const specRaw = builderData.specRaw ?? (shouldScoreApi ? apisGuruSpec : null) ?? null;
 
-  // When Firecrawl is configured but portal wasn't found via raw probes (bot-protection,
-  // JS redirects, etc.) — try the most common developer subdomain as a best-guess target.
-  // Firecrawl handles JS and some bot-protection that plain fetch cannot.
+  // Determine the best Firecrawl target for developer docs:
+  // - Known portal URL (from probes or discovery) — always use it
+  // - developer.{domain} as best-guess — only when we have no docs from path probes,
+  //   so we don't waste 20 s on a subdomain that may be login-gated
   const firecrawlDocTarget: string | undefined = portalUrl
-    ?? (firecrawlKey && shouldScoreApi ? `https://developer.${rawDomain}` : undefined);
+    ?? (firecrawlKey && shouldScoreApi && !builderData.docsHtml
+      ? `https://developer.${rawDomain}`
+      : undefined);
 
   // Run Claude analysis and API score in parallel.
   // API score uses Firecrawl to render JS-heavy developer portals if available.
@@ -456,9 +459,11 @@ export async function POST(req: NextRequest) {
       : Promise.resolve(null),
     shouldScoreApi
       ? (async () => {
-          const docsHtml = (firecrawlKey && firecrawlDocTarget)
+          const firecrawlResult = (firecrawlKey && firecrawlDocTarget)
             ? await firecrawlScrape(firecrawlDocTarget, firecrawlKey, 12_000)
-            : builderData.docsHtml ?? discoveredPortalContent ?? null;
+            : null;
+          // Always fall back to probe-detected docs or Exa content if Firecrawl returns null
+          const docsHtml = firecrawlResult ?? builderData.docsHtml ?? discoveredPortalContent ?? null;
           return scoreApi({
             specRaw,
             docsHtml,
