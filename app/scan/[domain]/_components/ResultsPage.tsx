@@ -27,6 +27,8 @@ import {
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
+const BOOK_MEETING_URL = "https://opensverige.se/boka";
+
 const BADGE_CFG = {
   green:  { label: "REDO",        ringColor: "hsl(var(--success))",    badgeVariant: "default"     as const },
   yellow: { label: "DELVIS REDO", ringColor: "#c9a55a",                 badgeVariant: "secondary"   as const },
@@ -598,16 +600,39 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                   {/* OpenAPI-spec alert */}
                   {!apiScore.hasSpec && (
                     <div className="px-6 pb-6">
-                      <div className="rounded-md border border-amber-200/60 bg-amber-50 px-3 py-2.5">
-                        <p className="text-xs text-amber-900 leading-relaxed">
+                      <div className="rounded-md border border-border bg-muted/40 px-4 py-3 space-y-3">
+                        <p className="text-xs text-muted-foreground leading-relaxed">
                           <Zap className="inline h-3 w-3 mr-1 shrink-0" />
-                          {specDetected ? (
-                            <>OpenAPI-spec verkar finnas, men vi kunde inte läsa in hela spec-filen automatiskt i den här körningen. Vi analyserade därför {apiScore.maxPossibleScore} av 100 möjliga poäng.</>
-                          ) : (
-                            <>Utan OpenAPI-spec kunde vi bara analysera {apiScore.maxPossibleScore} av 100 möjliga poäng.
-                            Publicera en spec på <code className="font-mono text-[10px]">/openapi.json</code> för fullständig analys.</>
-                          )}
+                          {specDetected
+                            ? <>OpenAPI-spec verkar finnas men kunde inte läsas in automatiskt. Vi analyserade {apiScore.maxPossibleScore} av 100 möjliga poäng.</>
+                            : <>Utan OpenAPI-spec analyserades bara {apiScore.maxPossibleScore} av 100 möjliga poäng.</>}
                         </p>
+                        <div className="space-y-1.5">
+                          <p className="text-[11px] font-mono text-muted-foreground/60 uppercase tracking-wider">
+                            {specDetected ? "Vanligaste orsakerna" : "Kortaste vägen dit"}
+                          </p>
+                          {specDetected ? (
+                            <ul className="space-y-1 text-xs text-muted-foreground">
+                              <li className="flex gap-2"><span className="shrink-0 opacity-40">—</span>Spec-endpointen kräver auth-token — se till att <code className="font-mono text-[10px]">/openapi.json</code> är publik</li>
+                              <li className="flex gap-2"><span className="shrink-0 opacity-40">—</span>CORS-headers saknas — lägg till <code className="font-mono text-[10px]">Access-Control-Allow-Origin: *</code></li>
+                              <li className="flex gap-2"><span className="shrink-0 opacity-40">—</span>Spec-filen returnerar HTML vid bot-request — kontrollera Content-Type</li>
+                            </ul>
+                          ) : (
+                            <ul className="space-y-1 text-xs text-muted-foreground">
+                              <li className="flex gap-2"><span className="shrink-0 opacity-40">—</span>FastAPI, NestJS och Spring Boot genererar specs automatiskt</li>
+                              <li className="flex gap-2"><span className="shrink-0 opacity-40">—</span>Befintligt API utan docs? Verktyg som Speakeasy genererar specs retroaktivt</li>
+                              <li className="flex gap-2"><span className="shrink-0 opacity-40">—</span>Publicera på <code className="font-mono text-[10px]">/openapi.json</code> — standard, 0 config i de flesta ramverk</li>
+                            </ul>
+                          )}
+                        </div>
+                        <a
+                          href={BOOK_MEETING_URL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs text-foreground hover:opacity-70 transition-opacity font-mono"
+                        >
+                          Behöver du hjälp att implementera det? Boka 30 min →
+                        </a>
                       </div>
                     </div>
                   )}
@@ -1033,6 +1058,24 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
               <Link href="/scan">← Scanna en annan sajt</Link>
             </Button>
           </div>
+        </div>
+
+        {/* ── BOKA MÖTE ────────────────────────────────────────── */}
+        <div className="mt-10 rounded-lg border border-border px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <p className="font-mono text-sm font-medium">Vill du förbättra din score?</p>
+            <p className="text-xs text-muted-foreground max-w-sm">
+              Vi hjälper svenska builders att bli agent-redo — från OpenAPI-spec till MCP-server. Boka 30 min så går vi igenom er specifika situation.
+            </p>
+          </div>
+          <a
+            href={BOOK_MEETING_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 inline-flex items-center gap-2 rounded-md border border-border bg-background px-4 py-2 font-mono text-xs hover:bg-muted transition-colors"
+          >
+            Boka möte →
+          </a>
         </div>
 
         {/* ── AGENT-KATALOGEN ──────────────────────────────────── */}
