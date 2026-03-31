@@ -247,6 +247,21 @@ async function fetchFirecrawlContent(domain: string, apiKey: string): Promise<st
   return firecrawlScrape(`https://${domain}`, apiKey, 8000, true);
 }
 
+// ── Decision tree helpers ─────────────────────────────────────────────────────
+
+// llms.txt must be a real text file — not an HTML page returned by a CMS catch-all.
+// Many sites return 200 with HTML for any unknown path (Next.js, WordPress, etc.).
+function isValidLlmsTxt(body: string, contentType: string | null): boolean {
+  const ct = contentType?.toLowerCase() ?? "";
+  // Reject HTML regardless of what the body says
+  if (ct.includes("text/html") || body.trimStart().startsWith("<!DOCTYPE") || body.trimStart().startsWith("<html")) return false;
+  // Accept explicit text/plain or text/markdown
+  if (ct.includes("text/plain") || ct.includes("text/markdown")) return true;
+  // Accept if body looks like an llms.txt file: starts with # heading or > blockquote
+  const start = body.trimStart().slice(0, 50);
+  return start.startsWith("#") || start.startsWith(">");
+}
+
 async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveChecks: LiveChecks; builderData: BuilderProbeData }> {
   const base = `https://${domain}`;
   const builderUrls = [
@@ -269,21 +284,34 @@ async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveCh
     `https://developer.${domain}/swagger.json`,
   ];
 
-  const [robotsRes, sitemapRes, llmsRes, ...builderResults] = await Promise.all([
+  // ── Phase 1: parallel quick fetches ──────────────────────────────────────
+  // sitemap_index.xml: large sites use this instead of sitemap.xml
+  // llms.txt: fetched but content-validated in phase 2 (status-200 is not enough)
+  const [robotsRes, sitemapRes, sitemapIndexRes, llmsRes, ...builderResults] = await Promise.all([
     fetchSafe(`${base}/robots.txt`),
     fetchSafe(`${base}/sitemap.xml`),
+    fetchSafe(`${base}/sitemap_index.xml`),
     fetchSafe(`${base}/llms.txt`),
     ...builderUrls.map(url => fetchSafe(url).then(r => ({ url, ...r ?? { status: 0, body: "", contentType: null } } as ProbeResult))),
   ]);
 
+  // ── Phase 2: resolve from phase 1 results ────────────────────────────────
   const robotsParsed = robotsRes?.status === 200 ? parseRobots(robotsRes.body) : { allowed: false, sitemapUrl: null };
   const robotsAllowed = robotsParsed.allowed;
-  // Sitemap passes if /sitemap.xml returns 200, OR if robots.txt declares a Sitemap: URL
-  const sitemapExists = sitemapRes?.status === 200 || (robotsRes?.status === 200 && robotsParsed.sitemapUrl !== null);
+
+  // Sitemap: /sitemap.xml 200 OR /sitemap_index.xml 200 OR robots.txt declares a Sitemap: URL
+  const sitemapExists =
+    sitemapRes?.status === 200 ||
+    sitemapIndexRes?.status === 200 ||
+    (robotsRes?.status === 200 && robotsParsed.sitemapUrl !== null);
+
+  // llms.txt: must be a real text file, not a CMS catch-all 200 with HTML content
+  const llmsValid = llmsRes?.status === 200 && isValidLlmsTxt(llmsRes.body, llmsRes.contentType);
+
   const liveChecks: LiveChecks = {
     robots: robotsAllowed,
     sitemap: sitemapExists,
-    llms: llmsRes?.status === 200,
+    llms: llmsValid,
   };
 
   const [privacyCheck, cookieCheck, aiMarkingCheck] = complianceChecks();
@@ -296,7 +324,7 @@ async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveCh
   const checks: AllChecks = {
     robots_ok: checkRobots(robotsAllowed),
     sitemap_exists: checkSitemap(sitemapExists),
-    llms_txt: checkLlms(llmsRes?.status ?? 0),
+    llms_txt: checkLlms(llmsValid),
     privacy_automation: privacyCheck,
     cookie_bot_handling: cookieCheck,
     ai_content_marking: aiMarkingCheck,
@@ -387,20 +415,39 @@ async function getIpHash(req: NextRequest): Promise<string> {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function checkRateLimit(ipHash: string): Promise<boolean> {
+// Returns { perIpOk, globalOk } — both must be true to proceed.
+// Global daily limit: configurable via DAILY_SCAN_LIMIT env var (default 200).
+// If Supabase is unavailable, both return true (fail open — better than blocking all scans).
+async function checkRateLimits(ipHash: string): Promise<{ perIpOk: boolean; globalOk: boolean }> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return true;
+  if (!url || !key) return { perIpOk: true, globalOk: true };
+
+  const dailyLimit = parseInt(process.env.DAILY_SCAN_LIMIT ?? "200", 10);
+  const oneMinuteAgo = new Date(Date.now() - 60_000).toISOString();
+  const dayStart = new Date();
+  dayStart.setHours(0, 0, 0, 0);
+
   try {
-    const oneMinuteAgo = new Date(Date.now() - 60_000).toISOString();
-    const res = await fetch(
-      `${url}/rest/v1/scan_submissions?select=id&ip_hash=eq.${ipHash}&scanned_at=gte.${oneMinuteAgo}&limit=1`,
-      { headers: { apikey: key, Authorization: `Bearer ${key}` }, signal: AbortSignal.timeout(3_000) }
-    );
-    if (!res.ok) return true;
-    const rows = await res.json() as unknown[];
-    return rows.length === 0;
-  } catch { return true; }
+    const [perIpRes, globalRes] = await Promise.all([
+      fetch(
+        `${url}/rest/v1/scan_submissions?select=id&ip_hash=eq.${ipHash}&scanned_at=gte.${oneMinuteAgo}&limit=1`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` }, signal: AbortSignal.timeout(3_000) }
+      ),
+      fetch(
+        `${url}/rest/v1/scan_submissions?select=id&scanned_at=gte.${dayStart.toISOString()}&limit=${dailyLimit + 1}`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` }, signal: AbortSignal.timeout(3_000) }
+      ),
+    ]);
+
+    const perIpRows = perIpRes.ok ? await perIpRes.json() as unknown[] : [];
+    const globalRows = globalRes.ok ? await globalRes.json() as unknown[] : [];
+
+    return {
+      perIpOk: perIpRows.length === 0,
+      globalOk: globalRows.length < dailyLimit,
+    };
+  } catch { return { perIpOk: true, globalOk: true }; }
 }
 
 async function saveToSupabase(
@@ -467,9 +514,12 @@ export async function POST(req: NextRequest) {
   }
 
   const ipHash = await getIpHash(req);
-  const allowed = await checkRateLimit(ipHash);
-  if (!allowed) {
+  const { perIpOk, globalOk } = await checkRateLimits(ipHash);
+  if (!perIpOk) {
     return Response.json({ error: "För många scanningar. Vänta en minut." }, { status: 429 });
+  }
+  if (!globalOk) {
+    return Response.json({ error: "Daglig scanlimit nådd. Försök igen imorgon." }, { status: 429 });
   }
 
   const firecrawlKey = process.env.FIRECRAWL_API_KEY;

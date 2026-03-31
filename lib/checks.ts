@@ -89,12 +89,11 @@ export function checkSitemap(exists: boolean): CheckResult {
   };
 }
 
-export function checkLlms(status: number): CheckResult {
-  const pass = status === 200;
+export function checkLlms(valid: boolean): CheckResult {
   return {
     id: 'llms_txt',
-    pass,
-    label: pass
+    pass: valid,
+    label: valid
       ? 'llms.txt finns — agenter vet vad du erbjuder'
       : 'Ingen llms.txt — agenter vet inte vad du erbjuder',
     category: 'discovery',
@@ -139,8 +138,8 @@ export function complianceChecks(): [CheckResult, CheckResult, CheckResult] {
 // ── Builder (live probes) ──────────────────────────────────
 
 export function checkApiExists(probes: ProbeResult[]): CheckResult {
-  // 200 = confirmed; 429 = rate-limited but API definitely exists
-  const hit = probes.find(p => p.status === 200 || p.status === 429);
+  // 200 = confirmed; 429 = rate-limited; 401/403 = auth required — all prove API exists
+  const hit = probes.find(p => p.status === 200 || p.status === 429 || p.status === 401 || p.status === 403);
   let path: string | undefined;
   try { path = hit ? new URL(hit.url).pathname : undefined; } catch { path = undefined; }
   return {
@@ -157,7 +156,7 @@ export function checkApiExists(probes: ProbeResult[]): CheckResult {
 
 export function checkOpenApiSpec(probes: ProbeResult[]): CheckResult {
   const hit = probes.find(p => {
-    if (p.status !== 200 && p.status !== 429) return false;
+    if (p.status !== 200 && p.status !== 429 && p.status !== 401 && p.status !== 403) return false;
     try {
       if (!OPENAPI_PATHS.has(new URL(p.url).pathname)) return false;
     } catch { return false; }
@@ -177,8 +176,8 @@ export function checkOpenApiSpec(probes: ProbeResult[]): CheckResult {
 
 export function checkApiDocs(probes: ProbeResult[]): CheckResult {
   const hit = probes.find(p => {
-    // 429 = docs page exists, rate-limited — still counts
-    if (p.status !== 200 && p.status !== 429) return false;
+    // 429 = rate-limited, 401/403 = auth-gated — all mean the page exists
+    if (p.status !== 200 && p.status !== 429 && p.status !== 401 && p.status !== 403) return false;
     try {
       const { hostname, pathname } = new URL(p.url);
       // Subdomain-based docs (api.X, developer.X) count even if path is "/"
