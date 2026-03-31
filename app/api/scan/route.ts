@@ -303,16 +303,28 @@ async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveCh
     .filter(p => p.status === 200 || p.status === 429)
     .map(p => { try { return new URL(p.url).pathname; } catch { return p.url; } });
 
-  let developerPortalUrl: string | undefined;
-  const devHit = probeResults.find(p =>
+  // Score dev portal candidates by specificity — prefer actual API docs over marketing pages.
+  // api.*/apidocs > developer.* > api.* (root) > /apidocs path > /developer path
+  function devPortalPriority(url: string): number {
+    if (/https?:\/\/api\./i.test(url) && (url.includes('/apidocs') || url.includes('/reference'))) return 5;
+    if (/https?:\/\/(developer|docs)\./i.test(url)) return 4;
+    if (/https?:\/\/api\./i.test(url)) return 3;
+    if (url.includes('/apidocs') || url.includes('/reference')) return 2;
+    if (url.includes('/developer') || url.includes('/docs')) return 1;
+    return 0;
+  }
+  const devCandidates = probeResults.filter(p =>
     (p.status === 200 || p.status === 429) && (
       p.url.includes('/developer') ||
-      p.url.startsWith(`https://developer.`) ||
+      /https?:\/\/(developer|docs)\./i.test(p.url) ||
       p.url.includes('/apidocs') ||
       p.url.includes('/reference') ||
       (p.url.startsWith(`https://api.`) && p.contentType?.includes('text/html'))
     )
   );
+  devCandidates.sort((a, b) => devPortalPriority(b.url) - devPortalPriority(a.url));
+  const devHit = devCandidates[0];
+  let developerPortalUrl: string | undefined;
   if (devHit) developerPortalUrl = devHit.url;
 
   // Extract raw spec body and docs HTML for API scoring.
