@@ -441,6 +441,12 @@ export async function POST(req: NextRequest) {
   const shouldScoreApi = checks.api_exists.pass || checks.openapi_spec.pass || !!discoveredPortalUrl;
   const specRaw = builderData.specRaw ?? (shouldScoreApi ? apisGuruSpec : null) ?? null;
 
+  // When Firecrawl is configured but portal wasn't found via raw probes (bot-protection,
+  // JS redirects, etc.) — try the most common developer subdomain as a best-guess target.
+  // Firecrawl handles JS and some bot-protection that plain fetch cannot.
+  const firecrawlDocTarget: string | undefined = portalUrl
+    ?? (firecrawlKey && shouldScoreApi ? `https://developer.${rawDomain}` : undefined);
+
   // Run Claude analysis and API score in parallel.
   // API score uses Firecrawl to render JS-heavy developer portals if available.
   // LLM extraction (claude-haiku) runs inside scoreApi when no spec is found.
@@ -450,8 +456,8 @@ export async function POST(req: NextRequest) {
       : Promise.resolve(null),
     shouldScoreApi
       ? (async () => {
-          const docsHtml = (firecrawlKey && portalUrl)
-            ? await firecrawlScrape(portalUrl, firecrawlKey, 12_000)
+          const docsHtml = (firecrawlKey && firecrawlDocTarget)
+            ? await firecrawlScrape(firecrawlDocTarget, firecrawlKey, 12_000)
             : builderData.docsHtml ?? discoveredPortalContent ?? null;
           return scoreApi({
             specRaw,
