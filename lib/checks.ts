@@ -51,6 +51,10 @@ export const BUILDER_PATHS = [
   '/apidocs', '/reference', '/doc', '/api/reference',
   '/v1/openapi.json', '/v2/openapi.json', '/v3/openapi.json',
   '/v1/swagger.json', '/v2/swagger.json',
+  // Deeper developer pages — often contain sandbox, auth, and getting-started content
+  '/developer/developer-portal', '/developer/authentication',
+  '/developer/getting-started', '/developer/docs',
+  '/developers/docs', '/developers/api',
 ] as const;
 
 const OPENAPI_PATHS = new Set(['/openapi.json', '/openapi.yaml', '/swagger.json', '/swagger.yaml']);

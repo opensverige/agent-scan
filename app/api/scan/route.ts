@@ -139,7 +139,11 @@ async function discoverFromLlmsTxt(domain: string): Promise<string | null> {
   return results.find(Boolean) ?? null;
 }
 
-async function discoverFromExa(domain: string, companyName: string, apiKey: string): Promise<string | null> {
+async function discoverFromExa(
+  domain: string,
+  companyName: string,
+  apiKey: string,
+): Promise<{ url: string; content?: string } | null> {
   const res = await fetch("https://api.exa.ai/search", {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-api-key": apiKey },
@@ -148,22 +152,34 @@ async function discoverFromExa(domain: string, companyName: string, apiKey: stri
       category: "company",
       numResults: 5,
       useAutoprompt: true,
+      contents: { text: { maxCharacters: 10_000 } },
     }),
-    signal: AbortSignal.timeout(6_000),
+    signal: AbortSignal.timeout(8_000),
   });
   if (!res.ok) return null;
-  const data = await res.json() as { results?: Array<{ url: string }> };
-  return data.results?.find(r => isLikelyDevPortal(r.url, domain))?.url ?? null;
+  const data = await res.json() as { results?: Array<{ url: string; text?: string }> };
+  const hit = data.results?.find(r => isLikelyDevPortal(r.url, domain));
+  if (!hit) return null;
+  return { url: hit.url, content: hit.text ?? undefined };
 }
 
-async function discoverApiPortalUrl(domain: string): Promise<string | null> {
+interface DiscoveredPortal {
+  url: string;
+  content?: string;
+}
+
+async function discoverApiPortalUrl(domain: string): Promise<DiscoveredPortal | null> {
   const companyName = domain.split(".")[0];
   const exaKey = process.env.EXA_API_KEY;
-  // Run all signals in parallel — Exa included when key is set; free signals win on latency
-  const signals: Promise<string | null>[] = [
-    discoverFromNpm(domain, companyName).catch(() => null),
-    discoverFromGitHub(domain, companyName).catch(() => null),
-    discoverFromLlmsTxt(domain).catch(() => null),
+
+  // Wrap string-only signals into DiscoveredPortal shape
+  const wrap = (p: Promise<string | null>): Promise<DiscoveredPortal | null> =>
+    p.then(url => (url ? { url } : null));
+
+  const signals: Promise<DiscoveredPortal | null>[] = [
+    wrap(discoverFromNpm(domain, companyName).catch(() => null)),
+    wrap(discoverFromGitHub(domain, companyName).catch(() => null)),
+    wrap(discoverFromLlmsTxt(domain).catch(() => null)),
     ...(exaKey ? [discoverFromExa(domain, companyName, exaKey).catch(() => null)] : []),
   ];
   try {
@@ -291,7 +307,8 @@ async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveCh
     p.status === 200 &&
     p.contentType?.includes('text/html') &&
     (p.url.includes('/developer') || p.url.includes('/docs') ||
-     p.url.includes('/apidocs') || p.url.includes('/reference'))
+     p.url.includes('/apidocs') || p.url.includes('/reference') ||
+     /https?:\/\/(developer|docs|api)\./i.test(p.url))
   );
 
   const builderData: BuilderProbeData = {
@@ -400,7 +417,7 @@ export async function POST(req: NextRequest) {
   const firecrawlKey = process.env.FIRECRAWL_API_KEY;
 
   // Run checks, Firecrawl, apis.guru, and multi-signal portal discovery in parallel
-  const [checkResult, firecrawlMarkdown, apisGuruSpec, discoveredPortalUrl] = await Promise.all([
+  const [checkResult, firecrawlMarkdown, apisGuruSpec, discoveredPortal] = await Promise.all([
     runAllChecks(rawDomain),
     firecrawlKey
       ? fetchFirecrawlContent(rawDomain, firecrawlKey)
@@ -415,8 +432,9 @@ export async function POST(req: NextRequest) {
   const severity_counts = computeSeverityCounts(checks);
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  // discoveredPortalUrl: found via npm/GitHub/llms.txt/Exa — use as portal target
-  // when path probing didn't find a developer portal.
+  // discoveredPortal: found via npm/GitHub/llms.txt/Exa — may include page text content (from Exa)
+  const discoveredPortalUrl = discoveredPortal?.url ?? null;
+  const discoveredPortalContent = discoveredPortal?.content ?? null;
   const portalUrl = builderData.developerPortalUrl ?? discoveredPortalUrl ?? undefined;
   // APIs.guru enriches the spec but does NOT trigger scoring on its own —
   // probes must confirm an API exists, OR discovery found a portal.
@@ -434,7 +452,7 @@ export async function POST(req: NextRequest) {
       ? (async () => {
           const docsHtml = (firecrawlKey && portalUrl)
             ? await firecrawlScrape(portalUrl, firecrawlKey, 12_000)
-            : builderData.docsHtml ?? null;
+            : builderData.docsHtml ?? discoveredPortalContent ?? null;
           return scoreApi({
             specRaw,
             docsHtml,
