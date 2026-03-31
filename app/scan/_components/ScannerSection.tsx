@@ -158,12 +158,25 @@ export default function ScannerSection() {
           <h1 className="font-serif text-[clamp(28px,6vw,44px)] font-normal leading-[1.1] tracking-[-1px] mb-4">
             Inte ett svenskt företag
           </h1>
-          <p className="text-base text-muted-foreground leading-relaxed max-w-[420px] mb-7">
+          <p className="text-base text-muted-foreground leading-relaxed max-w-[420px] mb-6">
             Vi scannar bara svenska företag och internationella bolag grundade i Sverige — som Spotify, IKEA och Klarna.
           </p>
-          <Button type="button" onClick={() => { setUrl(""); setState("idle"); }} size="lg">
-            Prova en annan domän →
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-3 mb-8">
+            <Button type="button" onClick={() => { setUrl(""); setState("idle"); }} size="lg">
+              Prova en annan domän →
+            </Button>
+            <a
+              href={`https://discord.gg/CSphbTk8En`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl border-2 border-border text-sm font-medium text-muted-foreground hover:border-primary/30 hover:text-foreground transition-colors duration-150"
+            >
+              Är detta fel? Kontakta oss →
+            </a>
+          </div>
+          <p className="text-xs text-muted-foreground/50 max-w-[400px]">
+            Om ditt bolag är grundat i Sverige men inte känns igen — hör av dig på Discord så lägger vi till det.
+          </p>
         </div>
       </div>
     );
