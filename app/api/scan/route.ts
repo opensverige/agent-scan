@@ -203,25 +203,42 @@ async function fetchSafe(url: string): Promise<{ status: number; body: string; c
   } catch { return null; }
 }
 
-async function firecrawlScrape(url: string, apiKey: string, maxChars = 8000): Promise<string | null> {
+async function firecrawlScrape(
+  url: string,
+  apiKey: string,
+  maxChars = 8000,
+  onlyMain = true,
+): Promise<string | null> {
   try {
     // eslint-disable-next-line
     const { default: FirecrawlApp } = await import("@mendable/firecrawl-js");
     const app = new FirecrawlApp({ apiKey });
-    // Hard cap: the SDK has no externally enforced timeout — race against a 20s deadline
-    // so a hanging page cannot push the Lambda past Vercel's 60 s maxDuration.
     const deadline = new Promise<null>(resolve => setTimeout(() => resolve(null), 20_000));
     const result = await Promise.race([
-      app.scrapeUrl(url, { formats: ["markdown"], onlyMainContent: true }),
+      app.scrapeUrl(url, {
+        formats: ["markdown"],
+        onlyMainContent: onlyMain,
+        // Give JS-heavy pages (Redoc, Swagger UI) time to initialize
+        ...(onlyMain ? {} : { waitFor: 2000 }),
+      }),
       deadline,
     ]);
-    if (!result || !("success" in result) || !result.success || !result.markdown) return null;
+    if (!result || !("success" in result) || !result.success || !result.markdown) {
+      const r = result as unknown as Record<string,unknown> | null;
+      console.log(`[firecrawl] miss url=${url} success=${r?.success} len=${r?.markdown ? String(r.markdown).length : 0}`);
+      return null;
+    }
+    console.log(`[firecrawl] ok url=${url} chars=${result.markdown.length}`);
     return result.markdown.slice(0, maxChars);
-  } catch { return null; }
+  } catch (e) {
+    console.log(`[firecrawl] error url=${url}`, String(e).slice(0, 120));
+    return null;
+  }
 }
 
 async function fetchFirecrawlContent(domain: string, apiKey: string): Promise<string | null> {
-  return firecrawlScrape(`https://${domain}`, apiKey, 8000);
+  // Homepage: onlyMainContent=true strips navigation noise
+  return firecrawlScrape(`https://${domain}`, apiKey, 8000, true);
 }
 
 async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveChecks: LiveChecks; builderData: BuilderProbeData }> {
@@ -461,6 +478,8 @@ export async function POST(req: NextRequest) {
   const shouldScoreApi = checks.api_exists.pass || checks.openapi_spec.pass || !!discoveredPortalUrl;
   const specRaw = builderData.specRaw ?? (shouldScoreApi ? apisGuruSpec : null) ?? null;
 
+  console.log(`[scan] domain=${rawDomain} shouldScore=${shouldScoreApi} portalUrl=${portalUrl ?? 'none'} hasSpec=${!!specRaw} docsHtmlLen=${builderData.docsHtml?.length ?? 0} hasFirecrawl=${!!firecrawlKey} hasExa=${!!process.env.EXA_API_KEY}`);
+
   // Determine the best Firecrawl target for developer docs:
   // - Known portal URL (from probes or discovery) — always use it
   // - developer.{domain} as best-guess — only when we have no docs from path probes,
@@ -479,8 +498,10 @@ export async function POST(req: NextRequest) {
       : Promise.resolve(null),
     shouldScoreApi
       ? (async () => {
+          // onlyMain=false: Redoc/Swagger UI renders content in sidebars/panels
+          // that onlyMainContent:true strips as "navigation noise" — we need all of it.
           const firecrawlResult = (firecrawlKey && firecrawlDocTarget)
-            ? await firecrawlScrape(firecrawlDocTarget, firecrawlKey, 12_000)
+            ? await firecrawlScrape(firecrawlDocTarget, firecrawlKey, 12_000, false)
             : null;
           // Always fall back to probe-detected docs or Exa content if Firecrawl returns null
           const docsHtml = firecrawlResult ?? builderData.docsHtml ?? discoveredPortalContent ?? null;
