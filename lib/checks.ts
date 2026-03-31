@@ -202,27 +202,39 @@ export function checkApiDocs(probes: ProbeResult[]): CheckResult {
 
 // ── Builder (hardcoded fails) ─────────────────────────────
 
-export function builderHardcoded(): [CheckResult, CheckResult] {
-  return [
-    {
-      id: 'mcp_server',
-      pass: false,
-      label: 'Ingen MCP-koppling hittad',
-      detail: 'AI-verktyg som Claude, Cursor och Windsurf använder MCP för att koppla in sig direkt i system. Vi hittade ingen kopplad till den här domänen — det kan innebära att agenter inte kan nå er utan manuell integration.',
-      category: 'builder',
-      severity: 'important',
-      hardcoded: true,
-    },
-    {
-      id: 'sandbox_available',
-      pass: false,
-      label: 'Ingen sandbox/testmiljö identifierad',
-      detail: 'Builders behöver testa utan att påverka produktionsdata',
-      category: 'builder',
-      severity: 'info',
-      hardcoded: true,
-    },
-  ];
+// MCP check: probe .well-known/mcp.json — if found, real MCP server exists.
+// Falls back to hardcoded fail if not found (most companies don't have MCP yet).
+export function checkMcpServer(probes: ProbeResult[]): CheckResult {
+  const hit = probes.find(p =>
+    p.status === 200 &&
+    (p.url.includes('/.well-known/mcp') || p.url.includes('/mcp.json')) &&
+    (p.contentType?.includes('application/json') || p.body.includes('"mcpVersion"') || p.body.includes('"tools"'))
+  );
+  return {
+    id: 'mcp_server',
+    pass: !!hit,
+    label: hit
+      ? 'MCP-server hittad — agenter kan koppla in sig direkt'
+      : 'Ingen MCP-koppling hittad',
+    detail: hit
+      ? undefined
+      : 'AI-verktyg som Claude, Cursor och Windsurf använder MCP för att koppla in sig direkt i system. Vi hittade ingen kopplad till den här domänen — det kan innebära att agenter inte kan nå er utan manuell integration.',
+    category: 'builder',
+    severity: 'important',
+    hardcoded: !hit,
+  };
+}
+
+export function sandboxHardcoded(): CheckResult {
+  return {
+    id: 'sandbox_available',
+    pass: false,
+    label: 'Ingen sandbox/testmiljö identifierad',
+    detail: 'Builders behöver testa utan att påverka produktionsdata',
+    category: 'builder',
+    severity: 'info',
+    hardcoded: true,
+  };
 }
 
 // ── Badge and score ───────────────────────────────────────

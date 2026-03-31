@@ -11,7 +11,7 @@ import {
 } from "@/lib/claude";
 import {
   checkRobots, checkSitemap, checkLlms,
-  complianceChecks, builderHardcoded,
+  complianceChecks, checkMcpServer, sandboxHardcoded,
   checkApiExists, checkOpenApiSpec, checkApiDocs,
   calculateBadge, getTopRecommendations, computeSeverityCounts,
   BUILDER_PATHS,
@@ -267,13 +267,20 @@ async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveCh
   const base = `https://${domain}`;
   const builderUrls = [
     ...BUILDER_PATHS.map(p => `${base}${p}`),
+    // .well-known standard paths (MCP, alternative llms location)
+    `${base}/.well-known/mcp.json`,
+    `${base}/.well-known/llms.txt`,
     // API subdomain — docs pages
     `https://developer.${domain}`,
+    `https://developer.${domain}/developer-portal`,
     `https://api.${domain}`,
     `https://api.${domain}/docs`,
     `https://api.${domain}/apidocs`,
     `https://api.${domain}/reference`,
     `https://developer.${domain}/docs`,
+    // apps subdomain — some companies (e.g. Fortnox) host additional docs here
+    `https://apps.${domain}/apidocs`,
+    `https://apps.${domain}/apidocs/experimental`,
     // API subdomain — spec files (common non-root locations)
     `https://api.${domain}/openapi.json`,
     `https://api.${domain}/openapi.yaml`,
@@ -287,12 +294,13 @@ async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveCh
 
   // ── Phase 1: parallel quick fetches ──────────────────────────────────────
   // sitemap_index.xml: large sites use this instead of sitemap.xml
-  // llms.txt: fetched but content-validated in phase 2 (status-200 is not enough)
-  const [robotsRes, sitemapRes, sitemapIndexRes, llmsRes, ...builderResults] = await Promise.all([
+  // llms.txt: checked at root AND .well-known — content-validated in phase 2
+  const [robotsRes, sitemapRes, sitemapIndexRes, llmsRes, llmsWellKnownRes, ...builderResults] = await Promise.all([
     fetchSafe(`${base}/robots.txt`),
     fetchSafe(`${base}/sitemap.xml`),
     fetchSafe(`${base}/sitemap_index.xml`),
     fetchSafe(`${base}/llms.txt`),
+    fetchSafe(`${base}/.well-known/llms.txt`),
     ...builderUrls.map(url => fetchSafe(url).then(r => ({ url, ...r ?? { status: 0, body: "", contentType: null } } as ProbeResult))),
   ]);
 
@@ -306,8 +314,10 @@ async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveCh
     sitemapIndexRes?.status === 200 ||
     (robotsRes?.status === 200 && robotsParsed.sitemapUrl !== null);
 
-  // llms.txt: must be a real text file, not a CMS catch-all 200 with HTML content
-  const llmsValid = llmsRes?.status === 200 && isValidLlmsTxt(llmsRes.body, llmsRes.contentType);
+  // llms.txt: valid at root OR at .well-known/llms.txt — must be real text, not HTML catch-all
+  const llmsValid =
+    (llmsRes?.status === 200 && isValidLlmsTxt(llmsRes.body, llmsRes.contentType)) ||
+    (llmsWellKnownRes?.status === 200 && isValidLlmsTxt(llmsWellKnownRes.body, llmsWellKnownRes.contentType));
 
   const liveChecks: LiveChecks = {
     robots: robotsAllowed,
@@ -320,7 +330,8 @@ async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveCh
   const apiExistsCheck = checkApiExists(probeResults);
   const openApiCheck = checkOpenApiSpec(probeResults);
   const apiDocsCheck = checkApiDocs(probeResults);
-  const [mcpCheck, sandboxCheck] = builderHardcoded();
+  const mcpCheck = checkMcpServer(probeResults);
+  const sandboxCheck = sandboxHardcoded();
 
   const checks: AllChecks = {
     robots_ok: checkRobots(robotsAllowed),
@@ -620,5 +631,6 @@ export async function POST(req: NextRequest) {
     scan_id: scanId,
     isDemo,
     api_score: apiScore ?? null,
+    scanned_at: new Date().toISOString(),
   });
 }

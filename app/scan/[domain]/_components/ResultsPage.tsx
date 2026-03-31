@@ -392,6 +392,29 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
           </div>
         )}
 
+        {/* TIMESTAMP + STALE WARNING */}
+        {(() => {
+          const scannedAt = r.scanned_at ? new Date(r.scanned_at) : null;
+          const daysOld = scannedAt ? Math.floor((Date.now() - scannedAt.getTime()) / 86_400_000) : null;
+          const isStale = daysOld !== null && daysOld > 30;
+          const dateStr = scannedAt?.toLocaleDateString("sv-SE", { year: "numeric", month: "long", day: "numeric" });
+          return (
+            <div className={`rounded-lg border px-4 py-2.5 flex items-center justify-between gap-3 ${isStale ? "border-warning/40 bg-warning/5" : "border-border/40"}`}>
+              <p className="text-xs text-muted-foreground">
+                {isStale ? <span className="text-warning font-medium">Föråldrat resultat — </span> : null}
+                Scannades {dateStr ?? "okänt datum"}
+                {daysOld !== null && daysOld > 0 ? ` (${daysOld} dagar sedan)` : daysOld === 0 ? " (idag)" : null}
+              </p>
+              <a
+                href={`/scan?domain=${domain}`}
+                className="font-mono text-[10px] text-muted-foreground hover:text-foreground transition-colors shrink-0"
+              >
+                Skanna igen →
+              </a>
+            </div>
+          );
+        })()}
+
         {/* ═══════════════════════════════════════════════════════
             SCORECARD — allt tab-beroende content inuti
         ═══════════════════════════════════════════════════════ */}

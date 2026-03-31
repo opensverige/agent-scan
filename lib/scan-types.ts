@@ -21,6 +21,7 @@ export interface ScanResult {
   scan_id: string | null;
   isDemo: boolean;
   api_score?: ApiScoreResult | null;
+  scanned_at: string; // ISO 8601
 }
 
 export const DEFAULT_AGENT_SUGGESTIONS: AgentSuggestion[] = [
