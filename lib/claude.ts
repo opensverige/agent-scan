@@ -101,7 +101,7 @@ Du har inte analyserat deras faktiska policies. Kommentera kort vad svenska för
         system: SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userContent }],
       }),
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.timeout(28_000),
     });
 
     if (!res.ok) {

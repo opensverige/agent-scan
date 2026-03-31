@@ -45,7 +45,6 @@ export async function GET(req: Request) {
           display: "flex",
           background: "#060606",
           position: "relative",
-          overflow: "hidden",
         }}
       >
         {/* Crayfish background */}
@@ -54,13 +53,14 @@ export async function GET(req: Request) {
           <img
             src={bgSrc}
             alt=""
+            width={1200}
+            height={630}
             style={{
               position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              objectPosition: "center",
+              top: 0,
+              left: 0,
+              width: 1200,
+              height: 630,
             }}
           />
         )}
@@ -69,7 +69,10 @@ export async function GET(req: Request) {
         <div
           style={{
             position: "absolute",
-            inset: 0,
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
             background: "rgba(6,6,6,0.78)",
           }}
         />
@@ -145,7 +148,6 @@ export async function GET(req: Request) {
                   color: "#f8f7f4",
                   fontFamily: "monospace",
                   letterSpacing: "-0.02em",
-                  wordBreak: "break-all",
                 }}
               >
                 {domain}
