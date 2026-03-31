@@ -125,7 +125,7 @@ export function ApiScoreSection({
         <div className="flex items-center gap-5">
           <ApiScoreRing
             score={apiScore.totalScore}
-            max={apiScore.maxPossibleScore}
+            max={100}
             ringColor={cfg.ring}
           />
           <div className="space-y-1.5">
