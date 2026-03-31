@@ -281,13 +281,14 @@ async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveCh
     sandbox_available: sandboxCheck,
   };
 
+  // 200 = confirmed; 429 = rate-limited — API definitely exists either way
   const apiPathsFound = probeResults
-    .filter(p => p.status === 200)
+    .filter(p => p.status === 200 || p.status === 429)
     .map(p => { try { return new URL(p.url).pathname; } catch { return p.url; } });
 
   let developerPortalUrl: string | undefined;
   const devHit = probeResults.find(p =>
-    p.status === 200 && (
+    (p.status === 200 || p.status === 429) && (
       p.url.includes('/developer') ||
       p.url.startsWith(`https://developer.`) ||
       p.url.includes('/apidocs') ||
@@ -297,14 +298,33 @@ async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveCh
   );
   if (devHit) developerPortalUrl = devHit.url;
 
-  // Extract raw spec body and docs HTML for API scoring
+  // Extract raw spec body and docs HTML for API scoring.
+  // Also handle Redoc pages that embed the full spec as __redoc_state JSON.
   const specProbe = probeResults.find(p =>
-    p.status === 200 &&
-    (p.url.includes('/openapi') || p.url.includes('/swagger')) &&
-    (p.body.includes('"openapi"') || p.body.includes('"swagger"') || p.body.includes('openapi:') || p.body.includes('swagger:'))
+    (p.status === 200 || p.status === 429) &&
+    (p.url.includes('/openapi') || p.url.includes('/swagger') || p.body.includes('__redoc_state')) &&
+    (p.body.includes('"openapi"') || p.body.includes('"swagger"') || p.body.includes('openapi:') ||
+     p.body.includes('swagger:') || p.body.includes('__redoc_state'))
   );
+  // Try to extract the embedded spec from a Redoc page (__redoc_state)
+  function extractRedocSpec(body: string): string | null {
+    const idx = body.indexOf('__redoc_state');
+    if (idx === -1) return null;
+    const m = body.slice(idx).match(/__redoc_state\s*=\s*(\{[\s\S]{0,50000})/);
+    if (!m) return null;
+    try {
+      const json = JSON.parse(m[1].replace(/;\s*$/, '').replace(/\n/g, ''));
+      const spec = (json as Record<string, unknown>)?.spec as Record<string, unknown>;
+      const data = spec?.data;
+      return data ? JSON.stringify(data) : null;
+    } catch { return null; }
+  }
+  const specBodyRaw = specProbe?.body
+    ? (specProbe.body.includes('__redoc_state') ? extractRedocSpec(specProbe.body) : specProbe.body)
+    : null;
+
   const docsProbe = probeResults.find(p =>
-    p.status === 200 &&
+    (p.status === 200 || p.status === 429) &&
     p.contentType?.includes('text/html') &&
     (p.url.includes('/developer') || p.url.includes('/docs') ||
      p.url.includes('/apidocs') || p.url.includes('/reference') ||
@@ -315,7 +335,7 @@ async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveCh
     apiPathsFound,
     openApiSpecFound: openApiCheck.pass,
     developerPortalUrl,
-    specRaw: specProbe?.body,
+    specRaw: specBodyRaw ?? undefined,
     docsHtml: docsProbe?.body ?? devHit?.body,
   };
 

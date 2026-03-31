@@ -140,8 +140,8 @@ export function complianceChecks(): [CheckResult, CheckResult, CheckResult] {
 // ── Builder (live probes) ──────────────────────────────────
 
 export function checkApiExists(probes: ProbeResult[]): CheckResult {
-  // fetchSafe uses redirect:follow, so final status is always the terminal hop (200 for live APIs)
-  const hit = probes.find(p => p.status === 200);
+  // 200 = confirmed; 429 = rate-limited but API definitely exists
+  const hit = probes.find(p => p.status === 200 || p.status === 429);
   let path: string | undefined;
   try { path = hit ? new URL(hit.url).pathname : undefined; } catch { path = undefined; }
   return {
@@ -158,7 +158,7 @@ export function checkApiExists(probes: ProbeResult[]): CheckResult {
 
 export function checkOpenApiSpec(probes: ProbeResult[]): CheckResult {
   const hit = probes.find(p => {
-    if (p.status !== 200) return false;
+    if (p.status !== 200 && p.status !== 429) return false;
     try {
       if (!OPENAPI_PATHS.has(new URL(p.url).pathname)) return false;
     } catch { return false; }
@@ -178,14 +178,18 @@ export function checkOpenApiSpec(probes: ProbeResult[]): CheckResult {
 
 export function checkApiDocs(probes: ProbeResult[]): CheckResult {
   const hit = probes.find(p => {
-    if (p.status !== 200) return false;
+    // 429 = docs page exists, rate-limited — still counts
+    if (p.status !== 200 && p.status !== 429) return false;
     try {
-      if (!API_DOC_PATHS.has(new URL(p.url).pathname)) return false;
+      const { hostname, pathname } = new URL(p.url);
+      // Subdomain-based docs (api.X, developer.X) count even if path is "/"
+      const isDocSubdomain = /^(api|developer|docs|dev)\./i.test(hostname);
+      if (!isDocSubdomain && !API_DOC_PATHS.has(pathname)) return false;
     } catch { return false; }
     const ct = p.contentType?.toLowerCase() ?? '';
     if (!ct.includes('text/html')) return false;
     const body = p.body.toLowerCase();
-    return body.includes('api') || body.includes('documentation') || body.includes('developer');
+    return body.includes('api') || body.includes('documentation') || body.includes('developer') || body.includes('redoc') || body.includes('swagger');
   });
   return {
     id: 'api_docs',
