@@ -18,6 +18,7 @@ import {
   type AllChecks, type ProbeResult,
 } from "@/lib/checks";
 import { scoreApi } from "@/lib/api-score";
+import { isSwedishCompany } from "@/lib/swedish-validator";
 
 const AI_AGENTS = ["gptbot", "claudebot", "anthropic-ai", "ccbot", "google-extended", "omgilibot"];
 
@@ -513,7 +514,18 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Ogiltig domän" }, { status: 400 });
   }
 
-  const ipHash = await getIpHash(req);
+  // Run Swedish company validation and IP hash in parallel — both needed before proceeding
+  const [swedishCheck, ipHash] = await Promise.all([
+    isSwedishCompany(rawDomain),
+    getIpHash(req),
+  ]);
+  if (!swedishCheck.pass) {
+    return Response.json(
+      { error: "Vi scannar bara svenska företag och internationella bolag grundade i Sverige." },
+      { status: 400 }
+    );
+  }
+
   const { perIpOk, globalOk } = await checkRateLimits(ipHash);
   if (!perIpOk) {
     return Response.json({ error: "För många scanningar. Vänta en minut." }, { status: 429 });

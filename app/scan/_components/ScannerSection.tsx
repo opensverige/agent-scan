@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
-type ScanState = "idle" | "scanning";
+type ScanState = "idle" | "scanning" | "not_swedish";
 
 // Exactly what the scanner does, in order — honest and specific
 const SCAN_MESSAGES = [
@@ -128,6 +128,13 @@ export default function ScannerSection() {
           } catch { /* ignore storage errors (private browsing, quota) */ }
           router.push(`/scan/${d}`);
         }, 200);
+      } else if (res.status === 400) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        if (body.error?.includes("svenska företag")) {
+          setState("not_swedish");
+        } else {
+          setState("idle");
+        }
       } else {
         setState("idle");
       }
@@ -140,6 +147,27 @@ export default function ScannerSection() {
 
   const inputDomain = cleanDomain(url);
   const canSubmit = isValidDomain(inputDomain);
+
+  // ── NOT SWEDISH ───────────────────────────────────────────────
+  if (state === "not_swedish") {
+    return (
+      <div>
+        <style>{CSS}</style>
+        <div className="px-6 pt-14 pb-16 max-w-[580px] mx-auto" style={{ animation: `ss-fadeup 0.35s ${EASE} both` }}>
+          <div className="font-mono text-[10px] font-bold text-primary tracking-[3px] mb-4">AGENT READINESS SCANNER</div>
+          <h1 className="font-serif text-[clamp(28px,6vw,44px)] font-normal leading-[1.1] tracking-[-1px] mb-4">
+            Inte ett svenskt företag
+          </h1>
+          <p className="text-base text-muted-foreground leading-relaxed max-w-[420px] mb-7">
+            Vi scannar bara svenska företag och internationella bolag grundade i Sverige — som Spotify, IKEA och Klarna.
+          </p>
+          <Button type="button" onClick={() => { setUrl(""); setState("idle"); }} size="lg">
+            Prova en annan domän →
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // ── IDLE ──────────────────────────────────────────────────────
   if (state === "idle") {
