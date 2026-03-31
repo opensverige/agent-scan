@@ -10,20 +10,27 @@ import { cn } from "@/lib/utils";
 
 type ScanState = "idle" | "scanning";
 
-const SCAN_STEPS = [
-  "Kan agenter hitta dig?",
-  "Är du lagligt redo?",
-  "Kan en dev bygga mot dig?",
-];
+// Exactly what the scanner does, in order — honest and specific
+const SCAN_MESSAGES = [
+  "Hämtar robots.txt — kontrollerar AI-agentbehörigheter",
+  "Verifierar sitemap.xml och llms.txt",
+  "Skannar 34 API-sökvägar parallellt",
+  "Probar developer- och API-subdomäner",
+  "Söker npm-registret efter SDK-paket",
+  "Granskar GitHub efter API-klienter och READMEs",
+  "Frågar apis.guru om publicerad OpenAPI-spec",
+  "Semantisk sökning efter developer portal",
+  "Renderar JS-tunga sidor med Firecrawl",
+  "Extraherar API-signaler med Claude Haiku",
+  "Djupanalys med Claude Sonnet",
+  "Scorer API-kvalitet på 9 axlar",
+  "Utvärderar GDPR Art. 22 och EU AI Act",
+  "Kontrollerar MCP-kopplingar och agent-beredskap",
+  "Sammanfattar rekommendationer",
+] as const;
 
-// Rotating thoughts shown while Claude analyses — never claims to be exact
-const CLAUDE_THOUGHTS = [
-  "Läser sajten...",
-  "Tolkar innehållet...",
-  "Väger branschkontext...",
-  "Formulerar analys...",
-  "Sista polering...",
-];
+// Timings (ms) match the actual backend phases: fast parallel fetches → discovery → AI
+const MSG_DELAYS = [0, 350, 700, 1100, 1600, 2100, 2700, 3300, 4000, 5000, 6100, 7100, 7900, 8700, 9500];
 
 const DEMO_CHIPS = ["fortnox.se", "visma.net", "bokio.se", "spotify.com"];
 
@@ -61,10 +68,8 @@ export default function ScannerSection() {
   const [state, setState] = useState<ScanState>("idle");
   const [url, setUrl] = useState("");
   const [domain, setDomain] = useState("");
-  const [scanStep, setScanStep] = useState(0);
+  const [activeMsgIdx, setActiveMsgIdx] = useState(0);
   const [progress, setProgress] = useState(0);
-  const [thinkingIdx, setThinkingIdx] = useState(0);
-  const [showThinking, setShowThinking] = useState(false);
   const rafRef = useRef<number>(0);
 
   const startProgressAnim = useCallback((ms: number) => {
@@ -89,25 +94,16 @@ export default function ScannerSection() {
 
     setDomain(d);
     setState("scanning");
-    setScanStep(0);
+    setActiveMsgIdx(0);
     setProgress(0);
-    setThinkingIdx(0);
-    setShowThinking(false);
 
-    // After checks complete, show the "Claude thinking" phase
-    const showThinkingTimer = setTimeout(() => setShowThinking(true), 4500);
+    // Schedule each message to appear at the right time
+    const timers = MSG_DELAYS.map((delay, i) =>
+      setTimeout(() => setActiveMsgIdx(i), delay)
+    );
 
-    // Rotate through thinking phrases every 2.5 s
-    const thinkingInterval = setInterval(() => {
-      setThinkingIdx(i => (i + 1) % CLAUDE_THOUGHTS.length);
-    }, 2500);
-
-    const timers = [
-      setTimeout(() => setScanStep(1), 1000),
-      setTimeout(() => setScanStep(2), 2000),
-      showThinkingTimer,
-    ];
-    const stopAnim = startProgressAnim(4000);
+    // Progress bar animates over the full expected scan duration
+    const stopAnim = startProgressAnim(MSG_DELAYS[MSG_DELAYS.length - 1]);
     const start = Date.now();
 
     try {
@@ -125,7 +121,6 @@ export default function ScannerSection() {
 
       if (res.ok) {
         const data: ScanResult = await res.json();
-        clearInterval(thinkingInterval);
         setProgress(100);
         setTimeout(() => {
           try {
@@ -138,7 +133,6 @@ export default function ScannerSection() {
       }
     } catch {
       timers.forEach(clearTimeout);
-      clearInterval(thinkingInterval);
       stopAnim();
       setState("idle");
     }
@@ -235,7 +229,7 @@ export default function ScannerSection() {
     <div>
       <style>{CSS}</style>
       <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
-        {showThinking ? `Claude analyserar ${domain}...` : `Skannar ${domain}, vänta...`}
+        Skannar {domain}: {SCAN_MESSAGES[activeMsgIdx]}
       </div>
       <div
         className="px-6 pt-16 pb-16 max-w-[580px] mx-auto"
@@ -245,64 +239,41 @@ export default function ScannerSection() {
           Kollar <span className="font-mono text-foreground font-semibold">{domain}</span>
         </div>
 
-        {/* Scan steps */}
-        <div className="flex flex-col gap-3.5 mb-8">
-          {SCAN_STEPS.map((step, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <div className="w-5 h-5 flex items-center justify-center shrink-0">
-                {showThinking || i < scanStep ? (
-                  <span
-                    className="font-mono text-sm text-success font-bold"
-                    style={{ animation: `ss-checkin 0.2s ${EASE} both` }}
-                  >
-                    ✓
-                  </span>
-                ) : i === scanStep ? (
-                  <div
-                    className="w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full"
-                    style={{ animation: "ss-spin 0.7s linear infinite" }}
-                  />
-                ) : (
-                  <span className="font-mono text-sm text-muted-foreground/30">◌</span>
-                )}
-              </div>
-              <span
-                className={cn(
-                  "text-sm transition-colors duration-300",
-                  showThinking || i <= scanStep ? "text-foreground font-semibold" : "text-muted-foreground"
-                )}
-              >
-                {step}
-              </span>
-            </div>
-          ))}
-
-          {/* Claude thinking row — fades in after checks are done */}
-          <div
-            className={cn(
-              "flex items-center gap-3 transition-opacity duration-500",
-              showThinking ? "opacity-100" : "opacity-0 pointer-events-none"
-            )}
-          >
-            <div className="w-5 h-5 flex items-center justify-center shrink-0">
+        <div className="flex flex-col gap-2.5 mb-8">
+          {(SCAN_MESSAGES as readonly string[]).slice(0, activeMsgIdx + 1).map((msg, i) => {
+            const isCurrent = i === activeMsgIdx;
+            return (
               <div
-                className="w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full"
-                style={{ animation: "ss-spin 0.7s linear infinite" }}
-              />
-            </div>
-            <div className="flex items-baseline gap-2 min-w-0">
-              <span className="font-mono text-[10px] font-bold tracking-widest text-primary shrink-0">
-                AI
-              </span>
-              <span
-                key={thinkingIdx}
-                className="text-sm text-foreground font-semibold"
-                style={{ animation: `ss-fadeup 0.3s ${EASE} both` }}
+                key={i}
+                className="flex items-center gap-3"
+                style={{ animation: `ss-fadeup 0.35s ${EASE} both` }}
               >
-                {CLAUDE_THOUGHTS[thinkingIdx]}
-              </span>
-            </div>
-          </div>
+                <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                  {isCurrent ? (
+                    <div
+                      className="w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full"
+                      style={{ animation: "ss-spin 0.7s linear infinite" }}
+                    />
+                  ) : (
+                    <span
+                      className="font-mono text-sm text-success font-bold"
+                      style={{ animation: `ss-checkin 0.2s ${EASE} both` }}
+                    >
+                      ✓
+                    </span>
+                  )}
+                </div>
+                <span
+                  className={cn(
+                    "text-sm transition-colors duration-300",
+                    isCurrent ? "text-foreground font-semibold" : "text-muted-foreground/50"
+                  )}
+                >
+                  {msg}
+                </span>
+              </div>
+            );
+          })}
         </div>
 
         <Progress value={progress} className="h-[3px] rounded-sm" />
