@@ -8,6 +8,13 @@ export interface AgentSuggestion {
   relevance: string;
 }
 
+export interface McpGithubHint {
+  url: string;
+  full_name: string;
+  stars: number;
+  owner: string;
+}
+
 export interface ScanResult {
   company: string;
   industry: string;
@@ -22,6 +29,7 @@ export interface ScanResult {
   isDemo: boolean;
   api_score?: ApiScoreResult | null;
   scanned_at: string; // ISO 8601
+  mcp_github_hint?: McpGithubHint | null;
 }
 
 export const DEFAULT_AGENT_SUGGESTIONS: AgentSuggestion[] = [

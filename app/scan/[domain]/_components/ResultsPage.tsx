@@ -21,7 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import {
   AlertTriangle, Calendar, Check, CheckCircle2, ChevronDown,
-  Code2, FileText, Globe, Lock, RotateCcw, Search, Share2,
+  Code2, FileText, Github, Globe, Lock, RotateCcw, Search, Share2,
   Shield, XCircle, Zap,
 } from "lucide-react";
 
@@ -938,6 +938,30 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                         </div>
                       );
                     })}
+                    {r.mcp_github_hint && !r.checks.mcp_server.pass && (
+                      <div className="mt-3 pt-3 border-t border-border/50 flex items-start gap-2.5">
+                        <Github className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-muted-foreground">
+                            Möjlig MCP-server hittad på GitHub —{" "}
+                            <a
+                              href={r.mcp_github_hint.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="underline underline-offset-2 hover:text-foreground transition-colors"
+                            >
+                              {r.mcp_github_hint.full_name}
+                            </a>
+                            {r.mcp_github_hint.stars > 0 && (
+                              <span className="ml-1 opacity-60">({r.mcp_github_hint.stars} stars)</span>
+                            )}
+                          </p>
+                          <p className="text-xs text-muted-foreground/50 mt-0.5">
+                            Kan vara officiell eller community-skapad. Verifiera med leverantören.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </AccordionContent>
               </AccordionItem>

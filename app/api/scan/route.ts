@@ -72,6 +72,41 @@ async function fetchApisGuruSpec(domain: string): Promise<string | null> {
   } catch { return null; }
 }
 
+// ── MCP GitHub discovery ─────────────────────────────────────────────────────
+// Searches GitHub for repos mentioning the company + MCP.
+// Purely informational — does NOT affect the mcp_server check score.
+async function discoverMcpOnGitHub(companyName: string): Promise<import('@/lib/scan-types').McpGithubHint | null> {
+  try {
+    const q = encodeURIComponent(`${companyName} mcp server`);
+    const res = await fetch(
+      `https://api.github.com/search/repositories?q=${q}&sort=stars&order=desc&per_page=8`,
+      {
+        headers: { "User-Agent": "OpenSverige-Scanner/1.0", "Accept": "application/vnd.github.v3+json" },
+        signal: AbortSignal.timeout(4_000),
+      }
+    );
+    if (!res.ok) return null;
+    const data = await res.json() as {
+      items?: Array<{
+        full_name: string;
+        html_url: string;
+        stargazers_count: number;
+        owner: { login: string };
+        name: string;
+        description: string | null;
+      }>;
+    };
+    if (!data.items?.length) return null;
+    const hit = data.items.find(r => {
+      const n = r.name.toLowerCase();
+      const d = (r.description ?? "").toLowerCase();
+      return n.includes("mcp") || d.includes("mcp") || d.includes("model context protocol");
+    });
+    if (!hit) return null;
+    return { url: hit.html_url, full_name: hit.full_name, stars: hit.stargazers_count, owner: hit.owner.login };
+  } catch { return null; }
+}
+
 // ── API portal discovery ──────────────────────────────────────────────────────
 // Multi-signal pipeline: npm → GitHub → llms.txt subdomain → Exa (paid).
 // All free signals race in parallel; Exa runs simultaneously when key is set.
@@ -632,10 +667,13 @@ export async function POST(req: NextRequest) {
       ? `https://developer.${rawDomain}`
       : undefined);
 
-  // Run Claude analysis and API score in parallel.
+  const companyName = rawDomain.split(".")[0] ?? rawDomain;
+
+  // Run Claude analysis, API score and MCP GitHub discovery in parallel.
   // API score uses Firecrawl to render JS-heavy developer portals if available.
   // LLM extraction (claude-haiku) runs inside scoreApi when no spec is found.
-  const [analysis, apiScore] = await Promise.all([
+  // MCP GitHub search only runs when the official check fails — purely informational.
+  const [analysis, apiScore, mcpGithubHint] = await Promise.all([
     apiKey
       ? analyzeWithClaude(rawDomain, liveChecks, builderData, apiKey, firecrawlMarkdown ?? undefined)
       : Promise.resolve(null),
@@ -658,6 +696,9 @@ export async function POST(req: NextRequest) {
           }).catch(() => null);
         })()
       : Promise.resolve(null),
+    checks.mcp_server.pass
+      ? Promise.resolve(null)
+      : discoverMcpOnGitHub(companyName),
   ]);
 
   const isDemo = !analysis;
@@ -680,6 +721,7 @@ export async function POST(req: NextRequest) {
     scan_id: scanId,
     isDemo,
     api_score: apiScore ?? null,
+    mcp_github_hint: mcpGithubHint ?? null,
     scanned_at: new Date().toISOString(),
   });
 }
