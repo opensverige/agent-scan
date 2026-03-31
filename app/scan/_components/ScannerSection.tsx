@@ -12,25 +12,15 @@ type ScanState = "idle" | "scanning" | "not_swedish";
 
 // Exactly what the scanner does, in order — honest and specific
 const SCAN_MESSAGES = [
-  "Hämtar robots.txt — kontrollerar AI-agentbehörigheter",
-  "Verifierar sitemap.xml och llms.txt",
-  "Skannar 34 API-sökvägar parallellt",
-  "Probar developer- och API-subdomäner",
-  "Söker npm-registret efter SDK-paket",
-  "Granskar GitHub efter API-klienter och READMEs",
-  "Frågar apis.guru om publicerad OpenAPI-spec",
-  "Semantisk sökning efter developer portal",
-  "Renderar JS-tunga sidor med Firecrawl",
-  "Extraherar API-signaler med Claude Haiku",
-  "Djupanalys med Claude Sonnet",
-  "Scorer API-kvalitet på 9 axlar",
-  "Utvärderar GDPR Art. 22 och EU AI Act",
-  "Kontrollerar MCP-kopplingar och agent-beredskap",
-  "Sammanfattar rekommendationer",
+  "Kollar åtkomst — robots.txt, sitemap och llms.txt",
+  "Kartlägger API-ytor — 40+ sökvägar och subdomäner",
+  "Söker developer portal — npm, GitHub och semantisk sökning",
+  "Hämtar och renderar dokumentation",
+  "AI-analys — extraherar signaler och sätter betyg",
 ] as const;
 
-// Timings (ms) match the actual backend phases: fast parallel fetches → discovery → AI
-const MSG_DELAYS = [0, 350, 700, 1100, 1600, 2100, 2700, 3300, 4000, 5000, 6100, 7100, 7900, 8700, 9500];
+// Spread evenly across the ~10s scan duration
+const MSG_DELAYS = [0, 2000, 4000, 6000, 8000];
 
 const DEMO_CHIPS = ["fortnox.se", "visma.net", "bokio.se", "spotify.com"];
 
