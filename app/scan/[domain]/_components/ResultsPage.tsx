@@ -360,7 +360,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
     const url = `https://agent.opensverige.se/scan/${domain}`;
     if (activeTab === "api" && apiScore) {
       const em = apiScore.totalScore < 30 ? "🔴" : apiScore.totalScore < 70 ? "🟡" : "🟢";
-      text = `${em} ${domain} fick ${apiScore.totalScore}/${apiScore.maxPossibleScore} i API agent-readiness.\n\n${apiScore.topBlockers.length} blockerare hittade.\n\nHur redo är ditt API? → ${url}`;
+      text = `${em} ${domain} fick ${apiScore.totalScore}/100 i API agent-readiness.\n\n${apiScore.topBlockers.length} blockerare hittade.\n\nHur redo är ditt API? → ${url}`;
     } else {
       const em = r.score <= 3 ? "🔴" : r.score <= 6 ? "🟡" : "🟢";
       text = `${em} ${domain} fick ${r.score}/11 i AI-readiness.\n\n● ${sc.critical} brister ● ${sc.important} varningar ● ${passedChecks.length} ok\n\nHur redo är din sajt? → ${url}`;
@@ -511,7 +511,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                   <div className="px-6 flex flex-col items-center gap-5 pt-2 pb-6">
                     <ScoreRing
                       score={apiScore.totalScore}
-                      total={apiScore.maxPossibleScore}
+                      total={100}
                       ringColor={apiRingColor}
                     />
 
@@ -825,7 +825,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                       <Code2 className="h-4 w-4 text-muted-foreground shrink-0" />
                       <span className="font-medium text-sm">API-axlar (detaljer)</span>
                       <Badge variant="outline" className="ml-1 text-[10px] font-mono">
-                        {apiScore.totalScore}/{apiScore.maxPossibleScore}
+                        {apiScore.totalScore}/100
                       </Badge>
                     </div>
                   </AccordionTrigger>
