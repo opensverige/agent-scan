@@ -27,7 +27,9 @@ import {
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
-const BOOK_MEETING_URL = "https://opensverige.se/boka";
+const BOOK_MEETING_URL = "https://cal.com/gustaf-garnow-3u8eg5/opensverige";
+const CAL_LINK = "gustaf-garnow-3u8eg5/opensverige";
+const CAL_NS = "opensverige";
 
 const BADGE_CFG = {
   green:  { label: "REDO",        ringColor: "hsl(var(--success))",    badgeVariant: "default"     as const },
@@ -627,9 +629,10 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                         </div>
                         <a
                           href={BOOK_MEETING_URL}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs text-foreground hover:opacity-70 transition-opacity font-mono"
+                          data-cal-link={CAL_LINK}
+                          data-cal-namespace={CAL_NS}
+                          data-cal-config='{"layout":"month_view"}'
+                          className="inline-flex items-center gap-1.5 text-xs text-foreground hover:opacity-70 transition-opacity font-mono cursor-pointer"
                         >
                           Behöver du hjälp att implementera det? Boka 30 min →
                         </a>
@@ -1070,9 +1073,10 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
           </div>
           <a
             href={BOOK_MEETING_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="shrink-0 inline-flex items-center gap-2 rounded-md border border-border bg-background px-4 py-2 font-mono text-xs hover:bg-muted transition-colors"
+            data-cal-link={CAL_LINK}
+            data-cal-namespace={CAL_NS}
+            data-cal-config='{"layout":"month_view"}'
+            className="shrink-0 inline-flex items-center gap-2 rounded-md border border-border bg-background px-4 py-2 font-mono text-xs hover:bg-muted transition-colors cursor-pointer"
           >
             Boka möte →
           </a>
