@@ -106,7 +106,7 @@ function buildPrompt(docsContent: string, specContext?: string): string {
   if (specContext) {
     parts.push(`## OpenAPI spec (may be partial or truncated)\n\n${specContext.slice(0, 5_000)}`);
   }
-  parts.push(`## Developer documentation\n\n${docsContent.slice(0, specContext ? 15_000 : 20_000)}`);
+  parts.push(`## Developer documentation\n\n${docsContent.slice(0, specContext ? 30_000 : 40_000)}`);
   return `Extract API capability signals from the following content:\n\n${parts.join("\n\n---\n\n")}`;
 }
 

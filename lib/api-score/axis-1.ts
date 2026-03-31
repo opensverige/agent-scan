@@ -24,7 +24,8 @@ export function scoreDiscoverability(
     checks.push({ name: "Changelog / versionsinfo", score: hasChangelog ? 2 : 0, maxScore: 2,
       detail: hasChangelog ? "Versionsinfo hittad" : "Ingen versionsinfo hittad" });
 
-    const linkCount = (docs.match(/href=/g) ?? []).length;
+    // Count links in both HTML (href=) and Markdown (](url)) formats
+    const linkCount = (docs.match(/href=|]\(https?:|]\(\//g) ?? []).length;
     checks.push({ name: "Docs navigerbara", score: linkCount > 5 ? 3 : linkCount > 0 ? 1 : 0, maxScore: 3,
       detail: `${linkCount} interna länkar hittade` });
 
@@ -72,7 +73,8 @@ export function scoreDiscoverability(
     detail: hasChangelog ? "Versionsinfo hittad i docs" : "Ingen versionsinfo hittad i docs" });
 
   // 7. Navigable docs (2p)
-  const linkCount = (docs.match(/href=/g) ?? []).length;
+  // Count links in both HTML (href=) and Markdown (](url)) formats
+  const linkCount = (docs.match(/href=|]\(https?:|]\(\//g) ?? []).length;
   checks.push({ name: "Docs sökbara / navigerbara", score: linkCount > 5 ? 2 : linkCount > 0 ? 1 : 0, maxScore: 2,
     detail: `${linkCount} interna länkar i docs` });
 

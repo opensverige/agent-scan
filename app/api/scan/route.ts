@@ -571,8 +571,10 @@ export async function POST(req: NextRequest) {
       ? (async () => {
           // onlyMain=false: Redoc/Swagger UI renders content in sidebars/panels
           // that onlyMainContent:true strips as "navigation noise" — we need all of it.
+          // 40K chars: enough to cover a full Redoc page past the navigation sidebar
+          // into actual API titles, auth docs, and endpoint descriptions.
           const firecrawlResult = (firecrawlKey && firecrawlDocTarget)
-            ? await firecrawlScrape(firecrawlDocTarget, firecrawlKey, 12_000, false)
+            ? await firecrawlScrape(firecrawlDocTarget, firecrawlKey, 40_000, false)
             : null;
           // Always fall back to probe-detected docs or Exa content if Firecrawl returns null
           const docsHtml = firecrawlResult ?? builderData.docsHtml ?? discoveredPortalContent ?? null;
