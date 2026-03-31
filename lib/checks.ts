@@ -164,11 +164,29 @@ export function checkApiExists(probes: ProbeResult[]): CheckResult {
 export function checkOpenApiSpec(probes: ProbeResult[]): CheckResult {
   const hit = probes.find(p => {
     if (p.status !== 200 && p.status !== 429 && p.status !== 401 && p.status !== 403) return false;
-    try {
-      if (!OPENAPI_PATHS.has(new URL(p.url).pathname)) return false;
-    } catch { return false; }
     const body = p.body.toLowerCase();
-    return body.includes('openapi') || body.includes('swagger');
+    const hasExplicitSpecPath = (() => {
+      try { return OPENAPI_PATHS.has(new URL(p.url).pathname); } catch { return false; }
+    })();
+    if (hasExplicitSpecPath && (body.includes('openapi') || body.includes('swagger'))) return true;
+
+    // Redoc/Swagger docs can expose the spec via JS download links instead of direct static paths.
+    const isLikelyDocsPage = (() => {
+      try {
+        const { hostname, pathname } = new URL(p.url);
+        const isDocSubdomain = /^(api|developer|docs|dev|apps)\./i.test(hostname);
+        return isDocSubdomain || pathname.includes('/apidocs') || pathname.includes('/docs') || pathname.includes('/reference');
+      } catch { return false; }
+    })();
+    if (!isLikelyDocsPage) return false;
+
+    return (
+      body.includes('__redoc_state') ||
+      body.includes('download openapi specification') ||
+      body.includes('download="openapi.json"') ||
+      /openapi\.(json|ya?ml)/.test(body) ||
+      /swagger\.(json|ya?ml)/.test(body)
+    );
   });
   return {
     id: 'openapi_spec',
@@ -232,15 +250,22 @@ export function checkMcpServer(probes: ProbeResult[]): CheckResult {
   };
 }
 
-export function sandboxHardcoded(): CheckResult {
+export function checkSandboxAvailable(probes: ProbeResult[]): CheckResult {
+  const hit = probes.find(p => {
+    if (p.status !== 200 && p.status !== 429 && p.status !== 401 && p.status !== 403) return false;
+    const hay = `${p.url}\n${p.body}`.toLowerCase();
+    return /sandbox|test.?environment|staging|testbed|playground|test.?compan|demo.?env|testmilj|testbolag|test.?account/.test(hay);
+  });
   return {
     id: 'sandbox_available',
-    pass: false,
-    label: 'Ingen sandbox/testmiljö identifierad',
-    detail: 'Builders behöver testa utan att påverka produktionsdata',
+    pass: !!hit,
+    label: hit ? 'Sandbox/testmiljö identifierad' : 'Ingen sandbox/testmiljö identifierad',
+    detail: hit
+      ? 'Testmiljö nämns i API-dokumentation eller relaterad utvecklar-sida'
+      : 'Builders behöver testa utan att påverka produktionsdata',
     category: 'builder',
     severity: 'info',
-    hardcoded: true,
+    hardcoded: false,
   };
 }
 

@@ -332,6 +332,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
 
   const hasApi = !!(r.api_score && (r.checks.api_exists.pass || r.checks.openapi_spec.pass));
   const apiScore: ApiScoreResult | null = hasApi ? r.api_score! : null;
+  const specDetected = r.checks.openapi_spec.pass;
   const apiRingColor = apiScore ? (API_BAND_RING[apiScore.band] ?? "hsl(var(--muted))") : "hsl(var(--muted))";
   const apiBadgeClass = apiScore ? (API_BADGE_CLASS[apiScore.band] ?? "") : "";
 
@@ -544,7 +545,9 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
 
                     {!apiScore.hasSpec && (
                       <p className="text-sm text-muted-foreground text-center max-w-xs">
-                        API hittades men ingen OpenAPI-spec. Max möjlig poäng: {apiScore.maxPossibleScore}/100.
+                        {specDetected
+                          ? `OpenAPI-spec upptäckt men kunde inte laddas fullt automatiskt. Max möjlig poäng just nu: ${apiScore.maxPossibleScore}/100.`
+                          : `API hittades men ingen OpenAPI-spec. Max möjlig poäng: ${apiScore.maxPossibleScore}/100.`}
                       </p>
                     )}
                     {apiScore.specFormat && (
@@ -598,8 +601,12 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                       <div className="rounded-md border border-amber-200/60 bg-amber-50 px-3 py-2.5">
                         <p className="text-xs text-amber-900 leading-relaxed">
                           <Zap className="inline h-3 w-3 mr-1 shrink-0" />
-                          Utan OpenAPI-spec kunde vi bara analysera {apiScore.maxPossibleScore} av 100 möjliga poäng.
-                          Publicera en spec på <code className="font-mono text-[10px]">/openapi.json</code> för fullständig analys.
+                          {specDetected ? (
+                            <>OpenAPI-spec verkar finnas, men vi kunde inte läsa in hela spec-filen automatiskt i den här körningen. Vi analyserade därför {apiScore.maxPossibleScore} av 100 möjliga poäng.</>
+                          ) : (
+                            <>Utan OpenAPI-spec kunde vi bara analysera {apiScore.maxPossibleScore} av 100 möjliga poäng.
+                            Publicera en spec på <code className="font-mono text-[10px]">/openapi.json</code> för fullständig analys.</>
+                          )}
                         </p>
                       </div>
                     </div>
@@ -853,7 +860,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="px-4 pb-4">
-                    <ApiScoreSection apiScore={apiScore} compact />
+                    <ApiScoreSection apiScore={apiScore} specDetected={specDetected} compact />
                   </AccordionContent>
                 </AccordionItem>
               )}

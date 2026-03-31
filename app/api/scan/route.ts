@@ -11,7 +11,7 @@ import {
 } from "@/lib/claude";
 import {
   checkRobots, checkSitemap, checkLlms,
-  complianceChecks, checkMcpServer, sandboxHardcoded,
+  complianceChecks, checkMcpServer, checkSandboxAvailable,
   checkApiExists, checkOpenApiSpec, checkApiDocs,
   calculateBadge, getTopRecommendations, computeSeverityCounts,
   BUILDER_PATHS,
@@ -205,7 +205,13 @@ async function fetchSafe(url: string): Promise<{ status: number; body: string; c
       redirect: "follow",
       signal: AbortSignal.timeout(5_000),
     });
-    const body = (await res.text()).slice(0, 15_000);
+    // Developer portals are often JS-heavy and put important signals far down the HTML.
+    // Keep both head and tail windows so we don't miss markers appended late in the document.
+    const fullBody = await res.text();
+    const BODY_WINDOW = 1_000_000;
+    const body = fullBody.length <= BODY_WINDOW * 2
+      ? fullBody
+      : `${fullBody.slice(0, BODY_WINDOW)}\n<!-- snip -->\n${fullBody.slice(-BODY_WINDOW)}`;
     return { status: res.status, body, contentType: res.headers.get("content-type") };
   } catch { return null; }
 }
@@ -336,7 +342,7 @@ async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveCh
   const openApiCheck = checkOpenApiSpec(probeResults);
   const apiDocsCheck = checkApiDocs(probeResults);
   const mcpCheck = checkMcpServer(probeResults);
-  const sandboxCheck = sandboxHardcoded();
+  const sandboxCheck = checkSandboxAvailable(probeResults);
 
   const checks: AllChecks = {
     robots_ok: checkRobots(robotsAllowed),
@@ -389,18 +395,55 @@ async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveCh
     (p.body.includes('"openapi"') || p.body.includes('"swagger"') || p.body.includes('openapi:') ||
      p.body.includes('swagger:') || p.body.includes('__redoc_state'))
   );
-  // Try to extract the embedded spec from a Redoc page (__redoc_state)
+  // Try to extract embedded spec from Redoc state assignment:
+  // window.__redoc_state = { ... };
   function extractRedocSpec(body: string): string | null {
-    const idx = body.indexOf('__redoc_state');
+    const marker = "__redoc_state";
+    const idx = body.indexOf(marker);
     if (idx === -1) return null;
-    const m = body.slice(idx).match(/__redoc_state\s*=\s*(\{[\s\S]{0,50000})/);
-    if (!m) return null;
+
+    const eq = body.indexOf("=", idx);
+    if (eq === -1) return null;
+
+    const start = body.indexOf("{", eq);
+    if (start === -1) return null;
+
+    // Brace matching with string-awareness to capture the full JSON object.
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+    let end = -1;
+    for (let i = start; i < body.length; i++) {
+      const ch = body[i];
+      if (inString) {
+        if (escaped) escaped = false;
+        else if (ch === "\\") escaped = true;
+        else if (ch === "\"") inString = false;
+        continue;
+      }
+      if (ch === "\"") {
+        inString = true;
+        continue;
+      }
+      if (ch === "{") depth++;
+      else if (ch === "}") {
+        depth--;
+        if (depth === 0) {
+          end = i;
+          break;
+        }
+      }
+    }
+    if (end === -1) return null;
+
     try {
-      const json = JSON.parse(m[1].replace(/;\s*$/, '').replace(/\n/g, ''));
-      const spec = (json as Record<string, unknown>)?.spec as Record<string, unknown>;
+      const state = JSON.parse(body.slice(start, end + 1)) as Record<string, unknown>;
+      const spec = state.spec as Record<string, unknown> | undefined;
       const data = spec?.data;
       return data ? JSON.stringify(data) : null;
-    } catch { return null; }
+    } catch {
+      return null;
+    }
   }
   const specBodyRaw = specProbe?.body
     ? (specProbe.body.includes('__redoc_state') ? extractRedocSpec(specProbe.body) : specProbe.body)
@@ -419,7 +462,8 @@ async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveCh
     openApiSpecFound: openApiCheck.pass,
     developerPortalUrl,
     specRaw: specBodyRaw ?? undefined,
-    docsHtml: docsProbe?.body ?? devHit?.body,
+    // Prefer the highest-priority developer portal candidate we already ranked.
+    docsHtml: devHit?.body ?? docsProbe?.body,
   };
 
   return { checks, liveChecks, builderData };

@@ -98,11 +98,13 @@ function AxisBar({ axis }: { axis: AxisScore }) {
 
 export function ApiScoreSection({
   apiScore,
+  specDetected = false,
   compact = false,
   showAxes = true,
   className,
 }: {
   apiScore: ApiScoreResult;
+  specDetected?: boolean;
   compact?: boolean;
   showAxes?: boolean;
   className?: string;
@@ -134,7 +136,9 @@ export function ApiScoreSection({
             </Badge>
             {!apiScore.hasSpec && (
               <p className="text-[11px] text-muted-foreground leading-relaxed max-w-[220px]">
-                API hittades men ingen OpenAPI-spec. Max möjlig poäng: {apiScore.maxPossibleScore}/100.
+                {specDetected
+                  ? `OpenAPI-spec upptäckt men kunde inte laddas fullt automatiskt. Max möjlig poäng just nu: ${apiScore.maxPossibleScore}/100.`
+                  : `API hittades men ingen OpenAPI-spec. Max möjlig poäng: ${apiScore.maxPossibleScore}/100.`}
               </p>
             )}
             {apiScore.specFormat && (
@@ -194,8 +198,12 @@ export function ApiScoreSection({
         <div className="rounded-md border border-amber-200/60 bg-amber-50 px-3 py-2.5">
           <p className="text-xs text-amber-900 leading-relaxed">
             <Zap className="inline h-3 w-3 mr-1 shrink-0" />
-            Utan OpenAPI-spec kunde vi bara analysera {apiScore.maxPossibleScore} av 100 möjliga poäng.
-            Publicera en spec på <code className="font-mono text-[10px]">/openapi.json</code> för fullständig analys.
+            {specDetected ? (
+              <>OpenAPI-spec verkar finnas, men vi kunde inte läsa in hela spec-filen automatiskt i den här körningen. Vi analyserade därför {apiScore.maxPossibleScore} av 100 möjliga poäng.</>
+            ) : (
+              <>Utan OpenAPI-spec kunde vi bara analysera {apiScore.maxPossibleScore} av 100 möjliga poäng.
+              Publicera en spec på <code className="font-mono text-[10px]">/openapi.json</code> för fullständig analys.</>
+            )}
           </p>
         </div>
       )}
