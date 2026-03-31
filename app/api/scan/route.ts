@@ -65,6 +65,116 @@ async function fetchApisGuruSpec(domain: string): Promise<string | null> {
   } catch { return null; }
 }
 
+// ── API portal discovery ──────────────────────────────────────────────────────
+// Multi-signal pipeline: npm → GitHub → llms.txt subdomain → Exa (paid).
+// All free signals race in parallel; Exa runs simultaneously when key is set.
+// Returns the first confident developer portal URL found, or null.
+
+function isLikelyDevPortal(url: string, baseDomain: string): boolean {
+  try {
+    const { hostname, pathname } = new URL(url);
+    const stripped = baseDomain.replace(/^www\./, "");
+    if (!hostname.endsWith(stripped)) return false;
+    if (/^(developer|api|docs|dev|apidocs|reference)\./i.test(hostname)) return true;
+    if (/\/(developer|api\/|docs\/|reference|apidocs)/i.test(pathname)) return true;
+    return false;
+  } catch { return false; }
+}
+
+async function discoverFromNpm(domain: string, companyName: string): Promise<string | null> {
+  const res = await fetch(
+    `https://registry.npmjs.org/-/v1/search?text=${encodeURIComponent(companyName)}+api&size=5`,
+    { headers: { "User-Agent": "OpenSverige-Scanner/1.0" }, signal: AbortSignal.timeout(3_000) },
+  );
+  if (!res.ok) return null;
+  const data = await res.json() as { objects?: Array<{ package: { links?: { homepage?: string } } }> };
+  for (const obj of data.objects ?? []) {
+    const hp = obj.package.links?.homepage;
+    if (hp && isLikelyDevPortal(hp, domain)) return hp;
+  }
+  return null;
+}
+
+async function discoverFromGitHub(domain: string, companyName: string): Promise<string | null> {
+  const headers = { "User-Agent": "OpenSverige-Scanner/1.0", "Accept": "application/vnd.github.v3+json" };
+  const res = await fetch(
+    `https://api.github.com/search/repositories?q=${encodeURIComponent(companyName)}+api&sort=stars&per_page=5`,
+    { headers, signal: AbortSignal.timeout(4_000) },
+  );
+  if (!res.ok) return null;
+  const data = await res.json() as { items?: Array<{ full_name: string; homepage?: string | null }> };
+  // First pass: homepage field (no extra requests)
+  for (const repo of data.items ?? []) {
+    if (repo.homepage && isLikelyDevPortal(repo.homepage, domain)) return repo.homepage;
+  }
+  // Second pass: README of top 2 repos
+  for (const repo of (data.items ?? []).slice(0, 2)) {
+    try {
+      const r = await fetch(`https://api.github.com/repos/${repo.full_name}/readme`,
+        { headers, signal: AbortSignal.timeout(3_000) });
+      if (!r.ok) continue;
+      const { content, encoding } = await r.json() as { content?: string; encoding?: string };
+      if (!content || encoding !== "base64") continue;
+      const text = Buffer.from(content, "base64").toString("utf-8");
+      const urls = text.match(/https?:\/\/[^\s\)\"\'>\]]+/g) ?? [];
+      const hit = urls.find(u => isLikelyDevPortal(u, domain));
+      if (hit) return hit;
+    } catch { continue; }
+  }
+  return null;
+}
+
+async function discoverFromLlmsTxt(domain: string): Promise<string | null> {
+  const subdomains = ["developer", "api", "docs", "dev"];
+  const results = await Promise.all(
+    subdomains.map(async sub => {
+      const base = `https://${sub}.${domain}`;
+      const r = await fetch(`${base}/llms.txt`, {
+        headers: { "User-Agent": "OpenSverige-Scanner/1.0" },
+        signal: AbortSignal.timeout(4_000),
+      }).catch(() => null);
+      return r?.status === 200 ? base : null;
+    }),
+  );
+  return results.find(Boolean) ?? null;
+}
+
+async function discoverFromExa(domain: string, companyName: string, apiKey: string): Promise<string | null> {
+  const res = await fetch("https://api.exa.ai/search", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-api-key": apiKey },
+    body: JSON.stringify({
+      query: `${companyName} REST API developer documentation portal`,
+      category: "company",
+      numResults: 5,
+      useAutoprompt: true,
+    }),
+    signal: AbortSignal.timeout(6_000),
+  });
+  if (!res.ok) return null;
+  const data = await res.json() as { results?: Array<{ url: string }> };
+  return data.results?.find(r => isLikelyDevPortal(r.url, domain))?.url ?? null;
+}
+
+async function discoverApiPortalUrl(domain: string): Promise<string | null> {
+  const companyName = domain.split(".")[0];
+  const exaKey = process.env.EXA_API_KEY;
+  // Run all signals in parallel — Exa included when key is set; free signals win on latency
+  const signals: Promise<string | null>[] = [
+    discoverFromNpm(domain, companyName).catch(() => null),
+    discoverFromGitHub(domain, companyName).catch(() => null),
+    discoverFromLlmsTxt(domain).catch(() => null),
+    ...(exaKey ? [discoverFromExa(domain, companyName, exaKey).catch(() => null)] : []),
+  ];
+  try {
+    return await Promise.any(
+      signals.map(p => p.then(r => r ?? Promise.reject(new Error("miss")))),
+    );
+  } catch {
+    return null;
+  }
+}
+
 async function fetchSafe(url: string): Promise<{ status: number; body: string; contentType: string | null } | null> {
   try {
     const res = await fetch(url, {
@@ -289,13 +399,14 @@ export async function POST(req: NextRequest) {
 
   const firecrawlKey = process.env.FIRECRAWL_API_KEY;
 
-  // Run checks, Firecrawl, and apis.guru spec lookup in parallel
-  const [checkResult, firecrawlMarkdown, apisGuruSpec] = await Promise.all([
+  // Run checks, Firecrawl, apis.guru, and multi-signal portal discovery in parallel
+  const [checkResult, firecrawlMarkdown, apisGuruSpec, discoveredPortalUrl] = await Promise.all([
     runAllChecks(rawDomain),
     firecrawlKey
       ? fetchFirecrawlContent(rawDomain, firecrawlKey)
       : Promise.resolve(null),
     fetchApisGuruSpec(rawDomain),
+    discoverApiPortalUrl(rawDomain),
   ]);
 
   const { checks, liveChecks, builderData } = checkResult;
@@ -304,10 +415,12 @@ export async function POST(req: NextRequest) {
   const severity_counts = computeSeverityCounts(checks);
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  // apis.guru enriches the spec but does NOT trigger scoring on its own —
-  // probes must first confirm an API exists to avoid applying an unrelated
-  // spec to a site that shares a domain name with an indexed API.
-  const shouldScoreApi = checks.api_exists.pass || checks.openapi_spec.pass;
+  // discoveredPortalUrl: found via npm/GitHub/llms.txt/Exa — use as portal target
+  // when path probing didn't find a developer portal.
+  const portalUrl = builderData.developerPortalUrl ?? discoveredPortalUrl ?? undefined;
+  // APIs.guru enriches the spec but does NOT trigger scoring on its own —
+  // probes must confirm an API exists, OR discovery found a portal.
+  const shouldScoreApi = checks.api_exists.pass || checks.openapi_spec.pass || !!discoveredPortalUrl;
   const specRaw = builderData.specRaw ?? (shouldScoreApi ? apisGuruSpec : null) ?? null;
 
   // Run Claude analysis and API score in parallel.
@@ -319,8 +432,8 @@ export async function POST(req: NextRequest) {
       : Promise.resolve(null),
     shouldScoreApi
       ? (async () => {
-          const docsHtml = (firecrawlKey && builderData.developerPortalUrl)
-            ? await firecrawlScrape(builderData.developerPortalUrl, firecrawlKey, 12_000)
+          const docsHtml = (firecrawlKey && portalUrl)
+            ? await firecrawlScrape(portalUrl, firecrawlKey, 12_000)
             : builderData.docsHtml ?? null;
           return scoreApi({
             specRaw,
