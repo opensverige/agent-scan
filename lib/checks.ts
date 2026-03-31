@@ -49,6 +49,8 @@ export const BUILDER_PATHS = [
   '/docs', '/docs/api', '/openapi.json', '/openapi.yaml',
   '/swagger.json', '/swagger.yaml', '/api-docs',
   '/apidocs', '/reference', '/doc', '/api/reference',
+  '/v1/openapi.json', '/v2/openapi.json', '/v3/openapi.json',
+  '/v1/swagger.json', '/v2/swagger.json',
 ] as const;
 
 const OPENAPI_PATHS = new Set(['/openapi.json', '/openapi.yaml', '/swagger.json', '/swagger.yaml']);

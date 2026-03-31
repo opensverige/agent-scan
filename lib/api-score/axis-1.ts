@@ -17,7 +17,7 @@ export function scoreDiscoverability(
       detail: hasApiRef ? "API-referens hittad i docs" : "Ingen API-titel hittad" });
 
     const hasAuth = /auth|api.?key|bearer|oauth|apikey|access.?token|authorization/.test(docs);
-    checks.push({ name: "Auth-metod förklarad", score: hasAuth ? 2 : 0, maxScore: 3,
+    checks.push({ name: "Auth-metod förklarad", score: hasAuth ? 2 : 0, maxScore: 2,
       detail: hasAuth ? "Auth-info hittad i docs" : "Ingen auth-dokumentation hittad" });
 
     const hasChangelog = /changelog|change log|version history|deprecat/.test(docs);

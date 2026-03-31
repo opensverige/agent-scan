@@ -19,63 +19,77 @@ export interface LLMApiSignals {
 const TOOL_SCHEMA = {
   name: "extract_api_signals",
   description:
-    "Extract structured API capability signals from developer documentation. Be liberal — if there is any evidence for a signal, mark it true.",
+    "Extract API capability signals from developer documentation. " +
+    "Only mark a signal true when you see clear, direct evidence — a specific keyword, " +
+    "code block, or explicit description. Do not infer from vague context. " +
+    "The docs may be in Swedish or English.",
   input_schema: {
     type: "object",
     properties: {
       authMethods: {
         type: "array",
         items: { type: "string" },
-        description: "Auth methods found. Allowed values: oauth2, api_key, bearer, jwt, basic, hmac",
+        description:
+          "Auth methods explicitly documented. Allowed values: oauth2, api_key, bearer, jwt, basic, hmac. " +
+          "Include oauth2 if you see OAuth, OAuth2, authorization_code, or client_credentials.",
       },
       hasM2MAuth: {
         type: "boolean",
-        description: "Service account, client_credentials flow, or machine-to-machine auth documented",
+        description:
+          "True only if service-to-service auth is explicitly documented: " +
+          "client_credentials flow, service account, M2M, server-to-server, or API key for automated systems.",
       },
       hasTokenRefresh: {
         type: "boolean",
-        description: "Token refresh flow, refresh_token, or renew token mentioned",
+        description: "True if token refresh, refresh_token, or token renewal is explicitly described.",
       },
       hasRateLimits: {
         type: "boolean",
-        description: "Rate limits, throttling, request quotas, or calls-per-second documented",
+        description:
+          "True if rate limits, request throttling, quotas, or requests-per-second/minute/hour are documented.",
       },
       hasSandbox: {
         type: "boolean",
         description:
-          "Sandbox, test environment, staging, test companies, demo accounts, or testbolag mentioned",
+          "True if a sandbox, test environment, staging environment, demo account, " +
+          "test companies (testbolag), or test credentials are explicitly offered.",
       },
       hasWebhooks: {
         type: "boolean",
-        description: "Webhooks, event callbacks, or push notifications documented",
+        description: "True if webhooks, event callbacks, or push notifications are documented.",
       },
       hasErrorCodes: {
         type: "boolean",
-        description: "HTTP 4xx/5xx error codes or error descriptions present",
+        description:
+          "True if HTTP 4xx or 5xx error codes are listed, or specific error messages/codes are described.",
       },
       hasRetry: {
         type: "boolean",
-        description: "Retry guidance, idempotency, Retry-After header, or retry-safe operations mentioned",
+        description:
+          "True if retry guidance, idempotency, Retry-After header, or retry-safe operations are mentioned.",
       },
       hasChangelog: {
         type: "boolean",
-        description: "Changelog, release notes, version history, or API versions documented",
+        description: "True if a changelog, release notes, version history, or breaking changes log exists.",
       },
       hasStatusPage: {
         type: "boolean",
-        description: "Status page, uptime page, system health, or status link present",
+        description: "True if a status page, uptime page, or system health dashboard is linked or mentioned.",
       },
       lastUpdatedYear: {
         type: ["integer", "null"],
-        description: "Most recent 4-digit year (e.g. 2024) found in the docs, or null if not found",
+        description:
+          "The most recent 4-digit year (e.g. 2024) found anywhere in the docs indicating a real update, or null.",
       },
       hasCodeExamples: {
         type: "boolean",
-        description: "Code examples, curl commands, SDK code snippets, or sample requests present",
+        description:
+          "True if there are curl commands, code snippets, SDK examples, or sample request/response payloads.",
       },
       openApiSpecUrl: {
         type: ["string", "null"],
-        description: "Full URL to an OpenAPI/Swagger spec file if explicitly linked in the docs, or null",
+        description:
+          "Full URL to an OpenAPI or Swagger spec file if explicitly linked (e.g. /openapi.json, /swagger.yaml), or null.",
       },
     },
     required: [
@@ -85,11 +99,21 @@ const TOOL_SCHEMA = {
       "hasCodeExamples", "openApiSpecUrl",
     ],
   },
-} as const;
+};
+
+function buildPrompt(docsContent: string, specContext?: string): string {
+  const parts: string[] = [];
+  if (specContext) {
+    parts.push(`## OpenAPI spec (may be partial or truncated)\n\n${specContext.slice(0, 5_000)}`);
+  }
+  parts.push(`## Developer documentation\n\n${docsContent.slice(0, specContext ? 15_000 : 20_000)}`);
+  return `Extract API capability signals from the following content:\n\n${parts.join("\n\n---\n\n")}`;
+}
 
 export async function extractApiSignals(
-  content: string,
+  docsContent: string,
   apiKey: string,
+  specContext?: string,
 ): Promise<LLMApiSignals | null> {
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -104,14 +128,9 @@ export async function extractApiSignals(
         max_tokens: 512,
         tools: [TOOL_SCHEMA],
         tool_choice: { type: "tool", name: "extract_api_signals" },
-        messages: [
-          {
-            role: "user",
-            content: `Extract API capability signals from this developer documentation:\n\n${content.slice(0, 10_000)}`,
-          },
-        ],
+        messages: [{ role: "user", content: buildPrompt(docsContent, specContext) }],
       }),
-      signal: AbortSignal.timeout(12_000),
+      signal: AbortSignal.timeout(15_000),
     });
 
     if (!res.ok) return null;
@@ -125,7 +144,23 @@ export async function extractApiSignals(
     );
     if (!toolUse?.input) return null;
 
-    return toolUse.input as LLMApiSignals;
+    // Sanitize — Claude may return partial or malformed shapes
+    const raw = toolUse.input as Record<string, unknown>;
+    return {
+      authMethods: Array.isArray(raw.authMethods) ? (raw.authMethods as string[]) : [],
+      hasM2MAuth: raw.hasM2MAuth === true,
+      hasTokenRefresh: raw.hasTokenRefresh === true,
+      hasRateLimits: raw.hasRateLimits === true,
+      hasSandbox: raw.hasSandbox === true,
+      hasWebhooks: raw.hasWebhooks === true,
+      hasErrorCodes: raw.hasErrorCodes === true,
+      hasRetry: raw.hasRetry === true,
+      hasChangelog: raw.hasChangelog === true,
+      hasStatusPage: raw.hasStatusPage === true,
+      lastUpdatedYear: typeof raw.lastUpdatedYear === "number" ? raw.lastUpdatedYear : null,
+      hasCodeExamples: raw.hasCodeExamples === true,
+      openApiSpecUrl: typeof raw.openApiSpecUrl === "string" ? raw.openApiSpecUrl : null,
+    };
   } catch {
     return null;
   }

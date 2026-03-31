@@ -44,20 +44,21 @@ async function fetchApisGuruSpec(domain: string): Promise<string | null> {
   try {
     const listRes = await fetch(`https://api.apis.guru/v2/${domain}.json`, {
       headers: { "User-Agent": "OpenSverige-Scanner/1.0" },
-      signal: AbortSignal.timeout(5_000),
+      signal: AbortSignal.timeout(3_000),
     });
     if (!listRes.ok) return null;
     const data = await listRes.json() as {
       preferred?: string;
       versions?: Record<string, { swaggerUrl?: string }>;
     };
-    if (!data.versions) return null;
+    if (!data.versions || Object.keys(data.versions).length === 0) return null;
     const preferredKey = data.preferred ?? Object.keys(data.versions)[0];
+    if (!preferredKey) return null;
     const specUrl = data.versions[preferredKey]?.swaggerUrl;
     if (!specUrl) return null;
     const specRes = await fetch(specUrl, {
       headers: { "User-Agent": "OpenSverige-Scanner/1.0" },
-      signal: AbortSignal.timeout(8_000),
+      signal: AbortSignal.timeout(5_000),
     });
     if (!specRes.ok) return null;
     return (await specRes.text()).slice(0, 100_000);
@@ -95,12 +96,22 @@ async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveCh
   const base = `https://${domain}`;
   const builderUrls = [
     ...BUILDER_PATHS.map(p => `${base}${p}`),
+    // API subdomain — docs pages
     `https://developer.${domain}`,
     `https://api.${domain}`,
     `https://api.${domain}/docs`,
     `https://api.${domain}/apidocs`,
     `https://api.${domain}/reference`,
     `https://developer.${domain}/docs`,
+    // API subdomain — spec files (common non-root locations)
+    `https://api.${domain}/openapi.json`,
+    `https://api.${domain}/openapi.yaml`,
+    `https://api.${domain}/swagger.json`,
+    `https://api.${domain}/v1/openapi.json`,
+    `https://api.${domain}/v2/openapi.json`,
+    `https://api.${domain}/v3/openapi.json`,
+    `https://developer.${domain}/openapi.json`,
+    `https://developer.${domain}/swagger.json`,
   ];
 
   const [robotsRes, sitemapRes, llmsRes, ...builderResults] = await Promise.all([

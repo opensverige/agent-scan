@@ -19,9 +19,11 @@ import { extractApiSignals, type LLMApiSignals } from "./llm-extract";
 // ── LLM boost helpers ─────────────────────────────────────────
 
 function boostCheck(axis: AxisScore, checkName: string, newScore: number, newDetail: string): AxisScore {
-  const checks = axis.checks.map(c =>
-    c.name === checkName && c.score < newScore ? { ...c, score: newScore, detail: newDetail } : c
-  );
+  const checks = axis.checks.map(c => {
+    if (c.name !== checkName) return c;
+    const capped = Math.min(newScore, c.maxScore);
+    return c.score < capped ? { ...c, score: capped, detail: newDetail } : c;
+  });
   return { ...axis, checks, score: checks.reduce((s, c) => s + c.score, 0) };
 }
 
@@ -96,7 +98,8 @@ export async function scoreApi(input: ApiScoreInput): Promise<ApiScoreResult> {
     }
   }
 
-  // Run all axis scoring and LLM extraction in parallel
+  // Run all axis scoring and LLM extraction in parallel.
+  // LLM extraction only when no spec — pass raw spec text as context even if parsing failed.
   const shouldExtract = !spec && !!anthropicApiKey && !!docsHtml;
 
   const [axisResults, llmSignals] = await Promise.all([
@@ -112,7 +115,7 @@ export async function scoreApi(input: ApiScoreInput): Promise<ApiScoreResult> {
       scoreAgentReadiness(spec, docsHtml, domain),
     ]),
     shouldExtract
-      ? extractApiSignals(docsHtml!, anthropicApiKey!)
+      ? extractApiSignals(docsHtml!, anthropicApiKey!, specRaw ?? undefined)
       : Promise.resolve(null),
   ]);
 

@@ -17,7 +17,10 @@ export async function scoreQualityGates(
     detail: hasRecent ? "Nyligen uppdaterat datum hittad i docs" : "Inget datum hittad i docs" });
 
   // 2. Status page (2p)
-  let hasStatus = /status\.(${domain}|page|io)|uptime|status page|statuspage/.test(docs);
+  const escapedDomain = domain.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  let hasStatus = new RegExp(
+    `status\\.(${escapedDomain}|page|io)|uptime|status page|statuspage`,
+  ).test(docs);
   if (!hasStatus) {
     // Quick probe for status subdomain
     try {
