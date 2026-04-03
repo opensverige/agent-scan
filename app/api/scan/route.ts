@@ -703,8 +703,9 @@ export async function POST(req: NextRequest) {
 
   // Post-check: if sandbox probe missed but Firecrawl docs mention it (e.g. behind login),
   // upgrade the check with a softer label. Reuses already-fetched Firecrawl content — no extra cost.
-  if (!checks.sandbox_available.pass && firecrawlDocsContent) {
-    const hay = firecrawlDocsContent.toLowerCase();
+  const sandboxContent = firecrawlDocsContent;
+  if (!checks.sandbox_available.pass && sandboxContent) {
+    const hay = sandboxContent.toLowerCase();
     if (/sandbox|testmilj|test.?environment|playground|staging|testbolag|test.?account/.test(hay)) {
       checks.sandbox_available = {
         ...checks.sandbox_available,
