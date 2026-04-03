@@ -410,12 +410,22 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                 Scannades {dateStr ?? "okänt datum"}
                 {daysOld !== null && daysOld > 0 ? ` (${daysOld} dagar sedan)` : daysOld === 0 ? " (idag)" : null}
               </p>
-              <a
-                href={`/scan?domain=${domain}`}
-                className="font-mono text-[10px] text-muted-foreground hover:text-foreground transition-colors shrink-0"
-              >
-                Skanna igen →
-              </a>
+              <div className="flex items-center gap-3 shrink-0">
+                <a
+                  href={`/api/results/${domain}?format=text`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-[10px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                >
+                  Raw →
+                </a>
+                <a
+                  href={`/scan?domain=${domain}`}
+                  className="font-mono text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Skanna igen →
+                </a>
+              </div>
             </div>
           );
         })()}
