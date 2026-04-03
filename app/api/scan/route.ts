@@ -642,9 +642,6 @@ export async function POST(req: NextRequest) {
   ]);
 
   const { checks, liveChecks, builderData } = checkResult;
-  const { badge, score } = calculateBadge(checks);
-  const recommendations = getTopRecommendations(checks);
-  const severity_counts = computeSeverityCounts(checks);
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   // discoveredPortal: found via npm/GitHub/llms.txt/Exa — may include page text content (from Exa)
@@ -673,6 +670,9 @@ export async function POST(req: NextRequest) {
   // API score uses Firecrawl to render JS-heavy developer portals if available.
   // LLM extraction (claude-haiku) runs inside scoreApi when no spec is found.
   // MCP GitHub search only runs when the official check fails — purely informational.
+  // Hoisted so sandbox re-check can use the same Firecrawl content as API scoring.
+  let firecrawlDocsContent: string | null = null;
+
   const [analysis, apiScore, mcpGithubHint] = await Promise.all([
     apiKey
       ? analyzeWithClaude(rawDomain, liveChecks, builderData, apiKey, firecrawlMarkdown ?? undefined)
@@ -683,11 +683,11 @@ export async function POST(req: NextRequest) {
           // that onlyMainContent:true strips as "navigation noise" — we need all of it.
           // 40K chars: enough to cover a full Redoc page past the navigation sidebar
           // into actual API titles, auth docs, and endpoint descriptions.
-          const firecrawlResult = (firecrawlKey && firecrawlDocTarget)
+          firecrawlDocsContent = (firecrawlKey && firecrawlDocTarget)
             ? await firecrawlScrape(firecrawlDocTarget, firecrawlKey, 40_000, false)
             : null;
           // Always fall back to probe-detected docs or Exa content if Firecrawl returns null
-          const docsHtml = firecrawlResult ?? builderData.docsHtml ?? discoveredPortalContent ?? null;
+          const docsHtml = firecrawlDocsContent ?? builderData.docsHtml ?? discoveredPortalContent ?? null;
           return scoreApi({
             specRaw,
             docsHtml,
@@ -700,6 +700,25 @@ export async function POST(req: NextRequest) {
       ? Promise.resolve(null)
       : discoverMcpOnGitHub(companyName),
   ]);
+
+  // Post-check: if sandbox probe missed but Firecrawl docs mention it (e.g. behind login),
+  // upgrade the check with a softer label. Reuses already-fetched Firecrawl content — no extra cost.
+  if (!checks.sandbox_available.pass && firecrawlDocsContent) {
+    const hay = firecrawlDocsContent.toLowerCase();
+    if (/sandbox|testmilj|test.?environment|playground|staging|testbolag|test.?account/.test(hay)) {
+      checks.sandbox_available = {
+        ...checks.sandbox_available,
+        pass: true,
+        label: 'Sandbox nämns i dokumentation',
+        detail: 'Nämnd i developer-docs — kan finnas bakom inloggning. Vi kunde inte verifiera direkt åtkomst.',
+      };
+    }
+  }
+
+  // Recalculate derived values after possible sandbox upgrade.
+  const { badge, score } = calculateBadge(checks);
+  const recommendations = getTopRecommendations(checks);
+  const severity_counts = computeSeverityCounts(checks);
 
   const isDemo = !analysis;
   const finalAnalysis = analysis ?? buildDemoAnalysis(rawDomain);

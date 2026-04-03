@@ -963,6 +963,9 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="px-4 pb-4">
+                  <p className="text-[10px] text-muted-foreground/50 font-mono mb-3">
+                    Kontrolleras via offentliga, oautentiserade anrop. Saker bakom inloggning kan finnas men syns inte här.
+                  </p>
                   <div className="space-y-2">
                     {(["mcp_server", "sandbox_available", "openapi_spec", "api_exists", "api_docs"] as const).map(id => {
                       const check = r.checks[id];
