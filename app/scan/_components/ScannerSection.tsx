@@ -240,7 +240,7 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
             playsInline
             preload="auto"
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 z-0 h-full min-h-full w-full object-cover opacity-45"
+            className="pointer-events-none absolute inset-0 z-0 h-full min-h-full w-full object-cover opacity-30"
           />
           {/* Lätt scrim: video syns; text läses via starkare ton under rubrik + brödtext */}
           <div
