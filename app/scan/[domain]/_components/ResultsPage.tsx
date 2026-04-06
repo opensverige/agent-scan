@@ -21,7 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import {
   AlertTriangle, Calendar, Check, CheckCircle2, ChevronDown,
-  Code2, FileText, Github, Globe, Lock, RotateCcw, Search, Share2,
+  Code2, FileJson, FileText, Github, Globe, Lock, RotateCcw, Search, Share2,
   Shield, XCircle, Zap,
 } from "lucide-react";
 
@@ -159,6 +159,28 @@ function FindingRow({ check, index }: { check: CheckResult; index: number }) {
 
 // ── Plan step card ──────────────────────────────────────────────────────────
 
+const PLAN_BOOKING_PHRASE = "Boka möte 15 min";
+
+function PlanCardRichText({ text }: { text: string }) {
+  if (!text.includes(PLAN_BOOKING_PHRASE)) {
+    return <>{text}</>;
+  }
+  const [before, after] = text.split(PLAN_BOOKING_PHRASE);
+  return (
+    <>
+      {before}
+      <a
+        href="#boka-mote"
+        className="font-semibold text-primary underline decoration-primary/40 underline-offset-[3px] transition-[color,text-decoration-color] duration-200 hover:text-primary/90 hover:decoration-primary"
+        style={{ transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)" }}
+      >
+        {PLAN_BOOKING_PHRASE}
+      </a>
+      {after}
+    </>
+  );
+}
+
 function PlanCard({ text, index, priority }: { text: string; index: number; priority: "high" | "medium" | null }) {
   return (
     <Card className={cn("transition-all", index === 0 && "border-2 border-foreground")}>
@@ -170,7 +192,7 @@ function PlanCard({ text, index, priority }: { text: string; index: number; prio
           {index + 1}
         </div>
         <p className="text-base font-semibold leading-relaxed flex-1 min-w-0 self-center" style={{ lineHeight: 1.6 }}>
-          {text}
+          <PlanCardRichText text={text} />
         </p>
         {priority === "high" && (
           <Badge variant="destructive" className="text-xs shrink-0">Kritisk</Badge>
@@ -438,8 +460,8 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
             <Badge variant="outline" className="font-mono text-[10px] tracking-widest w-fit">
               SCAN RESULTAT
             </Badge>
-            <CardTitle className="font-serif text-[clamp(20px,5vw,28px)] font-normal leading-[1.1] tracking-[-0.5px] mt-1">
-              Hur agent-redo<br />är ditt företag?
+            <CardTitle className="font-serif text-[clamp(28px,5vw,40px)] font-normal leading-[1.12] tracking-[-0.6px] mt-1">
+              Hur agent-redo är ditt företag?
             </CardTitle>
             <CardDescription className="font-mono">{domain}</CardDescription>
           </CardHeader>
@@ -557,13 +579,36 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                       {apiScore.bandLabel}
                     </Badge>
 
-                    {!apiScore.hasSpec && (
-                      <p className="text-sm text-muted-foreground text-center max-w-xs">
-                        {specDetected
-                          ? `OpenAPI-spec upptäckt men kunde inte laddas fullt automatiskt. Max möjlig poäng just nu: ${apiScore.maxPossibleScore}/100.`
-                          : `API hittades men ingen OpenAPI-spec. Max möjlig poäng: ${apiScore.maxPossibleScore}/100.`}
-                      </p>
-                    )}
+                    {!apiScore.hasSpec &&
+                      (specDetected ? (
+                        <div className="flex flex-col items-center gap-3 w-full max-w-sm">
+                          <div className="w-full rounded-xl border-2 border-primary/40 bg-primary/10 px-4 py-3.5">
+                            <div className="flex items-center justify-center gap-2.5">
+                              <FileJson
+                                className="h-5 w-5 text-primary shrink-0"
+                                aria-hidden
+                              />
+                              <span className="font-mono text-sm font-bold tracking-tight text-primary">
+                                OpenAPI-spec
+                              </span>
+                            </div>
+                            <p className="mt-1.5 text-center font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-primary/80">
+                              Upptäckt
+                            </p>
+                          </div>
+                          <p className="text-sm text-muted-foreground text-center max-w-xs leading-relaxed">
+                            Kunde inte laddas fullt automatiskt. Max möjlig poäng just nu:{" "}
+                            <span className="font-mono text-foreground/90 tabular-nums">
+                              {apiScore.maxPossibleScore}/100
+                            </span>
+                            .
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground text-center max-w-xs">
+                          {`API hittades men ingen OpenAPI-spec. Max möjlig poäng: ${apiScore.maxPossibleScore}/100.`}
+                        </p>
+                      ))}
                     {apiScore.specFormat && (
                       <p className="font-mono text-xs text-muted-foreground">
                         {apiScore.specFormat === "openapi3" ? "OpenAPI 3.x" : "Swagger 2.0"} spec analyserad
@@ -637,15 +682,6 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                             </ul>
                           )}
                         </div>
-                        <a
-                          href={BOOK_MEETING_URL}
-                          data-cal-link={CAL_LINK}
-                          data-cal-namespace={CAL_NS}
-                          data-cal-config='{"layout":"month_view"}'
-                          className="inline-flex items-center gap-1.5 text-xs text-foreground hover:opacity-70 transition-opacity font-mono cursor-pointer"
-                        >
-                          Behöver du hjälp att implementera det? Boka 30 min →
-                        </a>
                       </div>
                     </div>
                   )}
@@ -762,30 +798,6 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
           <CollapsibleContent className="mt-3">
             <Accordion type="multiple" defaultValue={defaultOpenSections} className="space-y-2">
 
-              {REGULATORY_UPDATES.length > 0 && (
-                <AccordionItem value="regulatorisk" className="border rounded-lg">
-                  <AccordionTrigger className="px-4 hover:no-underline min-h-[44px]">
-                    <div className="flex items-center gap-3">
-                      <Shield className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span className="font-medium text-sm">Regulatorisk spelplan</span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4">
-                    <div className="space-y-2">
-                      {REGULATORY_UPDATES.map((u, i) => (
-                        <div key={i} className="flex gap-2">
-                          <span className={cn("text-sm shrink-0", u.severity === "important" ? "text-amber-500" : "text-muted-foreground")}>•</span>
-                          <span className="text-xs text-muted-foreground leading-relaxed">{u.text}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-[10px] text-muted-foreground/60 mt-3 italic">
-                      Senast uppdaterad: {REGULATORY_UPDATES[0].date}
-                    </p>
-                  </AccordionContent>
-                </AccordionItem>
-              )}
-
               {failedCritical.length > 0 && (
                 <AccordionItem value="brister" className="border rounded-lg border-destructive/20 bg-destructive/[0.03]">
                   <AccordionTrigger className="px-4 hover:no-underline min-h-[44px]">
@@ -886,6 +898,30 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                 </AccordionItem>
               )}
 
+              {REGULATORY_UPDATES.length > 0 && (
+                <AccordionItem value="regulatorisk" className="border rounded-lg">
+                  <AccordionTrigger className="px-4 hover:no-underline min-h-[44px]">
+                    <div className="flex items-center gap-3">
+                      <Shield className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="font-medium text-sm">Regulatorisk spelplan</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4">
+                    <div className="space-y-2">
+                      {REGULATORY_UPDATES.map((u, i) => (
+                        <div key={i} className="flex gap-2">
+                          <span className={cn("text-sm shrink-0", u.severity === "important" ? "text-amber-500" : "text-muted-foreground")}>•</span>
+                          <span className="text-xs text-muted-foreground leading-relaxed">{u.text}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground/60 mt-3 italic">
+                      Senast uppdaterad: {REGULATORY_UPDATES[0].date}
+                    </p>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
+
               {hasApi && apiScore && (
                 <AccordionItem value="api-detaljer" className="border rounded-lg">
                   <AccordionTrigger className="px-4 hover:no-underline min-h-[44px]">
@@ -932,28 +968,6 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                   </div>
                 </AccordionContent>
               </AccordionItem>
-
-              {passedChecks.length > 0 && (
-                <AccordionItem value="godkanda" className="border rounded-lg border-success/20 bg-success/[0.03]">
-                  <AccordionTrigger className="px-4 hover:no-underline min-h-[44px]">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
-                      <span className="font-medium text-sm">Godkända</span>
-                      <Badge variant="outline" className="ml-1 text-[10px] font-mono border-success/40 text-success">{passedChecks.length}</Badge>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4">
-                    <div className="space-y-2">
-                      {passedChecks.map(check => (
-                        <div key={check.id} className="flex items-center gap-2.5">
-                          <Check className="h-4 w-4 text-success shrink-0" />
-                          <span className="text-sm text-success/80">{check.label}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              )}
 
               <AccordionItem value="mcp" className="border rounded-lg">
                 <AccordionTrigger className="px-4 hover:no-underline min-h-[44px]">
@@ -1006,6 +1020,28 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                   </div>
                 </AccordionContent>
               </AccordionItem>
+
+              {passedChecks.length > 0 && (
+                <AccordionItem value="godkanda" className="border rounded-lg border-success/20 bg-success/[0.03]">
+                  <AccordionTrigger className="px-4 hover:no-underline min-h-[44px]">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                      <span className="font-medium text-sm">Godkända</span>
+                      <Badge variant="outline" className="ml-1 text-[10px] font-mono border-success/40 text-success">{passedChecks.length}</Badge>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4">
+                    <div className="space-y-2">
+                      {passedChecks.map(check => (
+                        <div key={check.id} className="flex items-center gap-2.5">
+                          <Check className="h-4 w-4 text-success shrink-0" />
+                          <span className="text-sm text-success/80">{check.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
 
             </Accordion>
           </CollapsibleContent>
@@ -1077,7 +1113,10 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
         </div>
 
         {/* ── BOKA MÖTE ────────────────────────────────────────── */}
-        <div className="mt-10 rounded-lg border border-border px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div
+          id="boka-mote"
+          className="mt-10 scroll-mt-24 rounded-lg border border-border px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+        >
           <div className="space-y-1">
             <p className="font-mono text-sm font-medium">Vill du förbättra din score?</p>
             <p className="text-xs text-muted-foreground max-w-sm">

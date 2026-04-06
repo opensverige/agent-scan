@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { Separator } from "@/components/ui/separator";
 import Nav from "./_components/Nav";
 import ScannerSection from "./_components/ScannerSection";
-import IntegrationVote from "./_components/IntegrationVote";
 import CTA from "./_components/CTA";
 
 export const metadata: Metadata = {
@@ -78,8 +77,6 @@ export default async function ScanPage({ searchParams }: PageProps) {
       />
       <Nav />
       <ScannerSection initialDomain={domain} />
-      <Separator className="max-w-[580px] mx-auto" />
-      <IntegrationVote />
       <Separator className="max-w-[580px] mx-auto" />
       <CTA />
       <footer className="px-6 py-3.5 border-t border-border flex justify-between items-center font-mono text-[10px] text-muted-foreground flex-wrap gap-2">

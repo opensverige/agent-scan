@@ -22,8 +22,6 @@ const SCAN_MESSAGES = [
 // Spread evenly across the ~10s scan duration
 const MSG_DELAYS = [0, 2000, 4000, 6000, 8000];
 
-const DEMO_CHIPS = ["fortnox.se", "visma.net", "bokio.se", "spotify.com"];
-
 const CSS = `
   @keyframes ss-fadeup {
     from { opacity: 0; transform: translateY(8px); }
@@ -188,7 +186,6 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
       <div>
         <style>{CSS}</style>
         <div className="px-6 pt-14 pb-16 max-w-[580px] mx-auto" style={{ animation: `ss-fadeup 0.35s ${EASE} both` }}>
-          <div className="font-mono text-[10px] font-bold text-primary tracking-[3px] mb-4">AGENT READINESS SCANNER</div>
           <h1 className="font-serif text-[clamp(28px,6vw,44px)] font-normal leading-[1.1] tracking-[-1px] mb-4">
             Inte ett svenskt företag
           </h1>
@@ -247,14 +244,8 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
 
           {/* Hero content */}
           <div className="relative z-[2] mx-auto max-w-[580px] px-6 pb-12 pt-16 sm:pb-14">
-            <div
-              className="mb-4 font-mono text-[10px] font-bold tracking-[3px] text-primary drop-shadow-[0_1px_8px_hsl(var(--background))]"
-              style={{ animation: `ss-fadeup 0.5s ${EASE} both` }}
-            >
-              AGENT READINESS SCANNER
-            </div>
             <h1
-              className="mb-3.5 font-serif text-[clamp(32px,7vw,52px)] font-normal leading-[1.12] tracking-[-1.5px] text-foreground"
+              className="mb-5 font-serif text-[clamp(32px,7vw,52px)] font-normal leading-[1.12] tracking-[-1.5px] text-foreground"
               style={{
                 animation: `ss-fadeup 0.6s ${EASE} 50ms both`,
                 textShadow:
@@ -263,67 +254,46 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
             >
               Hur agent-redo är ditt företag?
             </h1>
-            <p
-              className="max-w-[420px] text-base leading-relaxed text-muted-foreground"
-              style={{
-                animation: `ss-fadeup 0.5s ${EASE} 100ms both`,
-                textShadow: "0 0 20px hsl(var(--background)), 0 1px 2px hsl(var(--background) / 0.9)",
-              }}
+
+            <div
+              className="max-w-[520px]"
+              style={{ animation: `ss-fadeup 0.5s ${EASE} 100ms both` }}
             >
-              AI-agenter försöker redan nå ditt system. Vi visar vad de ser — och vad som stoppar dem.
-            </p>
+              <div className="overflow-hidden rounded-2xl border-2 border-border/70 bg-background/90 shadow-lg backdrop-blur-md">
+                <p className="px-4 pb-3 pt-4 text-base leading-relaxed text-foreground sm:px-5 sm:pb-4 sm:pt-5">
+                  AI-agenter försöker redan nå ditt system. Vi visar vad de ser — och vad som stoppar dem.
+                </p>
+                <div className="border-t border-border/55 bg-card/45 px-3 py-3 sm:flex sm:flex-row sm:items-stretch sm:gap-2.5 sm:px-4 sm:pb-4">
+                  <div className="flex flex-1 items-center gap-2 rounded-xl border-2 border-border bg-background px-3.5 py-2.5 transition-colors duration-150 focus-within:border-primary/30">
+                    <span className="font-mono text-xs text-muted-foreground shrink-0">https://</span>
+                    <input
+                      value={url}
+                      onChange={e => setUrl(e.target.value)}
+                      onKeyDown={e => e.key === "Enter" && canSubmit && runScan(url)}
+                      placeholder="dittforetag.se"
+                      aria-label="Domännamn att scanna"
+                      autoComplete="url"
+                      spellCheck={false}
+                      className="min-w-0 flex-1 border-none bg-transparent font-mono text-[15px] font-medium text-foreground caret-primary outline-none placeholder:text-muted-foreground/40"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={() => runScan(url)}
+                    disabled={!canSubmit}
+                    size="lg"
+                    className="mt-2 w-full shrink-0 sm:mt-0 sm:w-auto"
+                  >
+                    Scanna →
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* ── Form — negativ marginal överlappar hero; z-index över video/scrim ── */}
-        <div className="relative z-[4] px-6 pb-16 max-w-[580px] mx-auto">
-          <div
-            className="mb-2 flex flex-col gap-2 sm:flex-row -mt-10 sm:-mt-14"
-            style={{ animation: `ss-fadeup 0.5s ${EASE} 140ms both` }}
-          >
-            <div className="flex flex-1 items-center gap-2 rounded-xl border-2 border-border bg-card px-3.5 py-3 shadow-md transition-colors duration-150 focus-within:border-primary/30">
-              <span className="font-mono text-xs text-muted-foreground shrink-0">https://</span>
-              <input
-                value={url}
-                onChange={e => setUrl(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && canSubmit && runScan(url)}
-                placeholder="dittforetag.se"
-                aria-label="Domännamn att scanna"
-                autoComplete="url"
-                spellCheck={false}
-                className="bg-transparent border-none outline-none text-foreground font-mono text-[15px] flex-1 caret-primary font-medium placeholder:text-muted-foreground/40 min-w-0"
-              />
-            </div>
-            <Button
-              type="button"
-              onClick={() => runScan(url)}
-              disabled={!canSubmit}
-              size="lg"
-              className="w-full shrink-0 shadow-md sm:w-auto"
-            >
-              Scanna →
-            </Button>
-          </div>
-
-          <div
-            className="flex flex-wrap gap-1.5 mb-9 mt-2"
-            style={{ animation: `ss-fadeup 0.4s ${EASE} 180ms both` }}
-          >
-            <span className="text-[11px] text-muted-foreground self-center">Prova:</span>
-            {DEMO_CHIPS.map(chip => (
-              <Button
-                key={chip}
-                type="button"
-                variant="outline"
-                onClick={() => runScan(chip)}
-                aria-label={`Scanna ${chip}`}
-                className="font-mono text-[11px] h-11 rounded-lg px-2.5 border-border hover:border-primary/30"
-              >
-                {chip}
-              </Button>
-            ))}
-          </div>
-
+        {/* ── Under hero: Varför ── */}
+        <div className="relative z-[4] mx-auto max-w-[580px] px-6 pb-16 pt-8">
           <h2
             className="font-serif text-[clamp(26px,5vw,36px)] font-normal tracking-[-0.45px] text-foreground mb-3 max-w-[460px]"
             style={{ animation: `ss-fadeup 0.4s ${EASE} 210ms both` }}

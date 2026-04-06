@@ -6,7 +6,7 @@ import type { ApiScoreResult, AxisScore, ScoreBand } from "@/lib/api-score";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { AlertTriangle, CheckCircle2, ChevronRight, XCircle, Zap } from "lucide-react";
+import { AlertTriangle, CheckCircle2, CircleDot, XCircle, Zap } from "lucide-react";
 
 // ── Band config ────────────────────────────────────────────────────────────
 
@@ -185,7 +185,7 @@ export function ApiScoreSection({
           <ul className="space-y-1">
             {apiScore.fastestFixes.map((f, i) => (
               <li key={i} className="flex items-start gap-2 text-xs">
-                <ChevronRight className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                <CircleDot className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" aria-hidden />
                 <span className="text-foreground/80">{f}</span>
               </li>
             ))}

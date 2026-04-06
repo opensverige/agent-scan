@@ -354,7 +354,8 @@ export function computeSeverityCounts(checks: AllChecks): { critical: number; im
 const RECOMMENDATION_MAP: Record<CheckId, string> = {
   llms_txt: 'Lägg till /llms.txt som beskriver ditt API och dina tjänster för AI-agenter.',
   privacy_automation: 'Uppdatera integritetspolicyn med info om automatiserad behandling (GDPR Art. 22).',
-  mcp_server: 'Vi hittade ingen MCP-koppling - AI-agenter kan inte nå er direkt utan manuell integration. Utred om en MCP-server är rätt steg för er.',
+  mcp_server:
+    'Vi hittade ingen MCP-koppling — agenter når er inte direkt utan manuell integration. Vill ni bolla nästa steg? Boka möte 15 min om ni vill.',
   openapi_spec: 'Publicera en OpenAPI-spec så agenter och builders kan mappa ditt API automatiskt.',
   api_exists: 'Skapa ett publikt API - utan det kan ingen agent interagera med ditt system.',
   cookie_bot_handling: 'Se över hur din cookielösning hanterar icke-mänskliga besökare.',
