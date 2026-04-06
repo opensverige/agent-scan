@@ -245,7 +245,7 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
           {/* Hero content */}
           <div className="relative z-[2] mx-auto max-w-[580px] px-6 pb-12 pt-16 sm:pb-14">
             <h1
-              className="mb-5 font-serif text-[clamp(32px,7vw,52px)] font-normal leading-[1.12] tracking-[-1.5px] text-foreground"
+              className="mb-5 text-center font-serif text-[clamp(32px,7vw,52px)] font-normal leading-[1.12] tracking-[-1.5px] text-foreground"
               style={{
                 animation: `ss-fadeup 0.6s ${EASE} 50ms both`,
                 textShadow:
@@ -256,14 +256,16 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
             </h1>
 
             <div
-              className="max-w-[520px]"
+              className="mx-auto max-w-[520px]"
               style={{ animation: `ss-fadeup 0.5s ${EASE} 100ms both` }}
             >
-              <div className="overflow-hidden rounded-2xl border-2 border-border/70 bg-background/90 shadow-lg backdrop-blur-md">
-                <p className="px-4 pb-3 pt-4 text-base leading-relaxed text-foreground sm:px-5 sm:pb-4 sm:pt-5">
-                  AI-agenter försöker redan nå ditt system. Vi visar vad de ser — och vad som stoppar dem.
+              <div className="overflow-hidden rounded-2xl border-2 border-border/70 bg-background shadow-lg">
+                <p className="px-4 pb-3 pt-4 text-center text-base leading-relaxed text-foreground sm:px-5 sm:pb-4 sm:pt-5">
+                  AI-agenter försöker redan nå ditt system.
+                  <br />
+                  Vi visar vad de ser — och vad som stoppar dem.
                 </p>
-                <div className="border-t border-border/55 bg-card/45 px-3 py-3 sm:flex sm:flex-row sm:items-stretch sm:gap-2.5 sm:px-4 sm:pb-4">
+                <div className="border-t border-border/55 bg-card px-3 py-3 sm:flex sm:flex-row sm:items-stretch sm:gap-2.5 sm:px-4 sm:pb-4">
                   <div className="flex flex-1 items-center gap-2 rounded-xl border-2 border-border bg-background px-3.5 py-2.5 transition-colors duration-150 focus-within:border-primary/30">
                     <span className="font-mono text-xs text-muted-foreground shrink-0">https://</span>
                     <input
@@ -295,13 +297,13 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
         {/* ── Under hero: Varför ── */}
         <div className="relative z-[4] mx-auto max-w-[580px] px-6 pb-16 pt-8">
           <h2
-            className="font-serif text-[clamp(26px,5vw,36px)] font-normal tracking-[-0.45px] text-foreground mb-3 max-w-[460px]"
+            className="mx-auto mb-3 max-w-[460px] text-center font-serif text-[clamp(28px,5.5vw,40px)] font-normal tracking-[-0.45px] text-foreground"
             style={{ animation: `ss-fadeup 0.4s ${EASE} 210ms both` }}
           >
             Varför
           </h2>
           <p
-            className="text-sm text-muted-foreground leading-relaxed max-w-[460px]"
+            className="mx-auto max-w-[460px] text-center text-base leading-relaxed text-muted-foreground"
             style={{ animation: `ss-fadeup 0.4s ${EASE} 220ms both` }}
           >
             Företag som inte syns för agenter blir ointegrerbara. Builders väljer system med öppna API:er — vi visar var ditt står.
