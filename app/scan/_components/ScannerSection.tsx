@@ -108,7 +108,7 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
-    const set = () => { v.playbackRate = 0.4; };
+    const set = () => { v.playbackRate = 0.2; };
     v.addEventListener("canplay", set, { once: true });
     if (v.readyState >= 3) set();
     return () => v.removeEventListener("canplay", set);
@@ -240,7 +240,7 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
             playsInline
             preload="auto"
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 z-0 h-full min-h-full w-full object-cover opacity-20"
+            className="pointer-events-none absolute inset-0 z-0 h-full min-h-full w-full object-cover opacity-45"
           />
           {/* Lätt scrim: video syns; text läses via starkare ton under rubrik + brödtext */}
           <div
