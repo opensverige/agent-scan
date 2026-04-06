@@ -238,7 +238,7 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
             className="text-base text-muted-foreground leading-relaxed max-w-[420px] mb-7"
             style={{ animation: `ss-fadeup 0.5s ${EASE} 100ms both` }}
           >
-            Vi scannar din sajt och visar vad AI-agenter ser — 11 checks. Gratis. Öppet.
+            AI-agenter försöker redan nå ditt system. Vi visar vad de ser — och vad som stoppar dem.
           </p>
 
           <div
@@ -292,7 +292,7 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
             className="text-sm text-muted-foreground leading-relaxed max-w-[460px]"
             style={{ animation: `ss-fadeup 0.4s ${EASE} 220ms both` }}
           >
-            AI-agenter börjar interagera med företagssajter. GDPR, EU AI Act och svenska lagar ställer krav på hur. Vi kollar om du är redo.
+            Företag som inte syns för agenter blir ointegrerbara. Builders väljer system med öppna API:er — vi visar var ditt står.
           </p>
         </div>
       </div>
