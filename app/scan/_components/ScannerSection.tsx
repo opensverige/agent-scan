@@ -108,7 +108,7 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
-    const set = () => { v.playbackRate = 0.2; };
+    const set = () => { v.playbackRate = 0.5; };
     v.addEventListener("canplay", set, { once: true });
     if (v.readyState >= 3) set();
     return () => v.removeEventListener("canplay", set);
@@ -240,15 +240,15 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
             playsInline
             preload="auto"
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 z-0 h-full min-h-full w-full object-cover opacity-30"
+            className="pointer-events-none absolute inset-0 z-0 h-full min-h-full w-full object-cover opacity-55"
           />
           {/* Lätt scrim: video syns; text läses via starkare ton under rubrik + brödtext */}
           <div
             className="pointer-events-none absolute inset-0 z-[1]"
             style={{
               background: [
-                "linear-gradient(180deg, hsl(var(--background) / 0.52) 0%, hsl(var(--background) / 0.22) 48%, hsl(var(--background) / 0.12) 100%)",
-                "linear-gradient(0deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.55) 28%, transparent 62%)",
+                "linear-gradient(180deg, hsl(var(--background) / 0.35) 0%, hsl(var(--background) / 0.10) 50%, transparent 100%)",
+                "linear-gradient(0deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.40) 25%, transparent 55%)",
               ].join(", "),
             }}
           />
