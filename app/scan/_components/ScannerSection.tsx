@@ -105,52 +105,6 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
   const [activeMsgIdx, setActiveMsgIdx] = useState(0);
   const [progress, setProgress] = useState(0);
   const rafRef = useRef<number>(0);
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  // Ping-pong: play forward → reverse → forward, seamless loop via RAF scrubbing
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-    let direction = 1;
-    let rafId = 0;
-    let prevTs: number | null = null;
-
-    function step(ts: number) {
-      if (!video) return;
-      if (prevTs !== null && video.duration > 0) {
-        const dt = Math.min((ts - prevTs) / 1000, 0.1);
-        const next = video.currentTime + direction * dt;
-        if (next >= video.duration) {
-          video.currentTime = video.duration;
-          direction = -1;
-        } else if (next <= 0) {
-          video.currentTime = 0;
-          direction = 1;
-        } else {
-          video.currentTime = next;
-        }
-      }
-      prevTs = ts;
-      rafId = requestAnimationFrame(step);
-    }
-
-    function start() {
-      video!.pause();
-      rafId = requestAnimationFrame(step);
-    }
-
-    if (video.readyState >= 1) {
-      start();
-    } else {
-      video.addEventListener("loadedmetadata", start, { once: true });
-    }
-
-    return () => {
-      cancelAnimationFrame(rafId);
-    };
-  }, []);
 
   const startProgressAnim = useCallback((ms: number) => {
     const start = Date.now();
@@ -268,56 +222,52 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
       <div>
         <style>{CSS}</style>
 
-        {/* ── Hero — video background ── */}
-        <div className="relative overflow-hidden">
+        {/* ── Hero — video loops natively (forward+reverse encoded in file) ── */}
+        <div className="relative min-h-[min(44vh,380px)] overflow-hidden">
           <video
-            ref={videoRef}
-            src="/assets/hero-video.mp4"
+            src="/assets/hero-video-loop.mp4"
+            autoPlay
+            loop
             muted
             playsInline
             preload="auto"
             aria-hidden="true"
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ opacity: 0.3 }}
+            className="pointer-events-none absolute inset-0 z-0 h-full min-h-full w-full object-cover"
           />
-          {/* top vignette — anchors text against video */}
+          {/* Lätt scrim: video syns; text läses via starkare ton under rubrik + brödtext */}
           <div
-            className="absolute inset-0 pointer-events-none"
-            style={{ background: "linear-gradient(to bottom, #060606cc 0%, #06060633 50%, transparent 100%)" }}
-          />
-          {/* bottom fade — dissolves into page bg */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{ background: "linear-gradient(to top, #060606 0%, #060606bb 25%, transparent 60%)" }}
-          />
-          {/* scanlines — subtle techy texture */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.10) 3px, rgba(0,0,0,0.10) 4px)" }}
+            className="pointer-events-none absolute inset-0 z-[1]"
+            style={{
+              background: [
+                "linear-gradient(180deg, hsl(var(--background) / 0.52) 0%, hsl(var(--background) / 0.22) 48%, hsl(var(--background) / 0.12) 100%)",
+                "linear-gradient(0deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.55) 28%, transparent 62%)",
+              ].join(", "),
+            }}
           />
 
           {/* Hero content */}
-          <div className="relative px-6 pt-16 pb-20 max-w-[580px] mx-auto">
+          <div className="relative z-[2] mx-auto max-w-[580px] px-6 pb-12 pt-16 sm:pb-14">
             <div
-              className="font-mono text-[10px] font-bold text-primary tracking-[3px] mb-4"
+              className="mb-4 font-mono text-[10px] font-bold tracking-[3px] text-primary drop-shadow-[0_1px_8px_hsl(var(--background))]"
               style={{ animation: `ss-fadeup 0.5s ${EASE} both` }}
             >
               AGENT READINESS SCANNER
             </div>
             <h1
-              className="font-serif text-[clamp(32px,7vw,52px)] font-normal leading-[1.12] tracking-[-1.5px] mb-3.5"
+              className="mb-3.5 font-serif text-[clamp(32px,7vw,52px)] font-normal leading-[1.12] tracking-[-1.5px] text-foreground"
               style={{
                 animation: `ss-fadeup 0.6s ${EASE} 50ms both`,
-                textShadow: "0 2px 24px rgba(0,0,0,0.9), 0 1px 4px rgba(0,0,0,0.7)",
+                textShadow:
+                  "0 0 28px hsl(var(--background) / 0.95), 0 1px 3px hsl(var(--background) / 0.9), 0 2px 12px hsl(var(--foreground) / 0.08)",
               }}
             >
               Hur agent-redo är ditt företag?
             </h1>
             <p
-              className="text-base text-muted-foreground leading-relaxed max-w-[420px]"
+              className="max-w-[420px] text-base leading-relaxed text-muted-foreground"
               style={{
                 animation: `ss-fadeup 0.5s ${EASE} 100ms both`,
-                textShadow: "0 1px 12px rgba(0,0,0,1)",
+                textShadow: "0 0 20px hsl(var(--background)), 0 1px 2px hsl(var(--background) / 0.9)",
               }}
             >
               AI-agenter försöker redan nå ditt system. Vi visar vad de ser — och vad som stoppar dem.
@@ -325,13 +275,13 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
           </div>
         </div>
 
-        {/* ── Form section — sits on solid bg below hero ── */}
-        <div className="px-6 pb-16 max-w-[580px] mx-auto">
+        {/* ── Form — negativ marginal överlappar hero; z-index över video/scrim ── */}
+        <div className="relative z-[4] px-6 pb-16 max-w-[580px] mx-auto">
           <div
-            className="flex flex-col sm:flex-row gap-2 mb-2"
+            className="mb-2 flex flex-col gap-2 sm:flex-row -mt-10 sm:-mt-14"
             style={{ animation: `ss-fadeup 0.5s ${EASE} 140ms both` }}
           >
-            <div className="flex flex-1 items-center gap-2 bg-card border-2 border-border rounded-xl px-3.5 py-3 focus-within:border-primary/30 transition-colors duration-150">
+            <div className="flex flex-1 items-center gap-2 rounded-xl border-2 border-border bg-card px-3.5 py-3 shadow-md transition-colors duration-150 focus-within:border-primary/30">
               <span className="font-mono text-xs text-muted-foreground shrink-0">https://</span>
               <input
                 value={url}
@@ -349,7 +299,7 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
               onClick={() => runScan(url)}
               disabled={!canSubmit}
               size="lg"
-              className="w-full sm:w-auto shrink-0"
+              className="w-full shrink-0 shadow-md sm:w-auto"
             >
               Scanna →
             </Button>
