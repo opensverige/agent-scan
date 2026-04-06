@@ -9,6 +9,7 @@ import {
   type LiveChecks,
   type BuilderProbeData,
 } from "@/lib/claude";
+import { saveLocalLatestScan } from "@/lib/local-scan-store";
 import {
   checkRobots, checkSitemap, checkLlms,
   complianceChecks, checkMcpServer, checkSandboxAvailable,
@@ -77,7 +78,8 @@ async function fetchApisGuruSpec(domain: string): Promise<string | null> {
 // Purely informational — does NOT affect the mcp_server check score.
 async function discoverMcpOnGitHub(companyName: string): Promise<import('@/lib/scan-types').McpGithubHint | null> {
   try {
-    const q = encodeURIComponent(`${companyName} mcp server`);
+    const companyToken = companyName.toLowerCase().replace(/[^a-z0-9-]/g, "");
+    const q = encodeURIComponent(`"${companyName}" mcp (server OR "model context protocol")`);
     const res = await fetch(
       `https://api.github.com/search/repositories?q=${q}&sort=stars&order=desc&per_page=8`,
       {
@@ -97,11 +99,32 @@ async function discoverMcpOnGitHub(companyName: string): Promise<import('@/lib/s
       }>;
     };
     if (!data.items?.length) return null;
-    const hit = data.items.find(r => {
-      const n = r.name.toLowerCase();
-      const d = (r.description ?? "").toLowerCase();
-      return n.includes("mcp") || d.includes("mcp") || d.includes("model context protocol");
-    });
+
+    const scored = data.items
+      .map((r) => {
+        const name = r.name.toLowerCase();
+        const full = r.full_name.toLowerCase();
+        const desc = (r.description ?? "").toLowerCase();
+        const text = `${name} ${full} ${desc}`;
+
+        const mentionsMcp = /(^|[^a-z])(mcp|model context protocol)($|[^a-z])/i.test(text);
+        if (!mentionsMcp) return null;
+
+        const mentionsCompany = companyToken.length >= 3 && text.includes(companyToken);
+        if (!mentionsCompany) return null;
+
+        let confidenceScore = 0;
+        if (name.includes("mcp")) confidenceScore += 2;
+        if (full.includes(companyToken)) confidenceScore += 2;
+        if (desc.includes("model context protocol")) confidenceScore += 1;
+        if (r.stargazers_count > 10) confidenceScore += 1;
+
+        return { repo: r, confidenceScore };
+      })
+      .filter((row): row is { repo: NonNullable<typeof data.items>[number]; confidenceScore: number } => row !== null)
+      .sort((a, b) => b.confidenceScore - a.confidenceScore || b.repo.stargazers_count - a.repo.stargazers_count);
+
+    const hit = scored[0]?.repo;
     if (!hit) return null;
     return { url: hit.html_url, full_name: hit.full_name, stars: hit.stargazers_count, owner: hit.owner.login };
   } catch { return null; }
@@ -332,17 +355,27 @@ async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveCh
     `https://developer.${domain}/openapi.json`,
     `https://developer.${domain}/swagger.json`,
   ];
+  const complianceUrls = [
+    `${base}/integritetspolicy`,
+    `${base}/privacy`,
+    `${base}/privacy-policy`,
+    `${base}/gdpr`,
+    `${base}/cookies`,
+    `${base}/cookiepolicy`,
+    `${base}/cookie-policy`,
+  ];
 
   // ── Phase 1: parallel quick fetches ──────────────────────────────────────
   // sitemap_index.xml: large sites use this instead of sitemap.xml
   // llms.txt: checked at root AND .well-known — content-validated in phase 2
-  const [robotsRes, sitemapRes, sitemapIndexRes, llmsRes, llmsWellKnownRes, ...builderResults] = await Promise.all([
+  const [robotsRes, sitemapRes, sitemapIndexRes, llmsRes, llmsWellKnownRes, ...probeResultsRaw] = await Promise.all([
     fetchSafe(`${base}/robots.txt`),
     fetchSafe(`${base}/sitemap.xml`),
     fetchSafe(`${base}/sitemap_index.xml`),
     fetchSafe(`${base}/llms.txt`),
     fetchSafe(`${base}/.well-known/llms.txt`),
     ...builderUrls.map(url => fetchSafe(url).then(r => ({ url, ...r ?? { status: 0, body: "", contentType: null } } as ProbeResult))),
+    ...complianceUrls.map(url => fetchSafe(url).then(r => ({ url, ...r ?? { status: 0, body: "", contentType: null } } as ProbeResult))),
   ]);
 
   // ── Phase 2: resolve from phase 1 results ────────────────────────────────
@@ -371,8 +404,19 @@ async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveCh
     llms: llmsValid,
   };
 
-  const [privacyCheck, cookieCheck, aiMarkingCheck] = complianceChecks();
-  const probeResults = builderResults as ProbeResult[];
+  const probeResults = probeResultsRaw.slice(0, builderUrls.length) as ProbeResult[];
+  const complianceProbeResults = probeResultsRaw.slice(builderUrls.length) as ProbeResult[];
+
+  const joinedComplianceText = complianceProbeResults
+    .filter((p) => p.status === 200 || p.status === 401 || p.status === 403)
+    .map((p) => `${p.url}\n${p.body}`)
+    .join("\n\n");
+
+  const [privacyCheck, cookieCheck, aiMarkingCheck] = complianceChecks({
+    privacyText: joinedComplianceText,
+    cookieText: joinedComplianceText,
+    aiText: joinedComplianceText,
+  });
   const apiExistsCheck = checkApiExists(probeResults);
   const openApiCheck = checkOpenApiSpec(probeResults);
   const apiDocsCheck = checkApiDocs(probeResults);
@@ -563,32 +607,71 @@ async function saveToSupabase(
   const compliance = [checks.privacy_automation, checks.cookie_bot_handling, checks.ai_content_marking];
   const builder = [checks.api_exists, checks.openapi_spec, checks.api_docs, checks.mcp_server, checks.sandbox_available];
 
+  const baseHeaders = {
+    "Content-Type": "application/json",
+    apikey: key,
+    Authorization: `Bearer ${key}`,
+    Prefer: "return=representation",
+  };
+
+  const modernPayload = {
+    domain, badge,
+    checks_passed: score, checks_total: 11,
+    discovery_passed: discovery.filter(c => c.pass).length,
+    compliance_passed: compliance.filter(c => c.pass).length,
+    builder_passed: builder.filter(c => c.pass).length,
+    has_robots: checks.robots_ok.pass, has_sitemap: checks.sitemap_exists.pass,
+    has_llms_txt: checks.llms_txt.pass, has_api: checks.api_exists.pass,
+    has_openapi_spec: checks.openapi_spec.pass, has_api_docs: checks.api_docs.pass,
+    checks_json: checks, claude_summary: summary, recommendations, ip_hash: ipHash,
+  };
+
+  // Backward-compatible payload for older scan_submissions schemas.
+  const legacyPayload = {
+    domain,
+    badge,
+    checks_passed: score,
+    checks_json: checks,
+    has_robots: checks.robots_ok.pass,
+    has_sitemap: checks.sitemap_exists.pass,
+    has_llms_txt: checks.llms_txt.pass,
+    wants_deep_scan: false,
+    ip_hash: ipHash,
+  };
+
   try {
     const res = await fetch(`${url}/rest/v1/scan_submissions`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: key,
-        Authorization: `Bearer ${key}`,
-        Prefer: "return=representation",
-      },
-      body: JSON.stringify({
-        domain, badge,
-        checks_passed: score, checks_total: 11,
-        discovery_passed: discovery.filter(c => c.pass).length,
-        compliance_passed: compliance.filter(c => c.pass).length,
-        builder_passed: builder.filter(c => c.pass).length,
-        has_robots: checks.robots_ok.pass, has_sitemap: checks.sitemap_exists.pass,
-        has_llms_txt: checks.llms_txt.pass, has_api: checks.api_exists.pass,
-        has_openapi_spec: checks.openapi_spec.pass, has_api_docs: checks.api_docs.pass,
-        checks_json: checks, claude_summary: summary, recommendations, ip_hash: ipHash,
-      }),
+      headers: baseHeaders,
+      body: JSON.stringify(modernPayload),
       signal: AbortSignal.timeout(5_000),
     });
-    if (!res.ok) return null;
-    const rows = await res.json() as Array<{ id: string }>;
+    if (res.ok) {
+      const rows = await res.json() as Array<{ id: string }>;
+      return rows[0]?.id ?? null;
+    }
+
+    const errText = await res.text().catch(() => "");
+    console.warn(`[scan] modern insert failed status=${res.status} body=${errText.slice(0, 220)}`);
+
+    const fallbackRes = await fetch(`${url}/rest/v1/scan_submissions`, {
+      method: "POST",
+      headers: baseHeaders,
+      body: JSON.stringify(legacyPayload),
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (!fallbackRes.ok) {
+      const fallbackErr = await fallbackRes.text().catch(() => "");
+      console.warn(`[scan] legacy insert failed status=${fallbackRes.status} body=${fallbackErr.slice(0, 220)}`);
+      return null;
+    }
+    const rows = await fallbackRes.json() as Array<{ id: string }>;
     return rows[0]?.id ?? null;
-  } catch { return null; }
+  } catch (error) {
+    console.warn("[scan] saveToSupabase error", error);
+    return null;
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -610,8 +693,23 @@ export async function POST(req: NextRequest) {
   }
 
   // Run Swedish company validation and IP hash in parallel — both needed before proceeding
+  const bypassFromEnv =
+    process.env.BYPASS_SWEDISH_CHECK === "1" ||
+    process.env.BYPASS_SWEDISH_CHECK === "true";
+  const bypassFromLocalhost =
+    req.nextUrl.hostname === "localhost" ||
+    req.nextUrl.hostname === "127.0.0.1";
+  const bypassSwedishCheck = bypassFromEnv || bypassFromLocalhost;
+
   const [swedishCheck, ipHash] = await Promise.all([
-    isSwedishCompany(rawDomain),
+    bypassSwedishCheck
+      ? Promise.resolve({
+          pass: true as const,
+          reason: bypassFromEnv
+            ? ("bypass_env" as "bypass_env" | "bypass_localhost")
+            : ("bypass_localhost" as "bypass_env" | "bypass_localhost"),
+        })
+      : isSwedishCompany(rawDomain),
     getIpHash(req),
   ]);
   if (!swedishCheck.pass) {
@@ -703,9 +801,9 @@ export async function POST(req: NextRequest) {
 
   // Post-check: if sandbox probe missed but Firecrawl docs mention it (e.g. behind login),
   // upgrade the check with a softer label. Reuses already-fetched Firecrawl content — no extra cost.
-  const sandboxContent: string | null = firecrawlDocsContent;
-  if (!checks.sandbox_available.pass && sandboxContent) {
-    const hay = sandboxContent.toLowerCase();
+  const docsForSandboxCheck: unknown = firecrawlDocsContent;
+  if (!checks.sandbox_available.pass && typeof docsForSandboxCheck === "string") {
+    const hay = docsForSandboxCheck.toLowerCase();
     if (/sandbox|testmilj|test.?environment|playground|staging|testbolag|test.?account/.test(hay)) {
       checks.sandbox_available = {
         ...checks.sandbox_available,
@@ -724,9 +822,23 @@ export async function POST(req: NextRequest) {
   const isDemo = !analysis;
   const finalAnalysis = analysis ?? buildDemoAnalysis(rawDomain);
 
-  const scanId = await saveToSupabase(
+  const scannedAt = new Date().toISOString();
+
+  const persistedScanId = await saveToSupabase(
     rawDomain, checks, badge, score, finalAnalysis.summary, recommendations, ipHash
   ).catch(() => null);
+
+  // Keep latest scan available in local/dev even when database persistence is missing.
+  const localScanId = saveLocalLatestScan({
+    domain: rawDomain,
+    badge,
+    checks_passed: score,
+    checks_json: checks,
+    claude_summary: finalAnalysis.summary,
+    recommendations,
+    scanned_at: scannedAt,
+  });
+  const scanId = persistedScanId ?? localScanId;
 
   return Response.json({
     company: finalAnalysis.company,
@@ -742,6 +854,10 @@ export async function POST(req: NextRequest) {
     isDemo,
     api_score: apiScore ?? null,
     mcp_github_hint: mcpGithubHint ?? null,
-    scanned_at: new Date().toISOString(),
+    swedish_check: {
+      bypassed: bypassSwedishCheck,
+      reason: swedishCheck.reason,
+    },
+    scanned_at: scannedAt,
   });
 }

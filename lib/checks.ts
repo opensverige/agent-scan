@@ -1,4 +1,4 @@
-// lib/checks.ts
+﻿// lib/checks.ts
 
 export type CheckId =
   | 'robots_ok' | 'sitemap_exists' | 'llms_txt'
@@ -43,15 +43,25 @@ export interface ProbeResult {
   error?: string;
 }
 
+export interface ComplianceEvidence {
+  privacyText?: string;
+  cookieText?: string;
+  aiText?: string;
+}
+
 // Paths to probe for builder checks (relative to domain root)
 export const BUILDER_PATHS = [
   '/api', '/api/v1', '/api/docs', '/developer', '/developers',
   '/docs', '/docs/api', '/openapi.json', '/openapi.yaml',
   '/swagger.json', '/swagger.yaml', '/api-docs',
   '/apidocs', '/reference', '/doc', '/api/reference',
+  '/api/v2/openapi.json', '/api/v3/openapi.json',
+  '/api/v2/swagger.json', '/api/v3/swagger.json',
+  '/v3/api-docs', '/v2/api-docs',
+  '/swagger-ui', '/swagger-ui/index.html',
   '/v1/openapi.json', '/v2/openapi.json', '/v3/openapi.json',
   '/v1/swagger.json', '/v2/swagger.json',
-  // Deeper developer pages — often contain sandbox, auth, and getting-started content
+  // Deeper developer pages - often contain sandbox, auth, and getting-started content
   '/developer/developer-portal', '/developer/authentication',
   '/developer/getting-started', '/developer/docs',
   '/developers/docs', '/developers/api',
@@ -59,15 +69,19 @@ export const BUILDER_PATHS = [
 
 const OPENAPI_PATHS = new Set([
   '/openapi.json', '/openapi.yaml', '/swagger.json', '/swagger.yaml',
+  '/api/v2/openapi.json', '/api/v3/openapi.json',
+  '/api/v2/swagger.json', '/api/v3/swagger.json',
+  '/v3/api-docs', '/v2/api-docs',
   '/v1/openapi.json', '/v2/openapi.json', '/v3/openapi.json',
   '/v1/swagger.json', '/v2/swagger.json',
 ]);
 const API_DOC_PATHS = new Set([
   '/developer', '/developers', '/docs', '/api/docs', '/api-docs',
   '/apidocs', '/reference', '/doc', '/api/reference',
+  '/v3/api-docs', '/v2/api-docs', '/swagger-ui', '/swagger-ui/index.html',
 ]);
 
-// ── Discovery ─────────────────────────────────────────────
+// â”€â”€ Discovery â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function checkRobots(allowed: boolean): CheckResult {
   return {
@@ -86,8 +100,8 @@ export function checkSitemap(exists: boolean): CheckResult {
     id: 'sitemap_exists',
     pass: exists,
     label: exists
-      ? 'Sitemap finns — agenter kan navigera'
-      : 'Ingen sitemap — agenter kan inte navigera sajten',
+      ? 'Sitemap finns - agenter kan navigera'
+      : 'Ingen sitemap - agenter kan inte navigera sajten',
     category: 'discovery',
     severity: 'info',
   };
@@ -98,48 +112,72 @@ export function checkLlms(valid: boolean): CheckResult {
     id: 'llms_txt',
     pass: valid,
     label: valid
-      ? 'llms.txt finns — agenter vet vad du erbjuder'
-      : 'Ingen llms.txt — agenter vet inte vad du erbjuder',
+      ? 'llms.txt finns - agenter vet vad du erbjuder'
+      : 'Ingen llms.txt - agenter vet inte vad du erbjuder',
     category: 'discovery',
     severity: 'important',
   };
 }
 
-// ── Compliance (always fail) ───────────────────────────────
+// â”€â”€ Compliance (evidence-based heuristic) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-export function complianceChecks(): [CheckResult, CheckResult, CheckResult] {
+function normalizedText(value?: string): string {
+  return (value ?? "").toLowerCase();
+}
+
+export function complianceChecks(evidence?: ComplianceEvidence): [CheckResult, CheckResult, CheckResult] {
+  const privacyHay = normalizedText(evidence?.privacyText);
+  const cookieHay = normalizedText(evidence?.cookieText);
+  const aiHay = normalizedText(evidence?.aiText);
+
+  const hasPrivacyAutomationInfo = /automatiserad|automated decision|profilering|profiling|art\.\s*22|artikel\s*22|machine-?made decision/.test(privacyHay);
+  const hasCookieBotHandling = /bot|crawler|user-agent|icke-m[aä]nsklig|non-human|machine client|agent/.test(cookieHay);
+  const hasAiLabelingInfo = /ai-generated|ai generated|syntetisk|watermark|maskinl[aä]sbar m[aä]rkning|article\s*50|art\.\s*50|eu ai act/.test(aiHay);
+
   return [
     {
       id: 'privacy_automation',
-      pass: false,
-      label: 'Integritetspolicyn saknar info om automatiserad behandling',
-      detail: 'GDPR Art. 22 — individer ska informeras om automatiserade beslut',
+      pass: hasPrivacyAutomationInfo,
+      label: hasPrivacyAutomationInfo
+        ? 'Integritetspolicy nämner automatiserad behandling'
+        : 'Integritetspolicy: ingen tydlig info om automatiserad behandling',
+      detail: hasPrivacyAutomationInfo
+        ? 'Hittade signaler kopplade till GDPR Art. 22 i publikt material'
+        : 'Ingen tydlig Art. 22/profilering-signal hittad i publikt material',
       category: 'compliance',
       severity: 'critical',
-      hardcoded: true,
+      hardcoded: false,
     },
     {
       id: 'cookie_bot_handling',
-      pass: false,
-      label: 'Cookiehantering kräver mänsklig consent — blockerar agenter',
-      detail: 'Consent-banners är byggda för människor, inte AI-agenter',
+      pass: hasCookieBotHandling,
+      label: hasCookieBotHandling
+        ? 'Cookiehantering för icke-mänskliga klienter nämns'
+        : 'Cookiehantering för icke-mänskliga klienter är oklar',
+      detail: hasCookieBotHandling
+        ? 'Hittade bot/user-agent-relaterad signal i publik cookie/policy-text'
+        : 'Ingen tydlig bot/crawler-hantering hittad i publikt material',
       category: 'compliance',
-      severity: 'critical',
-      hardcoded: true,
+      severity: 'important',
+      hardcoded: false,
     },
     {
       id: 'ai_content_marking',
-      pass: false,
-      label: 'AI-genererat innehåll inte märkt enligt EU AI Act',
-      detail: 'EU AI Act Art. 50(2) — maskinläsbar märkning krävs från aug 2026',
+      pass: hasAiLabelingInfo,
+      label: hasAiLabelingInfo
+        ? 'Signal om märkning/AI-transparens hittad'
+        : 'Ingen tydlig AI-märkningssignal hittad',
+      detail: hasAiLabelingInfo
+        ? 'Hittade referens till AI-märkning/transparens i publikt material'
+        : 'Ingen tydlig Art. 50/maskinläsbar märkningssignal hittad',
       category: 'compliance',
       severity: 'important',
-      hardcoded: true,
+      hardcoded: false,
     },
   ];
 }
 
-// ── Builder (live probes) ──────────────────────────────────
+// â”€â”€ Builder (live probes) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function checkApiExists(probes: ProbeResult[]): CheckResult {
   // 200/429 = confirmed; 401/403 only count if application/json (avoids Next.js auth HTML walls)
@@ -162,13 +200,36 @@ export function checkApiExists(probes: ProbeResult[]): CheckResult {
 }
 
 export function checkOpenApiSpec(probes: ProbeResult[]): CheckResult {
+  const isHtmlLike = (body: string, contentType: string | null): boolean => {
+    const ct = (contentType ?? '').toLowerCase();
+    const start = body.trimStart().slice(0, 120).toLowerCase();
+    return ct.includes('text/html') || start.startsWith('<!doctype') || start.startsWith('<html');
+  };
+
+  const looksLikeSpecDocument = (body: string, contentType: string | null): boolean => {
+    const ct = (contentType ?? '').toLowerCase();
+    const trimmed = body.trimStart();
+    if (/"openapi"\s*:/.test(body) || /"swagger"\s*:/.test(body)) return true;
+    if (/^openapi:\s*[0-9.]+/im.test(trimmed) || /^swagger:\s*['"]?2\.0['"]?/im.test(trimmed)) return true;
+    if (ct.includes('application/json') || ct.includes('application/yaml') || ct.includes('text/yaml')) {
+      return /openapi|swagger/i.test(body);
+    }
+    return false;
+  };
+
   const hit = probes.find(p => {
     if (p.status !== 200 && p.status !== 429 && p.status !== 401 && p.status !== 403) return false;
     const body = p.body.toLowerCase();
     const hasExplicitSpecPath = (() => {
       try { return OPENAPI_PATHS.has(new URL(p.url).pathname); } catch { return false; }
     })();
-    if (hasExplicitSpecPath && (body.includes('openapi') || body.includes('swagger'))) return true;
+    if (hasExplicitSpecPath) {
+      // 401/403/429 on a spec path still indicates a real spec endpoint exists.
+      if (p.status === 401 || p.status === 403 || p.status === 429) return true;
+      // Avoid false positives from HTML catch-all pages behind redirects.
+      if (isHtmlLike(p.body, p.contentType)) return looksLikeSpecDocument(p.body, p.contentType);
+      return looksLikeSpecDocument(p.body, p.contentType);
+    }
 
     // Redoc/Swagger docs can expose the spec via JS download links instead of direct static paths.
     const isLikelyDocsPage = (() => {
@@ -192,8 +253,8 @@ export function checkOpenApiSpec(probes: ProbeResult[]): CheckResult {
     id: 'openapi_spec',
     pass: !!hit,
     label: hit
-      ? 'OpenAPI-spec hittad — agenter kan mappa ditt API'
-      : 'Ingen OpenAPI-spec — agenter kan inte mappa ditt API automatiskt',
+      ? 'OpenAPI-spec hittad - agenter kan mappa ditt API'
+      : 'Ingen OpenAPI-spec - agenter kan inte mappa ditt API automatiskt',
     category: 'builder',
     severity: 'important',
   };
@@ -201,7 +262,7 @@ export function checkOpenApiSpec(probes: ProbeResult[]): CheckResult {
 
 export function checkApiDocs(probes: ProbeResult[]): CheckResult {
   const hit = probes.find(p => {
-    // 429 = rate-limited, 401/403 = auth-gated — all mean the page exists
+    // 429 = rate-limited, 401/403 = auth-gated - all mean the page exists
     if (p.status !== 200 && p.status !== 429 && p.status !== 401 && p.status !== 403) return false;
     try {
       const { hostname, pathname } = new URL(p.url);
@@ -225,9 +286,9 @@ export function checkApiDocs(probes: ProbeResult[]): CheckResult {
   };
 }
 
-// ── Builder (hardcoded fails) ─────────────────────────────
+// â”€â”€ Builder (hardcoded fails) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-// MCP check: probe .well-known/mcp.json — if found, real MCP server exists.
+// MCP check: probe .well-known/mcp.json - if found, real MCP server exists.
 // Falls back to hardcoded fail if not found (most companies don't have MCP yet).
 export function checkMcpServer(probes: ProbeResult[]): CheckResult {
   const hit = probes.find(p =>
@@ -239,11 +300,11 @@ export function checkMcpServer(probes: ProbeResult[]): CheckResult {
     id: 'mcp_server',
     pass: !!hit,
     label: hit
-      ? 'MCP-server hittad — agenter kan koppla in sig direkt'
+      ? 'MCP-server hittad - agenter kan koppla in sig direkt'
       : 'Ingen MCP-koppling hittad',
     detail: hit
       ? undefined
-      : 'AI-verktyg som Claude, Cursor och Windsurf använder MCP för att koppla in sig direkt i system. Vi hittade ingen kopplad till den här domänen — det kan innebära att agenter inte kan nå er utan manuell integration.',
+      : 'AI-verktyg som Claude, Cursor och Windsurf använder MCP för att koppla in sig direkt i system. Vi hittade ingen kopplad till den här domänen - det kan innebära att agenter inte kan nå er utan manuell integration.',
     category: 'builder',
     severity: 'important',
     hardcoded: !hit,
@@ -269,7 +330,7 @@ export function checkSandboxAvailable(probes: ProbeResult[]): CheckResult {
   };
 }
 
-// ── Badge and score ───────────────────────────────────────
+// â”€â”€ Badge and score â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function calculateBadge(checks: AllChecks): { badge: ScanBadge; score: number } {
   const score = Object.values(checks).filter(c => c.pass).length;
@@ -277,7 +338,7 @@ export function calculateBadge(checks: AllChecks): { badge: ScanBadge; score: nu
   return { badge, score };
 }
 
-// ── Severity counts (failing checks only) ─────────────────
+// â”€â”€ Severity counts (failing checks only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function computeSeverityCounts(checks: AllChecks): { critical: number; important: number; info: number } {
   const failing = Object.values(checks).filter(c => !c.pass);
@@ -288,20 +349,20 @@ export function computeSeverityCounts(checks: AllChecks): { critical: number; im
   };
 }
 
-// ── Top recommendations ───────────────────────────────────
+// â”€â”€ Top recommendations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const RECOMMENDATION_MAP: Record<CheckId, string> = {
   llms_txt: 'Lägg till /llms.txt som beskriver ditt API och dina tjänster för AI-agenter.',
   privacy_automation: 'Uppdatera integritetspolicyn med info om automatiserad behandling (GDPR Art. 22).',
-  mcp_server: 'Vi hittade ingen MCP-koppling — AI-agenter kan inte nå er direkt utan manuell integration. Utred om en MCP-server är rätt steg för er.',
+  mcp_server: 'Vi hittade ingen MCP-koppling - AI-agenter kan inte nå er direkt utan manuell integration. Utred om en MCP-server är rätt steg för er.',
   openapi_spec: 'Publicera en OpenAPI-spec så agenter och builders kan mappa ditt API automatiskt.',
-  api_exists: 'Skapa ett publikt API — utan det kan ingen agent interagera med ditt system.',
+  api_exists: 'Skapa ett publikt API - utan det kan ingen agent interagera med ditt system.',
   cookie_bot_handling: 'Se över hur din cookielösning hanterar icke-mänskliga besökare.',
-  ai_content_marking: 'Förbered för EU AI Act — märk AI-genererat innehåll maskinläsbart (Art. 50).',
+  ai_content_marking: 'Förbered för EU AI Act - märk AI-genererat innehåll maskinläsbart (Art. 50).',
   sandbox_available: 'Erbjud en sandbox/testmiljö så builders kan testa utan att påverka produktionsdata.',
   robots_ok: 'Se till att robots.txt inte blockerar AI-agenter som GPTBot och ClaudeBot.',
   sitemap_exists: 'Lägg till sitemap.xml så agenter kan navigera din sajt.',
-  api_docs: 'Publicera API-dokumentation — utan docs kan ingen bygga mot ditt system.',
+  api_docs: 'Publicera API-dokumentation - utan docs kan ingen bygga mot ditt system.',
 };
 
 const RECOMMENDATION_PRIORITY: CheckId[] = [
@@ -323,3 +384,5 @@ export const CHECK_DISPLAY_ORDER: CheckId[] = [
   'privacy_automation', 'cookie_bot_handling', 'ai_content_marking',
   'api_exists', 'openapi_spec', 'api_docs', 'mcp_server', 'sandbox_available',
 ];
+
+

@@ -6,6 +6,7 @@
 import { NextRequest } from "next/server";
 import type { AllChecks } from "@/lib/checks";
 import { computeSeverityCounts } from "@/lib/checks";
+import { getLocalLatestScan } from "@/lib/local-scan-store";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -13,32 +14,111 @@ const CORS = {
   "Access-Control-Allow-Headers": "Content-Type, Accept",
 };
 
-const SITE = "https://agent.opensverige.se";
-
 interface ScanRow {
   badge: string;
   checks_passed: number;
   checks_json: AllChecks;
   claude_summary: string | null;
-  recommendations: string | null;
+  recommendations: string[] | null;
   scanned_at: string | null;
+}
+
+interface LegacyScanRow {
+  badge: string;
+  checks_passed: number;
+  checks_json: AllChecks;
+  scanned_at: string | null;
+}
+
+function getSiteOrigin(req: NextRequest): string {
+  const origin = req.nextUrl.origin;
+  return origin || "https://agent.opensverige.se";
+}
+
+function normalizeRecommendations(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
 }
 
 async function fetchLatestScan(domain: string): Promise<ScanRow | null> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return null;
+  if (!url || !key) {
+    const local = getLocalLatestScan(domain);
+    if (!local) return null;
+    return {
+      badge: local.badge,
+      checks_passed: local.checks_passed,
+      checks_json: local.checks_json,
+      claude_summary: local.claude_summary,
+      recommendations: local.recommendations,
+      scanned_at: local.scanned_at,
+    };
+  }
 
-  const res = await fetch(
-    `${url}/rest/v1/scan_submissions?domain=eq.${encodeURIComponent(domain)}&order=scanned_at.desc&limit=1&select=badge,checks_passed,checks_json,claude_summary,recommendations,scanned_at`,
-    {
-      headers: { apikey: key, Authorization: `Bearer ${key}` },
-      next: { revalidate: 60 },
+  const stripped = domain.replace(/^www\./, "");
+  const candidates = Array.from(new Set([
+    domain,
+    stripped,
+    `www.${stripped}`,
+  ]));
+
+  const headers = { apikey: key, Authorization: `Bearer ${key}` };
+  const modernSelect = "badge,checks_passed,checks_json,claude_summary,recommendations,scanned_at";
+  const legacySelect = "badge,checks_passed,checks_json,scanned_at";
+
+  for (const candidate of candidates) {
+    const modernRes = await fetch(
+      `${url}/rest/v1/scan_submissions?domain=eq.${encodeURIComponent(candidate)}&order=scanned_at.desc&limit=1&select=${modernSelect}`,
+      { headers, next: { revalidate: 60 } }
+    );
+
+    if (modernRes.ok) {
+      const rows = await modernRes.json() as Array<ScanRow & { recommendations?: unknown }>;
+      const row = rows[0];
+      if (row) {
+        return {
+          badge: row.badge,
+          checks_passed: row.checks_passed,
+          checks_json: row.checks_json,
+          claude_summary: row.claude_summary ?? null,
+          recommendations: normalizeRecommendations(row.recommendations),
+          scanned_at: row.scanned_at ?? null,
+        };
+      }
+      continue;
     }
-  );
-  if (!res.ok) return null;
-  const rows = await res.json() as ScanRow[];
-  return rows[0] ?? null;
+
+    // Older schemas don't have claude_summary/recommendations columns.
+    const legacyRes = await fetch(
+      `${url}/rest/v1/scan_submissions?domain=eq.${encodeURIComponent(candidate)}&order=scanned_at.desc&limit=1&select=${legacySelect}`,
+      { headers, next: { revalidate: 60 } }
+    );
+    if (!legacyRes.ok) continue;
+
+    const legacyRows = await legacyRes.json() as LegacyScanRow[];
+    const legacyRow = legacyRows[0];
+    if (!legacyRow) continue;
+
+    return {
+      badge: legacyRow.badge,
+      checks_passed: legacyRow.checks_passed,
+      checks_json: legacyRow.checks_json,
+      claude_summary: null,
+      recommendations: [],
+      scanned_at: legacyRow.scanned_at ?? null,
+    };
+  }
+
+  const local = getLocalLatestScan(domain);
+  if (!local) return null;
+  return {
+    badge: local.badge,
+    checks_passed: local.checks_passed,
+    checks_json: local.checks_json,
+    claude_summary: local.claude_summary,
+    recommendations: local.recommendations,
+    scanned_at: local.scanned_at,
+  };
 }
 
 function badgeLabel(badge: string): string {
@@ -51,7 +131,7 @@ function checkLine(pass: boolean, label: string): string {
   return `${pass ? "✓" : "✗"} ${label}`;
 }
 
-function toMarkdown(domain: string, row: ScanRow): string {
+function toMarkdown(domain: string, row: ScanRow, site: string): string {
   const c = row.checks_json;
   const sc = computeSeverityCounts(c);
   const recs: string[] = Array.isArray(row.recommendations) ? row.recommendations : [];
@@ -98,9 +178,9 @@ function toMarkdown(domain: string, row: ScanRow): string {
   sections.push(
     "",
     "---",
-    `Scan page: ${SITE}/scan/${domain}`,
-    `Raw JSON:  ${SITE}/api/results/${domain}`,
-    `New scan:  ${SITE}/scan?domain=${domain}`,
+    `Scan page: ${site}/scan/${domain}`,
+    `Raw JSON:  ${site}/api/results/${domain}`,
+    `New scan:  ${site}/scan?domain=${domain}`,
   );
 
   return sections.join("\n");
@@ -116,6 +196,7 @@ export async function GET(
 ) {
   const { domain: rawDomain } = await params;
   const domain = rawDomain.toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+  const site = getSiteOrigin(req);
 
   const row = await fetchLatestScan(domain);
 
@@ -124,13 +205,13 @@ export async function GET(
       error: "No scan found for this domain.",
       domain,
       hint: "Run a scan first.",
-      scan_url: `${SITE}/scan/${domain}`,
+      scan_url: `${site}/scan/${domain}`,
     };
     const accept = req.headers.get("accept") ?? "";
     const format = new URL(req.url).searchParams.get("format");
     if (format === "text" || accept.includes("text/plain") || accept.includes("text/markdown")) {
       return new Response(
-        `# AI Readiness: ${domain}\n\nNo scan found.\n\nRun a scan: ${SITE}/scan/${domain}\n`,
+        `# AI Readiness: ${domain}\n\nNo scan found.\n\nRun a scan: ${site}/scan/${domain}\n`,
         { status: 404, headers: { ...CORS, "Content-Type": "text/plain; charset=utf-8" } }
       );
     }
@@ -142,7 +223,7 @@ export async function GET(
   const wantsText = format === "text" || accept.includes("text/plain") || accept.includes("text/markdown");
 
   if (wantsText) {
-    return new Response(toMarkdown(domain, row), {
+    return new Response(toMarkdown(domain, row, site), {
       headers: {
         ...CORS,
         "Content-Type": "text/plain; charset=utf-8",
@@ -166,9 +247,9 @@ export async function GET(
       summary: row.claude_summary,
       recommendations: recs,
       _links: {
-        scan_page: `${SITE}/scan/${domain}`,
-        raw_text: `${SITE}/api/results/${domain}?format=text`,
-        new_scan: `${SITE}/scan?domain=${domain}`,
+        scan_page: `${site}/scan/${domain}`,
+        raw_text: `${site}/api/results/${domain}?format=text`,
+        new_scan: `${site}/scan?domain=${domain}`,
       },
     },
     {

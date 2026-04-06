@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import type { ScanResult } from "@/lib/scan-types";
 import type { AllChecks } from "@/lib/checks";
 import { computeSeverityCounts } from "@/lib/checks";
+import { getLocalLatestScan } from "@/lib/local-scan-store";
 import Nav from "../_components/Nav";
 import ResultsPage from "./_components/ResultsPage";
 
@@ -13,39 +14,111 @@ interface PageProps {
 async function getLatestScan(domain: string): Promise<ScanResult | null> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return null;
-  try {
-    const res = await fetch(
-      `${url}/rest/v1/scan_submissions?domain=eq.${encodeURIComponent(domain)}&order=scanned_at.desc&limit=1&select=badge,checks_passed,checks_json,claude_summary,recommendations,scanned_at`,
-      {
-        headers: { apikey: key, Authorization: `Bearer ${key}` },
-        next: { revalidate: 60 },
-      }
-    );
-    if (!res.ok) return null;
-    const rows = await res.json() as Array<{
+  if (!url || !key) {
+    const local = getLocalLatestScan(domain);
+    if (!local) return null;
+    return {
+      company: local.domain.split(".")[0] ?? local.domain,
+      industry: "",
+      summary: local.claude_summary ?? "",
+      agent_suggestions: [],
+      badge: local.badge as ScanResult["badge"],
+      score: local.checks_passed,
+      checks: local.checks_json,
+      recommendations: local.recommendations,
+      severity_counts: computeSeverityCounts(local.checks_json),
+      scan_id: local.scan_id,
+      isDemo: false,
+      scanned_at: local.scanned_at ?? new Date(0).toISOString(),
+    };
+  }
+
+  const stripped = domain.replace(/^www\./, "");
+  const candidates = Array.from(new Set([
+    domain,
+    stripped,
+    `www.${stripped}`,
+  ]));
+
+  const headers = { apikey: key, Authorization: `Bearer ${key}` };
+  const modernSelect = "badge,checks_passed,checks_json,claude_summary,recommendations,scanned_at";
+  const legacySelect = "badge,checks_passed,checks_json,scanned_at";
+
+  const toScanResult = (
+    candidateDomain: string,
+    row: {
       badge: string;
       checks_passed: number;
       checks_json: AllChecks;
-      claude_summary: string | null;
-      recommendations: string[] | null;
-      scanned_at: string | null;
-    }>;
-    if (!rows.length) return null;
-    const row = rows[0];
+      claude_summary?: string | null;
+      recommendations?: unknown;
+      scanned_at?: string | null;
+    },
+  ): ScanResult => ({
+    company: candidateDomain.split(".")[0] ?? candidateDomain,
+    industry: "",
+    summary: row.claude_summary ?? "",
+    agent_suggestions: [],
+    badge: row.badge as ScanResult["badge"],
+    score: row.checks_passed,
+    checks: row.checks_json,
+    recommendations: Array.isArray(row.recommendations)
+      ? row.recommendations.filter((v): v is string => typeof v === "string")
+      : [],
+    severity_counts: computeSeverityCounts(row.checks_json),
+    scan_id: null,
+    isDemo: false,
+    scanned_at: row.scanned_at ?? new Date(0).toISOString(),
+  });
+
+  try {
+    for (const candidate of candidates) {
+      const modernRes = await fetch(
+        `${url}/rest/v1/scan_submissions?domain=eq.${encodeURIComponent(candidate)}&order=scanned_at.desc&limit=1&select=${modernSelect}`,
+        { headers, next: { revalidate: 60 } }
+      );
+      if (modernRes.ok) {
+        const modernRows = await modernRes.json() as Array<{
+          badge: string;
+          checks_passed: number;
+          checks_json: AllChecks;
+          claude_summary: string | null;
+          recommendations: unknown;
+          scanned_at: string | null;
+        }>;
+        if (modernRows.length) return toScanResult(candidate, modernRows[0]);
+        continue;
+      }
+
+      // Backward-compat: older schema missing claude_summary/recommendations.
+      const legacyRes = await fetch(
+        `${url}/rest/v1/scan_submissions?domain=eq.${encodeURIComponent(candidate)}&order=scanned_at.desc&limit=1&select=${legacySelect}`,
+        { headers, next: { revalidate: 60 } }
+      );
+      if (!legacyRes.ok) continue;
+      const legacyRows = await legacyRes.json() as Array<{
+        badge: string;
+        checks_passed: number;
+        checks_json: AllChecks;
+        scanned_at: string | null;
+      }>;
+      if (legacyRows.length) return toScanResult(candidate, legacyRows[0]);
+    }
+    const local = getLocalLatestScan(domain);
+    if (!local) return null;
     return {
-      company: domain.split('.')[0] ?? domain,
-      industry: '',
-      summary: row.claude_summary ?? '',
+      company: local.domain.split(".")[0] ?? local.domain,
+      industry: "",
+      summary: local.claude_summary ?? "",
       agent_suggestions: [],
-      badge: row.badge as ScanResult['badge'],
-      score: row.checks_passed,
-      checks: row.checks_json,
-      recommendations: row.recommendations ?? [],
-      severity_counts: computeSeverityCounts(row.checks_json),
-      scan_id: null,
+      badge: local.badge as ScanResult["badge"],
+      score: local.checks_passed,
+      checks: local.checks_json,
+      recommendations: local.recommendations,
+      severity_counts: computeSeverityCounts(local.checks_json),
+      scan_id: local.scan_id,
       isDemo: false,
-      scanned_at: row.scanned_at ?? new Date(0).toISOString(),
+      scanned_at: local.scanned_at ?? new Date(0).toISOString(),
     };
   } catch { return null; }
 }
