@@ -240,15 +240,15 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
             playsInline
             preload="auto"
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 z-0 h-full min-h-full w-full object-cover opacity-55"
+            className="pointer-events-none absolute inset-0 z-0 h-full min-h-full w-full object-cover opacity-80"
           />
           {/* Lätt scrim: video syns; text läses via starkare ton under rubrik + brödtext */}
           <div
             className="pointer-events-none absolute inset-0 z-[1]"
             style={{
               background: [
-                "linear-gradient(180deg, hsl(var(--background) / 0.35) 0%, hsl(var(--background) / 0.10) 50%, transparent 100%)",
-                "linear-gradient(0deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.40) 25%, transparent 55%)",
+                "linear-gradient(180deg, hsl(var(--background) / 0.20) 0%, transparent 50%)",
+                "linear-gradient(0deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.25) 22%, transparent 50%)",
               ].join(", "),
             }}
           />
