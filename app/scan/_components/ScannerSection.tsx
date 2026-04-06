@@ -103,6 +103,16 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
   const [activeMsgIdx, setActiveMsgIdx] = useState(0);
   const [progress, setProgress] = useState(0);
   const rafRef = useRef<number>(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    const set = () => { v.playbackRate = 0.4; };
+    v.addEventListener("canplay", set, { once: true });
+    if (v.readyState >= 3) set();
+    return () => v.removeEventListener("canplay", set);
+  }, []);
 
   const startProgressAnim = useCallback((ms: number) => {
     const start = Date.now();
@@ -222,6 +232,7 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
         {/* ── Hero — video loops natively (forward+reverse encoded in file) ── */}
         <div className="relative min-h-[min(44vh,380px)] overflow-hidden">
           <video
+            ref={videoRef}
             src="/assets/hero-video-loop.mp4"
             autoPlay
             loop
@@ -229,7 +240,7 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
             playsInline
             preload="auto"
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 z-0 h-full min-h-full w-full object-cover"
+            className="pointer-events-none absolute inset-0 z-0 h-full min-h-full w-full object-cover opacity-20"
           />
           {/* Lätt scrim: video syns; text läses via starkare ton under rubrik + brödtext */}
           <div
