@@ -116,8 +116,43 @@ async function checkWikidata(rootDomain: string): Promise<"swedish" | "not_swedi
 }
 
 export type SwedishCheckResult =
-  | { pass: true; reason: "se_tld" | "allowlist" | "wikidata" | "wikidata_unavailable" }
+  | { pass: true; reason: "se_tld" | "allowlist" | "swedish_language" | "wikidata" | "wikidata_unavailable" }
   | { pass: false; reason: "not_swedish" };
+
+// Fetches the homepage and checks for Swedish language signals:
+// - <html lang="sv"> or lang="sv-SE" / lang="sv-*"
+// - <meta http-equiv="Content-Language" content="sv">
+// Returns true only on a clear positive signal — never blocks on failure.
+async function detectSwedishLanguage(domain: string): Promise<boolean> {
+  try {
+    const res = await fetch(`https://${domain}`, {
+      headers: { "User-Agent": "OpenSverige-Scanner/1.0 (https://opensverige.se)" },
+      redirect: "follow",
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!res.ok) return false;
+    // Only read the first 8 KB — lang attributes are always in <head>
+    const reader = res.body?.getReader();
+    if (!reader) return false;
+    let chunk = "";
+    let bytesRead = 0;
+    while (bytesRead < 8_192) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunk += new TextDecoder().decode(value);
+      bytesRead += value.byteLength;
+    }
+    reader.cancel();
+    const head = chunk.slice(0, 8_192).toLowerCase();
+    // Match lang="sv", lang="sv-se", lang="sv-*"
+    if (/\blang=["']sv(-[a-z]{2,4})?["']/.test(head)) return true;
+    // Meta content-language
+    if (/content-language[^>]*content=["']sv/.test(head)) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
 
 export async function isSwedishCompany(domain: string): Promise<SwedishCheckResult> {
   // 1. .se TLD — covers all Swedish-registered domains including subdomains
@@ -132,11 +167,19 @@ export async function isSwedishCompany(domain: string): Promise<SwedishCheckResu
     return { pass: true, reason: "allowlist" };
   }
 
-  // 3. Wikidata — covers companies not in the allowlist
-  //    Fail OPEN: if Wikidata is down we don't block the scan.
-  //    Worst case: a non-Swedish company gets through during an outage.
-  //    Better than blocking legitimate Swedish companies.
-  const wikidataResult = await checkWikidata(root);
+  // 3. Swedish language detection — fast signal before Wikidata lookup.
+  //    A site whose main page declares lang="sv" is almost certainly Swedish.
+  //    Run in parallel with Wikidata to avoid extra latency.
+  const [languageResult, wikidataResult] = await Promise.all([
+    detectSwedishLanguage(domain),
+    checkWikidata(root),
+  ]);
+
+  if (languageResult) {
+    return { pass: true, reason: "swedish_language" };
+  }
+
+  // 4. Wikidata — covers companies not in the allowlist or without sv lang tag
   if (wikidataResult === "swedish") {
     return { pass: true, reason: "wikidata" };
   }

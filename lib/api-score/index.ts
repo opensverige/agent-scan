@@ -122,9 +122,10 @@ export async function scoreApi(input: ApiScoreInput): Promise<ApiScoreResult> {
   const axes = llmSignals ? applyLlmBoosts(axisResults, llmSignals) : axisResults;
 
   const totalScore = axes.reduce((s, a) => s + a.score, 0);
-  const maxPossibleScore = spec
-    ? 100
-    : axes.reduce((s, a) => s + (a.limited ? a.score : a.maxScore), 0);
+  // Always divide by the full possible points — never by achieved score.
+  // Without a spec, limited axes can only reach a fraction of their maxScore,
+  // but the denominator must reflect what could have been scored, not what was.
+  const maxPossibleScore = axes.reduce((s, a) => s + a.maxScore, 0);
 
   const band = getBand(totalScore);
 

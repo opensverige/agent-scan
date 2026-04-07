@@ -13,6 +13,8 @@ export type ScanBadge = 'green' | 'yellow' | 'red';
 export interface CheckResult {
   id: CheckId;
   pass: boolean;
+  /** true = check does not apply to this site; excluded from score denominator */
+  na?: boolean;
   label: string;
   detail?: string;
   path?: string;
@@ -130,20 +132,31 @@ export function complianceChecks(evidence?: ComplianceEvidence): [CheckResult, C
   const cookieHay = normalizedText(evidence?.cookieText);
   const aiHay = normalizedText(evidence?.aiText);
 
-  const hasPrivacyAutomationInfo = /automatiserad|automated decision|profilering|profiling|art\.\s*22|artikel\s*22|machine-?made decision/.test(privacyHay);
-  const hasCookieBotHandling = /bot|crawler|user-agent|icke-m[aä]nsklig|non-human|machine client|agent/.test(cookieHay);
-  const hasAiLabelingInfo = /ai-generated|ai generated|syntetisk|watermark|maskinl[aä]sbar m[aä]rkning|article\s*50|art\.\s*50|eu ai act/.test(aiHay);
+  // N/A when we couldn't find any policy pages at all — no evidence means we can't score.
+  // This avoids penalising sites that simply don't have crawlable policy pages.
+  const noPrivacyEvidence = privacyHay.trim().length === 0;
+  const noCookieEvidence = cookieHay.trim().length === 0;
+  const noAiEvidence = aiHay.trim().length === 0;
+
+  const hasPrivacyAutomationInfo = !noPrivacyEvidence && /automatiserad|automated decision|profilering|profiling|art\.\s*22|artikel\s*22|machine-?made decision/.test(privacyHay);
+  const hasCookieBotHandling = !noCookieEvidence && /bot|crawler|user-agent|icke-m[aä]nsklig|non-human|machine client|agent/.test(cookieHay);
+  const hasAiLabelingInfo = !noAiEvidence && /ai-generated|ai generated|syntetisk|watermark|maskinl[aä]sbar m[aä]rkning|article\s*50|art\.\s*50|eu ai act/.test(aiHay);
 
   return [
     {
       id: 'privacy_automation',
       pass: hasPrivacyAutomationInfo,
-      label: hasPrivacyAutomationInfo
-        ? 'Integritetspolicy nämner automatiserad behandling'
-        : 'Integritetspolicy: ingen tydlig info om automatiserad behandling',
-      detail: hasPrivacyAutomationInfo
-        ? 'Hittade signaler kopplade till GDPR Art. 22 i publikt material'
-        : 'Ingen tydlig Art. 22/profilering-signal hittad i publikt material',
+      na: noPrivacyEvidence,
+      label: noPrivacyEvidence
+        ? 'Integritetspolicy: ingen policy-sida hittad (ej bedömd)'
+        : hasPrivacyAutomationInfo
+          ? 'Integritetspolicy nämner automatiserad behandling'
+          : 'Integritetspolicy: ingen tydlig info om automatiserad behandling',
+      detail: noPrivacyEvidence
+        ? 'Vi hittade ingen publik integritetspolicy att analysera'
+        : hasPrivacyAutomationInfo
+          ? 'Hittade signaler kopplade till GDPR Art. 22 i publikt material'
+          : 'Ingen tydlig Art. 22/profilering-signal hittad i publikt material',
       category: 'compliance',
       severity: 'critical',
       hardcoded: false,
@@ -151,12 +164,17 @@ export function complianceChecks(evidence?: ComplianceEvidence): [CheckResult, C
     {
       id: 'cookie_bot_handling',
       pass: hasCookieBotHandling,
-      label: hasCookieBotHandling
-        ? 'Cookiehantering för icke-mänskliga klienter nämns'
-        : 'Cookiehantering för icke-mänskliga klienter är oklar',
-      detail: hasCookieBotHandling
-        ? 'Hittade bot/user-agent-relaterad signal i publik cookie/policy-text'
-        : 'Ingen tydlig bot/crawler-hantering hittad i publikt material',
+      na: noCookieEvidence,
+      label: noCookieEvidence
+        ? 'Cookiehantering: ingen policy-sida hittad (ej bedömd)'
+        : hasCookieBotHandling
+          ? 'Cookiehantering för icke-mänskliga klienter nämns'
+          : 'Cookiehantering för icke-mänskliga klienter är oklar',
+      detail: noCookieEvidence
+        ? 'Vi hittade ingen publik cookiepolicy att analysera'
+        : hasCookieBotHandling
+          ? 'Hittade bot/user-agent-relaterad signal i publik cookie/policy-text'
+          : 'Ingen tydlig bot/crawler-hantering hittad i publikt material',
       category: 'compliance',
       severity: 'important',
       hardcoded: false,
@@ -164,12 +182,17 @@ export function complianceChecks(evidence?: ComplianceEvidence): [CheckResult, C
     {
       id: 'ai_content_marking',
       pass: hasAiLabelingInfo,
-      label: hasAiLabelingInfo
-        ? 'Signal om märkning/AI-transparens hittad'
-        : 'Ingen tydlig AI-märkningssignal hittad',
-      detail: hasAiLabelingInfo
-        ? 'Hittade referens till AI-märkning/transparens i publikt material'
-        : 'Ingen tydlig Art. 50/maskinläsbar märkningssignal hittad',
+      na: noAiEvidence,
+      label: noAiEvidence
+        ? 'AI-märkning: ingen relevant sida hittad (ej bedömd)'
+        : hasAiLabelingInfo
+          ? 'Signal om märkning/AI-transparens hittad'
+          : 'Ingen tydlig AI-märkningssignal hittad',
+      detail: noAiEvidence
+        ? 'Vi hittade inget publikt material att analysera för AI-märkning'
+        : hasAiLabelingInfo
+          ? 'Hittade referens till AI-märkning/transparens i publikt material'
+          : 'Ingen tydlig Art. 50/maskinläsbar märkningssignal hittad',
       category: 'compliance',
       severity: 'important',
       hardcoded: false,
@@ -332,16 +355,22 @@ export function checkSandboxAvailable(probes: ProbeResult[]): CheckResult {
 
 // â”€â”€ Badge and score â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-export function calculateBadge(checks: AllChecks): { badge: ScanBadge; score: number } {
-  const score = Object.values(checks).filter(c => c.pass).length;
-  const badge: ScanBadge = score >= 8 ? 'green' : score >= 4 ? 'yellow' : 'red';
-  return { badge, score };
+export function calculateBadge(checks: AllChecks): { badge: ScanBadge; score: number; total: number } {
+  // Only count applicable checks (exclude N/A from both numerator and denominator).
+  const applicable = Object.values(checks).filter(c => !c.na);
+  const score = applicable.filter(c => c.pass).length;
+  const total = applicable.length;
+  // Proportional thresholds matching original 8/11 and 4/11 cutoffs.
+  const pct = total > 0 ? score / total : 0;
+  const badge: ScanBadge = pct >= 8 / 11 ? 'green' : pct >= 4 / 11 ? 'yellow' : 'red';
+  return { badge, score, total };
 }
 
 // â”€â”€ Severity counts (failing checks only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function computeSeverityCounts(checks: AllChecks): { critical: number; important: number; info: number } {
-  const failing = Object.values(checks).filter(c => !c.pass);
+  // N/A checks are excluded — they're not actionable failures.
+  const failing = Object.values(checks).filter(c => !c.pass && !c.na);
   return {
     critical: failing.filter(c => c.severity === 'critical').length,
     important: failing.filter(c => c.severity === 'important').length,
@@ -374,7 +403,7 @@ const RECOMMENDATION_PRIORITY: CheckId[] = [
 
 export function getTopRecommendations(checks: AllChecks, count = 3): string[] {
   return RECOMMENDATION_PRIORITY
-    .filter(id => !checks[id].pass)
+    .filter(id => !checks[id].pass && !checks[id].na)
     .slice(0, count)
     .map(id => RECOMMENDATION_MAP[id]);
 }

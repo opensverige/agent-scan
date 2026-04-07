@@ -595,6 +595,7 @@ async function saveToSupabase(
   checks: AllChecks,
   badge: string,
   score: number,
+  total: number,
   summary: string,
   recommendations: string[],
   ipHash: string
@@ -616,7 +617,7 @@ async function saveToSupabase(
 
   const modernPayload = {
     domain, badge,
-    checks_passed: score, checks_total: 11,
+    checks_passed: score, checks_total: total,
     discovery_passed: discovery.filter(c => c.pass).length,
     compliance_passed: compliance.filter(c => c.pass).length,
     builder_passed: builder.filter(c => c.pass).length,
@@ -748,7 +749,8 @@ export async function POST(req: NextRequest) {
   const portalUrl = builderData.developerPortalUrl ?? discoveredPortalUrl ?? undefined;
   // APIs.guru enriches the spec but does NOT trigger scoring on its own —
   // probes must confirm an API exists, OR discovery found a portal.
-  const shouldScoreApi = checks.api_exists.pass || checks.openapi_spec.pass || !!discoveredPortalUrl;
+  // Also score when api_docs was found — company has documented an API even if /api path didn't respond.
+  const shouldScoreApi = checks.api_exists.pass || checks.openapi_spec.pass || checks.api_docs.pass || !!discoveredPortalUrl;
   const specRaw = builderData.specRaw ?? (shouldScoreApi ? apisGuruSpec : null) ?? null;
 
   console.log(`[scan] domain=${rawDomain} shouldScore=${shouldScoreApi} portalUrl=${portalUrl ?? 'none'} hasSpec=${!!specRaw} docsHtmlLen=${builderData.docsHtml?.length ?? 0} hasFirecrawl=${!!firecrawlKey} hasExa=${!!process.env.EXA_API_KEY} hasAnthropicKey=${!!apiKey}`);
@@ -814,8 +816,13 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Recalculate derived values after possible sandbox upgrade.
-  const { badge, score } = calculateBadge(checks);
+  // Sandbox is only applicable when an API exists — no API means no sandbox to offer.
+  if (!checks.api_exists.pass) {
+    checks.sandbox_available = { ...checks.sandbox_available, na: true };
+  }
+
+  // Recalculate derived values after possible sandbox upgrade and N/A marking.
+  const { badge, score, total } = calculateBadge(checks);
   const recommendations = getTopRecommendations(checks);
   const severity_counts = computeSeverityCounts(checks);
 
@@ -825,7 +832,7 @@ export async function POST(req: NextRequest) {
   const scannedAt = new Date().toISOString();
 
   const persistedScanId = await saveToSupabase(
-    rawDomain, checks, badge, score, finalAnalysis.summary, recommendations, ipHash
+    rawDomain, checks, badge, score, total, finalAnalysis.summary, recommendations, ipHash
   ).catch(() => null);
 
   // Keep latest scan available in local/dev even when database persistence is missing.
