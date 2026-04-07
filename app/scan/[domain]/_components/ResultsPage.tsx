@@ -295,10 +295,8 @@ function getStepPriority(i: number, criticalCount: number, importantCount: numbe
   return null;
 }
 
-function getDefaultTab(data: ScanResult | null): "sajt" | "api" {
-  if (!data?.api_score) return "sajt";
-  const hasApi = data.checks.api_exists.pass || data.checks.openapi_spec.pass;
-  return hasApi && data.api_score.totalScore < 70 ? "api" : "sajt";
+function getDefaultTab(_data: ScanResult | null): "sajt" | "api" {
+  return "sajt";
 }
 
 // ── Main Component ──────────────────────────────────────────────────────────
@@ -478,10 +476,10 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                   <Globe className="h-3.5 w-3.5" />
                   Sajt
                 </TabsTrigger>
-                <TabsTrigger value="api" className="flex-1 font-mono text-xs gap-1.5 h-9" disabled={!hasApi}>
+                <TabsTrigger value="api" className="flex-1 font-mono text-xs gap-1.5 h-9" disabled>
                   <Code2 className="h-3.5 w-3.5" />
                   API
-                  {!hasApi && <span className="ml-1 text-[10px] opacity-50">(ej hittat)</span>}
+                  <span className="ml-1 text-[10px] opacity-50">Kommer snart</span>
                 </TabsTrigger>
               </TabsList>
             </div>
