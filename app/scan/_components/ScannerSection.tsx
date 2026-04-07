@@ -104,6 +104,7 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
   const [progress, setProgress] = useState(0);
   const rafRef = useRef<number>(0);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const autoStarted = useRef(false);
 
   useEffect(() => {
     const v = videoRef.current;
@@ -113,6 +114,15 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
     if (v.readyState >= 3) set();
     return () => v.removeEventListener("canplay", set);
   }, []);
+
+  useEffect(() => {
+    if (!initialDomain || autoStarted.current) return;
+    const d = cleanDomain(initialDomain);
+    if (!isValidDomain(d)) return;
+    autoStarted.current = true;
+    runScan(initialDomain);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialDomain]);
 
   const startProgressAnim = useCallback((ms: number) => {
     const start = Date.now();

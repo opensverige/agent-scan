@@ -348,7 +348,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
       <div className="max-w-lg mx-auto px-6 py-20 text-center">
         <p className="font-mono text-sm text-muted-foreground mb-4">{domain}</p>
         <p className="text-base text-muted-foreground mb-8">Ingen scan hittad för den här domänen.</p>
-        <Button asChild><Link href="/scan">Scanna {domain} →</Link></Button>
+        <Button asChild><Link href={`/scan?domain=${encodeURIComponent(domain)}`}>Scanna {domain} →</Link></Button>
       </div>
     );
   }
