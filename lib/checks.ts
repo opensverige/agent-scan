@@ -15,6 +15,8 @@ export interface CheckResult {
   pass: boolean;
   /** true = check does not apply to this site; excluded from score denominator */
   na?: boolean;
+  /** true = check is a nice-to-have suggestion, not a scored blocker */
+  recommendation?: boolean;
   label: string;
   detail?: string;
   path?: string;
@@ -356,8 +358,8 @@ export function checkSandboxAvailable(probes: ProbeResult[]): CheckResult {
 // â”€â”€ Badge and score â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function calculateBadge(checks: AllChecks): { badge: ScanBadge; score: number; total: number } {
-  // Only count applicable checks (exclude N/A from both numerator and denominator).
-  const applicable = Object.values(checks).filter(c => !c.na);
+  // Exclude N/A (not applicable) and recommendation-only checks from scored denominator.
+  const applicable = Object.values(checks).filter(c => !c.na && !c.recommendation);
   const score = applicable.filter(c => c.pass).length;
   const total = applicable.length;
   // Proportional thresholds matching original 8/11 and 4/11 cutoffs.
@@ -369,8 +371,8 @@ export function calculateBadge(checks: AllChecks): { badge: ScanBadge; score: nu
 // â”€â”€ Severity counts (failing checks only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function computeSeverityCounts(checks: AllChecks): { critical: number; important: number; info: number } {
-  // N/A checks are excluded — they're not actionable failures.
-  const failing = Object.values(checks).filter(c => !c.pass && !c.na);
+  // N/A and recommendation-only checks are excluded — not actionable failures.
+  const failing = Object.values(checks).filter(c => !c.pass && !c.na && !c.recommendation);
   return {
     critical: failing.filter(c => c.severity === 'critical').length,
     important: failing.filter(c => c.severity === 'important').length,
@@ -403,7 +405,7 @@ const RECOMMENDATION_PRIORITY: CheckId[] = [
 
 export function getTopRecommendations(checks: AllChecks, count = 3): string[] {
   return RECOMMENDATION_PRIORITY
-    .filter(id => !checks[id].pass && !checks[id].na)
+    .filter(id => !checks[id].pass && !checks[id].na && !checks[id].recommendation)
     .slice(0, count)
     .map(id => RECOMMENDATION_MAP[id]);
 }

@@ -114,6 +114,8 @@ function ScoreRing({ score, total, ringColor }: { score: number; total: number; 
 
 function SeverityIcon({ result, size = "h-5 w-5" }: { result: CheckResult; size?: string }) {
   if (result.pass) return <CheckCircle2 className={cn(size, "text-success shrink-0")} />;
+  if (result.na) return <Search className={cn(size, "text-muted-foreground/40 shrink-0")} />;
+  if (result.recommendation) return <Zap className={cn(size, "text-primary/70 shrink-0")} />;
   if (result.severity === "critical") return <XCircle className={cn(size, "text-destructive shrink-0")} />;
   if (result.severity === "important") return <AlertTriangle className={cn(size, "text-amber-500 shrink-0")} />;
   return <Search className={cn(size, "text-muted-foreground shrink-0")} />;
@@ -363,10 +365,13 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
   const apiBadgeClass = apiScore ? (API_BADGE_CLASS[apiScore.band] ?? "") : "";
 
   const allChecks = CHECK_DISPLAY_ORDER.map(id => r.checks[id]);
-  const failedCritical = allChecks.filter(c => !c.pass && c.severity === "critical");
-  const failedImportant = allChecks.filter(c => !c.pass && c.severity === "important");
-  const failedInfo = allChecks.filter(c => !c.pass && c.severity === "info");
+  // Scored failures only — exclude N/A (not applicable) and recommendation-only checks.
+  const failedCritical = allChecks.filter(c => !c.pass && !c.na && !c.recommendation && c.severity === "critical");
+  const failedImportant = allChecks.filter(c => !c.pass && !c.na && !c.recommendation && c.severity === "important");
+  const failedInfo = allChecks.filter(c => !c.pass && !c.na && !c.recommendation && c.severity === "info");
   const passedChecks = allChecks.filter(c => c.pass);
+  // Soft suggestions: failed but marked as recommendation-only (e.g. MCP when OpenAPI exists)
+  const recommendationChecks = allChecks.filter(c => !c.pass && c.recommendation);
   const sc = r.severity_counts ?? {
     critical: failedCritical.length,
     important: failedImportant.length,
@@ -485,7 +490,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
             <TabsContent value="sajt">
               {/* Score + badge + breakdown + summary */}
               <div className="px-6 flex flex-col items-center gap-5 pt-2 pb-6">
-                <ScoreRing score={r.score} total={11} ringColor={cfg.ringColor} />
+                <ScoreRing score={r.score} total={r.checks_total ?? 11} ringColor={cfg.ringColor} />
 
                 <Badge variant={cfg.badgeVariant} className="text-base px-5 py-1.5 font-mono font-bold tracking-wide">
                   {cfg.label}
@@ -535,6 +540,29 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                         +{allFailed.length - 5} fler fynd i rapporten nedan
                       </p>
                     )}
+                  </div>
+                </>
+              )}
+
+              {/* Rekommendationer (inte blockerare) */}
+              {recommendationChecks.length > 0 && (
+                <>
+                  <Separator />
+                  <div className="px-6 py-4">
+                    <p className="font-mono text-[10px] font-bold tracking-widest text-muted-foreground mb-3">
+                      REKOMMENDATIONER
+                    </p>
+                    <div className="space-y-2">
+                      {recommendationChecks.map(check => (
+                        <div key={check.id} className="flex items-start gap-3 rounded-lg border border-primary/15 bg-primary/5 px-4 py-3">
+                          <Zap className="h-4 w-4 text-primary/70 shrink-0 mt-0.5" />
+                          <div className="space-y-0.5">
+                            <p className="text-sm font-medium leading-snug">{check.label}</p>
+                            {check.detail && <p className="text-xs text-muted-foreground leading-relaxed">{check.detail}</p>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </>
               )}

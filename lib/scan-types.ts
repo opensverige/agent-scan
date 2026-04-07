@@ -22,6 +22,7 @@ export interface ScanResult {
   agent_suggestions: AgentSuggestion[];
   badge: ScanBadge;
   score: number;
+  checks_total?: number;
   checks: AllChecks;
   recommendations: string[];
   severity_counts: { critical: number; important: number; info: number };

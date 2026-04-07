@@ -797,6 +797,33 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // MCP is a recommendation (not a scored blocker) when the site has a documented REST API.
+  // REST + OpenAPI is already agent-ready — MCP is an enhancement, not a requirement.
+  if (!checks.mcp_server.pass && (checks.openapi_spec.pass || checks.api_docs.pass)) {
+    checks.mcp_server = {
+      ...checks.mcp_server,
+      recommendation: true,
+      severity: 'info',
+      label: 'MCP-server saknas — rekommenderas för djupare agent-integration',
+      detail: 'REST API + OpenAPI är agent-ready utan MCP. MCP ger direkt tool-koppling för Claude, Cursor och Windsurf — ett bra nästa steg men inte ett blockerande krav.',
+    };
+  }
+
+  // Open API: sandbox not needed if API responds without auth and no pricing signals.
+  // apiPathsFound contains only 200/429 paths — empty means all hits were auth-gated (401/403+json).
+  const apiIsOpenAccess = checks.api_exists.pass && builderData.apiPathsFound.length > 0;
+  const hasPricingMention = /pris|pricing|betalplan|subscription|billing|faktur/.test(
+    ((firecrawlMarkdown ?? "") + (firecrawlDocsContent ?? "")).toLowerCase()
+  );
+  if (apiIsOpenAccess && !hasPricingMention && !checks.sandbox_available.pass) {
+    checks.sandbox_available = {
+      ...checks.sandbox_available,
+      na: true,
+      label: 'Öppet API — testa direkt, ingen sandbox behövs',
+      detail: 'API:et svarar utan autentisering. Builders kan testa mot produktions-API:et direkt.',
+    };
+  }
+
   // Sandbox is only applicable when an API exists — no API means no sandbox to offer.
   if (!checks.api_exists.pass) {
     checks.sandbox_available = { ...checks.sandbox_available, na: true };
@@ -835,6 +862,7 @@ export async function POST(req: NextRequest) {
     agent_suggestions: finalAnalysis.agent_suggestions,
     badge,
     score,
+    checks_total: total,
     checks,
     recommendations,
     severity_counts,
