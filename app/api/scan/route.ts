@@ -693,32 +693,13 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Ogiltig domän" }, { status: 400 });
   }
 
-  // Run Swedish company validation and IP hash in parallel — both needed before proceeding
-  const bypassFromEnv =
-    process.env.BYPASS_SWEDISH_CHECK === "1" ||
-    process.env.BYPASS_SWEDISH_CHECK === "true";
-  const bypassFromLocalhost =
-    req.nextUrl.hostname === "localhost" ||
-    req.nextUrl.hostname === "127.0.0.1";
-  const bypassSwedishCheck = bypassFromEnv || bypassFromLocalhost;
-
-  const [swedishCheck, ipHash] = await Promise.all([
-    bypassSwedishCheck
-      ? Promise.resolve({
-          pass: true as const,
-          reason: bypassFromEnv
-            ? ("bypass_env" as "bypass_env" | "bypass_localhost")
-            : ("bypass_localhost" as "bypass_env" | "bypass_localhost"),
-        })
-      : isSwedishCompany(rawDomain),
+  // Swedish filter removed — scanner is open to all domains.
+  const bypassSwedishCheck = true;
+  const [, ipHash] = await Promise.all([
+    Promise.resolve(null),
     getIpHash(req),
   ]);
-  if (!swedishCheck.pass) {
-    return Response.json(
-      { error: "Vi scannar bara svenska företag och internationella bolag grundade i Sverige." },
-      { status: 400 }
-    );
-  }
+  const swedishCheck = { pass: true as const, reason: "bypass_env" as const };
 
   const { perIpOk, globalOk } = await checkRateLimits(ipHash);
   if (!perIpOk) {
