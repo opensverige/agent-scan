@@ -27,9 +27,6 @@ import {
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
-const BOOK_MEETING_URL = "https://cal.com/gustaf-garnow-3u8eg5/opensverige";
-const CAL_LINK = "gustaf-garnow-3u8eg5/opensverige";
-const CAL_NS = "opensverige";
 
 const BADGE_CFG = {
   green:  { label: "REDO",        ringColor: "hsl(var(--success))",    badgeVariant: "default"     as const },
@@ -305,6 +302,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
   const [result, setResult] = useState<ScanResult | null>(initialData);
   const [notFound, setNotFound] = useState(false);
   const [shared, setShared] = useState(false);
+  const [teamShared, setTeamShared] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"sajt" | "api">(() => getDefaultTab(initialData));
 
@@ -384,6 +382,21 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
   else if (failedImportant.length > 0) defaultOpenSections.push("varningar");
 
   const cta = getBookingCTA(activeTab, r.score, apiScore, domain);
+
+  function handleTeamShare() {
+    const url = `https://agent.opensverige.se/scan/${domain}`;
+    const text = `Jag scannade ${domain} med agent.opensverige.se — vi fick ${r.score}/${r.checks_total ?? 11}. Här är vad vi kan fixa: ${url}`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => setTeamShared(true)).catch(() => {});
+    } else {
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.style.cssText = "position:fixed;opacity:0;pointer-events:none";
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      try { document.execCommand("copy"); setTeamShared(true); } catch {}
+      document.body.removeChild(ta);
+    }
+    setTimeout(() => setTeamShared(false), 2500);
+  }
 
   function handleShare() {
     let text: string;
@@ -584,6 +597,14 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                         />
                       ))}
                     </div>
+                    <div className="mt-4 pt-4 border-t border-border/40">
+                      <Link
+                        href={`/scan?domain=${encodeURIComponent(domain)}`}
+                        className="font-mono text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        Fixat något? Scanna igen och se din nya score →
+                      </Link>
+                    </div>
                   </div>
                 </>
               )}
@@ -751,63 +772,6 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
         {/* ═══════════════════════════════════════════════════════
             ALLT NEDAN: TAB-OBEROENDE
         ═══════════════════════════════════════════════════════ */}
-
-        {/* ── DYNAMISK CTA ─────────────────────────────────────── */}
-        <Card className={cn(
-          "mt-8",
-          cta.urgency === "high" && "border-2 border-foreground bg-foreground text-background",
-          cta.urgency === "medium" && "border-2 border-foreground",
-          cta.urgency === "low" && "border"
-        )}>
-          <CardHeader className="text-center pb-2">
-            <CardTitle className={cn("text-xl font-bold tracking-tight", cta.urgency === "high" && "text-background")}>
-              {cta.headline}
-            </CardTitle>
-            <CardDescription className={cn(
-              "max-w-md mx-auto text-base",
-              cta.urgency === "high" ? "text-background/85" : "text-muted-foreground"
-            )}>
-              {cta.subtext}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center pt-0 pb-8 text-center">
-            <ul
-              className={cn(
-                "flex flex-col items-center gap-3 mb-6 text-xs font-mono max-w-sm mx-auto",
-                cta.urgency === "high" ? "text-background/80" : "text-muted-foreground"
-              )}
-              aria-label="Vad du får på samtalet"
-            >
-              {BOOKING_BULLETS.map(line => (
-                <li key={line} className="flex items-center justify-center gap-2">
-                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                  <span>{line}</span>
-                </li>
-              ))}
-            </ul>
-
-            <Button
-              size="lg"
-              variant={cta.urgency === "high" ? "secondary" : "default"}
-              className="px-8"
-              data-cal-link="gustaf-garnow-3u8eg5/opensverige"
-              data-cal-namespace="opensverige"
-              data-cal-config='{"layout":"month_view","useSlotsViewOnSmallScreen":"true"}'
-            >
-              <Calendar className="mr-2 h-4 w-4" />
-              {cta.buttonText}
-            </Button>
-
-            <BuilderAvatarStack urgency={cta.urgency} />
-
-            <p className={cn(
-              "text-[11px] mt-3 opacity-70 max-w-xs",
-              cta.urgency === "high" ? "text-background/80" : "text-muted-foreground"
-            )}>
-              Matchning med rätt builder i communityn.
-            </p>
-          </CardContent>
-        </Card>
 
         {/* ── FULLSTÄNDIG RAPPORT ──────────────────────────────── */}
         <Collapsible open={reportOpen} onOpenChange={setReportOpen}>
@@ -1126,6 +1090,10 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
             <Share2 className="mr-2 h-4 w-4" />
             {shared ? "Kopierat!" : "Dela ditt resultat"}
           </Button>
+          <Button onClick={handleTeamShare} variant="outline" className="w-full" size="lg">
+            <Share2 className="mr-2 h-4 w-4" />
+            {teamShared ? "Kopierat!" : "Skicka till ditt team"}
+          </Button>
           <Button variant="outline" className="w-full" size="lg" asChild>
             <a href="https://discord.gg/CSphbTk8En" target="_blank" rel="noopener noreferrer">
               250+ builders i Discord →
@@ -1138,29 +1106,65 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
           </div>
         </div>
 
-        {/* ── BOKA MÖTE ────────────────────────────────────────── */}
-        <div
-          id="boka-mote"
-          className="mt-10 scroll-mt-24 rounded-lg border border-border px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-        >
-          <div className="space-y-1">
-            <p className="font-mono text-sm font-medium">Vill du förbättra din score?</p>
-            <p className="text-xs text-muted-foreground max-w-sm">
-              Vi hjälper svenska builders att bli agent-redo — från OpenAPI-spec till MCP-server. Boka 30 min så går vi igenom er specifika situation.
-            </p>
-          </div>
-          <a
-            href={BOOK_MEETING_URL}
-            data-cal-link={CAL_LINK}
-            data-cal-namespace={CAL_NS}
-            data-cal-config='{"layout":"month_view"}'
-            className="shrink-0 inline-flex items-center gap-2 rounded-md border border-border bg-background px-4 py-2 font-mono text-xs hover:bg-muted transition-colors cursor-pointer"
-          >
-            Boka möte →
-          </a>
-        </div>
+        {/* ── DYNAMISK CTA ─────────────────────────────────────── */}
+        <Card className={cn(
+          "mt-8",
+          cta.urgency === "high" && "border-2 border-foreground bg-foreground text-background",
+          cta.urgency === "medium" && "border-2 border-foreground",
+          cta.urgency === "low" && "border"
+        )}>
+          <CardHeader className="text-center pb-2">
+            <CardTitle className={cn("text-xl font-bold tracking-tight", cta.urgency === "high" && "text-background")}>
+              {cta.headline}
+            </CardTitle>
+            <CardDescription className={cn(
+              "max-w-md mx-auto text-base",
+              cta.urgency === "high" ? "text-background/85" : "text-muted-foreground"
+            )}>
+              {cta.subtext}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center pt-0 pb-8 text-center">
+            <ul
+              className={cn(
+                "flex flex-col items-center gap-3 mb-6 text-xs font-mono max-w-sm mx-auto",
+                cta.urgency === "high" ? "text-background/80" : "text-muted-foreground"
+              )}
+              aria-label="Vad du får på samtalet"
+            >
+              {BOOKING_BULLETS.map(line => (
+                <li key={line} className="flex items-center justify-center gap-2">
+                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <span>{line}</span>
+                </li>
+              ))}
+            </ul>
 
-        {/* ── AGENT-KATALOGEN ──────────────────────────────────── */}
+            <Button
+              size="lg"
+              variant={cta.urgency === "high" ? "secondary" : "default"}
+              className="px-8"
+              data-cal-link="gustaf-garnow-3u8eg5/opensverige"
+              data-cal-namespace="opensverige"
+              data-cal-config='{"layout":"month_view","useSlotsViewOnSmallScreen":"true"}'
+            >
+              <Calendar className="mr-2 h-4 w-4" />
+              {cta.buttonText}
+            </Button>
+
+            <BuilderAvatarStack urgency={cta.urgency} />
+
+            <p className={cn(
+              "text-[11px] mt-3 opacity-70 max-w-xs",
+              cta.urgency === "high" ? "text-background/80" : "text-muted-foreground"
+            )}>
+              Matchning med rätt builder i communityn.
+            </p>
+          </CardContent>
+        </Card>
+
+
+{/* ── AGENT-KATALOGEN ──────────────────────────────────── */}
         <Card className="mt-10 border-dashed bg-muted/20">
           <CardHeader className="text-center pb-2">
             <CardTitle className="font-mono text-xs font-bold tracking-widest text-muted-foreground">
