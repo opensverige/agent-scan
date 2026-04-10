@@ -19,6 +19,8 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { useLang } from "@/lib/language-context";
+import type { Translations } from "@/lib/i18n";
 import {
   AlertTriangle, Calendar, Check, CheckCircle2, ChevronDown,
   Code2, FileJson, FileText, Github, Globe, Lock, RotateCcw, Search, Share2,
@@ -28,10 +30,10 @@ import {
 // ── Constants ──────────────────────────────────────────────────────────────
 
 
-const BADGE_CFG = {
-  green:  { label: "REDO",        ringColor: "hsl(var(--success))",    badgeVariant: "default"     as const },
-  yellow: { label: "DELVIS REDO", ringColor: "#c9a55a",                 badgeVariant: "secondary"   as const },
-  red:    { label: "INTE REDO",   ringColor: "hsl(var(--destructive))", badgeVariant: "destructive" as const },
+const BADGE_RING = {
+  green:  { ringColor: "hsl(var(--success))",    badgeVariant: "default"     as const },
+  yellow: { ringColor: "#c9a55a",                 badgeVariant: "secondary"   as const },
+  red:    { ringColor: "hsl(var(--destructive))", badgeVariant: "destructive" as const },
 } as const;
 
 const API_BAND_RING: Record<string, string> = {
@@ -180,7 +182,7 @@ function PlanCardRichText({ text }: { text: string }) {
   );
 }
 
-function PlanCard({ text, index, priority }: { text: string; index: number; priority: "high" | "medium" | null }) {
+function PlanCard({ text, index, priority, labelCritical, labelImportant }: { text: string; index: number; priority: "high" | "medium" | null; labelCritical: string; labelImportant: string }) {
   return (
     <Card className={cn("transition-all", index === 0 && "border-2 border-foreground")}>
       <CardContent className="flex gap-4 items-start py-4 px-4">
@@ -194,10 +196,10 @@ function PlanCard({ text, index, priority }: { text: string; index: number; prio
           <PlanCardRichText text={text} />
         </p>
         {priority === "high" && (
-          <Badge variant="destructive" className="text-xs shrink-0">Kritisk</Badge>
+          <Badge variant="destructive" className="text-xs shrink-0">{labelCritical}</Badge>
         )}
         {priority === "medium" && (
-          <Badge className="text-xs shrink-0 bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100">Viktig</Badge>
+          <Badge className="text-xs shrink-0 bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100">{labelImportant}</Badge>
         )}
       </CardContent>
     </Card>
@@ -210,49 +212,23 @@ function getBookingCTA(
   activeTab: "sajt" | "api",
   siteScore: number,
   apiScore: ApiScoreResult | null | undefined,
-  domain: string
+  domain: string,
+  tr: Translations["results"]
 ) {
   if (activeTab === "api" && apiScore) {
     if (apiScore.totalScore < 30) {
-      return {
-        headline: "Ditt API pratar inte med agenter.",
-        subtext: `En builder från communityn visar vad ${domain} behöver för att AI-agenter ska kunna koppla in sig.`,
-        buttonText: "Boka 15 min gratis med en builder →",
-        urgency: "high" as const,
-      };
+      return { headline: tr.ctaHighApiHeadline, subtext: tr.ctaHighApiSubtext(domain), buttonText: tr.ctaBookFree, urgency: "high" as const };
     }
-    return {
-      headline: "Ditt API har potential — men brister kvar.",
-      subtext: `Prata med en builder om hur ${domain} kan bli en plattform som agenter bygger mot.`,
-      buttonText: "Boka 15 min med en builder →",
-      urgency: "medium" as const,
-    };
+    return { headline: tr.ctaMedApiHeadline, subtext: tr.ctaMedApiSubtext(domain), buttonText: tr.ctaBook, urgency: "medium" as const };
   }
   if (siteScore <= 3) {
-    return {
-      headline: "AI-agenter ser er knappt.",
-      subtext: `Builder från communityn hjälper ${domain} bli agent-redo.`,
-      buttonText: "Boka 15 min gratis med en builder →",
-      urgency: "high" as const,
-    };
+    return { headline: tr.ctaHighSiteHeadline, subtext: tr.ctaHighSiteSubtext(domain), buttonText: tr.ctaBookFree, urgency: "high" as const };
   }
   if (siteScore <= 6) {
-    return {
-      headline: "Grund finns — fler steg kvar.",
-      subtext: `En builder visar vad ${domain} behöver för agent-integration.`,
-      buttonText: "Boka 15 min gratis med en builder →",
-      urgency: "medium" as const,
-    };
+    return { headline: tr.ctaMedSiteHeadline, subtext: tr.ctaMedSiteSubtext(domain), buttonText: tr.ctaBookFree, urgency: "medium" as const };
   }
-  return {
-    headline: "Du ligger före de flesta. Vad är nästa steg?",
-    subtext: `Prata med en builder om vad agenter kan bygga mot ${domain}.`,
-    buttonText: "Boka samtal →",
-    urgency: "low" as const,
-  };
+  return { headline: tr.ctaLowHeadline, subtext: tr.ctaLowSubtext(domain), buttonText: tr.ctaBookCall, urgency: "low" as const };
 }
-
-const BOOKING_BULLETS = ["Personlig builder", "Samma data som din scan", "Konkreta nästa steg"] as const;
 
 const BUILDER_AVATAR_URLS = [
   "https://randomuser.me/api/portraits/women/65.jpg",
@@ -299,6 +275,7 @@ function getDefaultTab(_data: ScanResult | null): "sajt" | "api" {
 // ── Main Component ──────────────────────────────────────────────────────────
 
 export default function ResultsPage({ domain, initialData }: { domain: string; initialData: ScanResult | null }) {
+  const { t } = useLang();
   const [result, setResult] = useState<ScanResult | null>(initialData);
   const [notFound, setNotFound] = useState(false);
   const [shared, setShared] = useState(false);
@@ -345,14 +322,15 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
     return (
       <div className="max-w-lg mx-auto px-6 py-20 text-center">
         <p className="font-mono text-sm text-muted-foreground mb-4">{domain}</p>
-        <p className="text-base text-muted-foreground mb-8">Ingen scan hittad för den här domänen.</p>
-        <Button asChild><Link href={`/scan?domain=${encodeURIComponent(domain)}`}>Scanna {domain} →</Link></Button>
+        <p className="text-base text-muted-foreground mb-8">{t.results.notFoundText}</p>
+        <Button asChild><Link href={`/scan?domain=${encodeURIComponent(domain)}`}>{t.results.scanDomain(domain)}</Link></Button>
       </div>
     );
   }
 
   const r = result!;
-  const cfg = BADGE_CFG[r.badge];
+  const badgeLabels = { green: t.results.badgeReady, yellow: t.results.badgePartial, red: t.results.badgeNotReady };
+  const cfg = { ...BADGE_RING[r.badge], label: badgeLabels[r.badge] };
 
   const hasApi = !!(r.api_score && (r.checks.api_exists.pass || r.checks.openapi_spec.pass));
   const apiScore: ApiScoreResult | null = hasApi ? r.api_score! : null;
@@ -381,11 +359,11 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
   if (failedCritical.length > 0) defaultOpenSections.push("brister");
   else if (failedImportant.length > 0) defaultOpenSections.push("varningar");
 
-  const cta = getBookingCTA(activeTab, r.score, apiScore, domain);
+  const cta = getBookingCTA(activeTab, r.score, apiScore, domain, t.results);
 
   function handleTeamShare() {
     const url = `https://agent.opensverige.se/scan/${domain}`;
-    const text = `Jag scannade ${domain} med agent.opensverige.se — vi fick ${r.score}/${r.checks_total ?? 11}. Här är vad vi kan fixa: ${url}`;
+    const text = t.results.teamShareText(domain, r.score, r.checks_total ?? 11, url);
     if (navigator.clipboard) {
       navigator.clipboard.writeText(text).then(() => setTeamShared(true)).catch(() => {});
     } else {
@@ -399,17 +377,12 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
   }
 
   function handleShare() {
-    let text: string;
     const url = `https://agent.opensverige.se/scan/${domain}`;
-    if (activeTab === "api" && apiScore) {
-      const em = apiScore.totalScore < 30 ? "🔴" : apiScore.totalScore < 70 ? "🟡" : "🟢";
-      text = `${em} ${domain} fick ${apiScore.totalScore}/100 i API agent-readiness.\n\n${apiScore.topBlockers.length} blockerare hittade.\n\nHur redo är ditt API? → ${url}`;
-    } else {
-      const em = r.score <= 3 ? "🔴" : r.score <= 6 ? "🟡" : "🟢";
-      text = `${em} ${domain} fick ${r.score}/11 i AI-readiness.\n\n● ${sc.critical} brister ● ${sc.important} varningar ● ${passedChecks.length} ok\n\nHur redo är din sajt? → ${url}`;
-    }
+    const text = activeTab === "api" && apiScore
+      ? t.results.shareApiText(domain, apiScore.totalScore, apiScore.topBlockers.length, url)
+      : t.results.shareSiteText(domain, r.score, sc.critical, sc.important, passedChecks.length, url);
     if (navigator.share) {
-      navigator.share({ title: `${domain} — AI-beredskap`, text, url }).catch(() => {});
+      navigator.share({ title: `${domain} — AI-readiness`, text, url }).catch(() => {});
     } else if (navigator.clipboard) {
       navigator.clipboard.writeText(text).then(() => setShared(true)).catch(() => {});
     } else {
@@ -428,9 +401,9 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
         {/* DEMO BANNER */}
         {r.isDemo && (
           <div className="rounded-lg border border-warning/30 bg-warning/5 px-4 py-2.5 flex items-start gap-3">
-            <Badge variant="warning" className="shrink-0 mt-0.5">DEMO</Badge>
+            <Badge variant="warning" className="shrink-0 mt-0.5">{t.results.demoBadge}</Badge>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Tekniska checks är riktiga. Analystexten är generisk tills <code className="font-mono">ANTHROPIC_API_KEY</code> läggs till.
+              {t.results.demoText}
             </p>
           </div>
         )}
@@ -444,9 +417,9 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
           return (
             <div className={`rounded-lg border px-4 py-2.5 flex items-center justify-between gap-3 ${isStale ? "border-warning/40 bg-warning/5" : "border-border/40"}`}>
               <p className="text-xs text-muted-foreground">
-                {isStale ? <span className="text-warning font-medium">Föråldrat resultat — </span> : null}
-                Scannades {dateStr ?? "okänt datum"}
-                {daysOld !== null && daysOld > 0 ? ` (${daysOld} dagar sedan)` : daysOld === 0 ? " (idag)" : null}
+                {isStale ? <span className="text-warning font-medium">{t.results.staleWarning} </span> : null}
+                {t.results.scannedAt} {dateStr ?? "—"}
+                {daysOld !== null && daysOld > 0 ? ` ${t.results.daysAgo(daysOld)}` : daysOld === 0 ? ` ${t.results.today}` : null}
               </p>
               <div className="flex items-center gap-3 shrink-0">
                 <a
@@ -461,7 +434,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                   href={`/scan?domain=${domain}`}
                   className="font-mono text-[10px] text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Skanna igen →
+                  {t.results.scanAgain}
                 </a>
               </div>
             </div>
@@ -474,10 +447,10 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
         <Card className="border-2 border-foreground/80 animate-in fade-in slide-in-from-bottom-2 duration-500">
           <CardHeader className="pb-3">
             <Badge variant="outline" className="font-mono text-[10px] tracking-widest w-fit">
-              SCAN RESULTAT
+              {t.results.scanResultsBadge}
             </Badge>
             <CardTitle className="font-serif text-[clamp(28px,5vw,40px)] font-normal leading-[1.12] tracking-[-0.6px] mt-1">
-              Hur agent-redo är ditt företag?
+              {t.results.headline}
             </CardTitle>
             <CardDescription className="font-mono">{domain}</CardDescription>
           </CardHeader>
@@ -487,12 +460,12 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
               <TabsList className="w-full h-11">
                 <TabsTrigger value="sajt" className="flex-1 font-mono text-xs gap-1.5 h-9">
                   <Globe className="h-3.5 w-3.5" />
-                  Sajt
+                  {t.results.tabSite}
                 </TabsTrigger>
                 <TabsTrigger value="api" className="flex-1 font-mono text-xs gap-1.5 h-9" disabled>
                   <Code2 className="h-3.5 w-3.5" />
-                  API
-                  <span className="ml-1 text-[10px] opacity-50">Kommer snart</span>
+                  {t.results.tabApi}
+                  <span className="ml-1 text-[10px] opacity-50">{t.results.comingSoon}</span>
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -511,13 +484,13 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                   {sc.critical > 0 && (
                     <span className="flex items-center gap-1.5">
                       <XCircle className="h-3.5 w-3.5 text-destructive" />
-                      {sc.critical} {sc.critical === 1 ? "brist" : "brister"}
+                      {sc.critical} {sc.critical === 1 ? t.results.criticalSingle : t.results.criticalPlural}
                     </span>
                   )}
                   {sc.important > 0 && (
                     <span className="flex items-center gap-1.5">
                       <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
-                      {sc.important} {sc.important === 1 ? "varning" : "varningar"}
+                      {sc.important} {sc.important === 1 ? t.results.warningSingle : t.results.warningPlural}
                     </span>
                   )}
                   <span className="flex items-center gap-1.5">
@@ -539,7 +512,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                   <Separator />
                   <div className="px-6 py-5">
                     <p className="font-mono text-[10px] font-bold tracking-widest text-muted-foreground mb-3">
-                      TOPPHITTAR
+                      {t.results.topFindings}
                     </p>
                     <Accordion type="multiple" className="space-y-2">
                       {topSiteFindings.map((check, i) => (
@@ -548,7 +521,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                     </Accordion>
                     {allFailed.length > 5 && (
                       <p className="text-xs text-muted-foreground font-mono mt-3 text-center">
-                        +{allFailed.length - 5} fler fynd i rapporten nedan
+                        {t.results.moreFindings(allFailed.length - 5)}
                       </p>
                     )}
                   </div>
@@ -561,7 +534,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                   <Separator />
                   <div className="px-6 py-4">
                     <p className="font-mono text-[10px] font-bold tracking-widest text-muted-foreground mb-3">
-                      REKOMMENDATIONER
+                      {t.results.recommendations}
                     </p>
                     <div className="space-y-2">
                       {recommendationChecks.map(check => (
@@ -584,9 +557,9 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                   <Separator />
                   <div className="px-6 py-5">
                     <h3 className="font-mono text-[10px] font-bold tracking-widest text-muted-foreground mb-1">
-                      DIN PLAN
+                      {t.results.planHeading}
                     </h3>
-                    <p className="text-sm text-muted-foreground mb-4">Viktigast först.</p>
+                    <p className="text-sm text-muted-foreground mb-4">{t.results.planSubtext}</p>
                     <div className="space-y-3">
                       {r.recommendations.map((rec, i) => (
                         <PlanCard
@@ -594,6 +567,8 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                           text={rec}
                           index={i}
                           priority={getStepPriority(i, sc.critical, sc.important)}
+                          labelCritical={t.results.priorityCritical}
+                          labelImportant={t.results.priorityImportant}
                         />
                       ))}
                     </div>
@@ -602,7 +577,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                         href={`/scan?domain=${encodeURIComponent(domain)}`}
                         className="font-mono text-xs text-muted-foreground hover:text-foreground transition-colors"
                       >
-                        Fixat något? Scanna igen och se din nya score →
+                        {t.results.fixedRescan}
                       </Link>
                     </div>
                   </div>
@@ -694,7 +669,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                         <p className="text-sm text-muted-foreground mb-4">Så blir ditt API agent-redo.</p>
                         <div className="space-y-3">
                           {apiScore.fastestFixes.map((step, i) => (
-                            <PlanCard key={i} text={step} index={i} priority={null} />
+                            <PlanCard key={i} text={step} index={i} priority={null} labelCritical={t.results.priorityCritical} labelImportant={t.results.priorityImportant} />
                           ))}
                         </div>
                       </div>
@@ -779,7 +754,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
             <Button variant="outline" className="w-full font-mono justify-between min-h-[44px]">
               <span className="flex items-center gap-2">
                 <FileText className="h-4 w-4" />
-                Visa fullständig rapport
+                {t.results.viewFullReport}
               </span>
               <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", reportOpen && "rotate-180")} />
             </Button>
@@ -793,7 +768,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                   <AccordionTrigger className="px-4 hover:no-underline min-h-[44px]">
                     <div className="flex items-center gap-3">
                       <XCircle className="h-4 w-4 text-destructive shrink-0" />
-                      <span className="font-medium text-sm">Kritiska brister</span>
+                      <span className="font-medium text-sm">{t.results.criticalSection}</span>
                       <Badge variant="destructive" className="ml-1 text-[10px] font-mono">{failedCritical.length}</Badge>
                     </div>
                   </AccordionTrigger>
@@ -830,7 +805,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                   <AccordionTrigger className="px-4 hover:no-underline min-h-[44px]">
                     <div className="flex items-center gap-3">
                       <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
-                      <span className="font-medium text-sm">Varningar</span>
+                      <span className="font-medium text-sm">{t.results.warningsSection}</span>
                       <Badge className="ml-1 text-[10px] font-mono bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100">{failedImportant.length}</Badge>
                     </div>
                   </AccordionTrigger>
@@ -867,7 +842,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                   <AccordionTrigger className="px-4 hover:no-underline min-h-[44px]">
                     <div className="flex items-center gap-3">
                       <Search className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span className="font-medium text-sm">Saknade delar</span>
+                      <span className="font-medium text-sm">{t.results.missingSection}</span>
                       <Badge variant="outline" className="ml-1 text-[10px] font-mono">{failedInfo.length}</Badge>
                     </div>
                   </AccordionTrigger>
@@ -893,7 +868,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                   <AccordionTrigger className="px-4 hover:no-underline min-h-[44px]">
                     <div className="flex items-center gap-3">
                       <Shield className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span className="font-medium text-sm">Regulatorisk spelplan</span>
+                      <span className="font-medium text-sm">{t.results.regulatorySection}</span>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="px-4 pb-4">
@@ -906,7 +881,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                       ))}
                     </div>
                     <p className="text-[10px] text-muted-foreground/60 mt-3 italic">
-                      Senast uppdaterad: {REGULATORY_UPDATES[0].date}
+                      {t.results.lastUpdated} {REGULATORY_UPDATES[0].date}
                     </p>
                   </AccordionContent>
                 </AccordionItem>
@@ -917,7 +892,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                   <AccordionTrigger className="px-4 hover:no-underline min-h-[44px]">
                     <div className="flex items-center gap-3">
                       <Code2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span className="font-medium text-sm">API-axlar (detaljer)</span>
+                      <span className="font-medium text-sm">{t.results.apiDetailsSection}</span>
                       <Badge variant="outline" className="ml-1 text-[10px] font-mono">
                         {apiScore.totalScore}/100
                       </Badge>
@@ -933,7 +908,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                 <AccordionTrigger className="px-4 hover:no-underline min-h-[44px]">
                   <div className="flex items-center gap-3">
                     <Code2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <span className="font-medium text-sm">Tekniska resultat</span>
+                    <span className="font-medium text-sm">{t.results.technicalSection}</span>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="px-4 pb-4">
@@ -950,7 +925,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                             {check.label}
                           </span>
                           {!check.pass && check.severity === "critical" && (
-                            <Badge variant="destructive" className="text-[9px] shrink-0">KRITISK</Badge>
+                            <Badge variant="destructive" className="text-[9px] shrink-0">{t.results.criticalBadge}</Badge>
                           )}
                         </div>
                       );
@@ -963,12 +938,12 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                 <AccordionTrigger className="px-4 hover:no-underline min-h-[44px]">
                   <div className="flex items-center gap-3">
                     <Lock className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <span className="font-medium text-sm">MCP-readiness</span>
+                    <span className="font-medium text-sm">{t.results.mcpSection}</span>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="px-4 pb-4">
                   <p className="text-[10px] text-muted-foreground/50 font-mono mb-3">
-                    Kontrolleras via offentliga, oautentiserade anrop. Saker bakom inloggning kan finnas men syns inte här.
+                    {t.results.mcpNote}
                   </p>
                   <div className="space-y-2">
                     {(["mcp_server", "sandbox_available", "openapi_spec", "api_exists", "api_docs"] as const).map(id => {
@@ -988,7 +963,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                         <Github className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs text-muted-foreground">
-                            Möjlig MCP-server hittad på GitHub —{" "}
+                            {t.results.mcpGithubHint}{" "}
                             <a
                               href={r.mcp_github_hint.url}
                               target="_blank"
@@ -1002,7 +977,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                             )}
                           </p>
                           <p className="text-xs text-muted-foreground/50 mt-0.5">
-                            Kan vara officiell eller community-skapad. Verifiera med leverantören.
+                            {t.results.mcpGithubVerify}
                           </p>
                         </div>
                       </div>
@@ -1016,7 +991,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                   <AccordionTrigger className="px-4 hover:no-underline min-h-[44px]">
                     <div className="flex items-center gap-3">
                       <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
-                      <span className="font-medium text-sm">Godkända</span>
+                      <span className="font-medium text-sm">{t.results.passedSection}</span>
                       <Badge variant="outline" className="ml-1 text-[10px] font-mono border-success/40 text-success">{passedChecks.length}</Badge>
                     </div>
                   </AccordionTrigger>
@@ -1043,7 +1018,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
             <Button variant="ghost" className="w-full justify-between font-mono text-xs text-muted-foreground">
               <span className="flex items-center gap-2">
                 <Code2 className="h-3.5 w-3.5" />
-                Teknisk data (för builders)
+                {t.results.techDataBtn}
               </span>
               <ChevronDown className="h-3.5 w-3.5" />
             </Button>
@@ -1052,10 +1027,10 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
             <Card className="mt-2 bg-muted/30">
               <CardContent className="py-4 font-mono text-xs space-y-2">
                 {[
-                  ["API",          r.checks.api_exists.pass  ? "Hittad"   : "Ej hittad"],
-                  ["OpenAPI spec", r.checks.openapi_spec.pass ? "Finns"   : "Saknas",    r.checks.openapi_spec.pass],
-                  ["MCP-server",   r.checks.mcp_server.pass  ? "Finns"    : "Saknas",    r.checks.mcp_server.pass],
-                  ["Developer docs",r.checks.api_docs.pass   ? "Hittad"   : "Ej hittad"],
+                  ["API",          r.checks.api_exists.pass  ? t.results.apiFound   : t.results.apiNotFound],
+                  ["OpenAPI spec", r.checks.openapi_spec.pass ? t.results.found   : t.results.missing,    r.checks.openapi_spec.pass],
+                  ["MCP-server",   r.checks.mcp_server.pass  ? t.results.found    : t.results.missing,    r.checks.mcp_server.pass],
+                  ["Developer docs",r.checks.api_docs.pass   ? t.results.apiFound   : t.results.apiNotFound],
                 ].map(([label, value, green], i) => (
                   <div key={i}>
                     {i > 0 && <Separator className="my-2" />}
@@ -1069,14 +1044,14 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">robots.txt</span>
                   <span className={r.checks.robots_ok.pass ? "text-success" : "text-destructive"}>
-                    {r.checks.robots_ok.pass ? "Tillåter AI-crawlers" : "Blockerar AI-crawlers"}
+                    {r.checks.robots_ok.pass ? t.results.allowsCrawlers : t.results.blocksCrawlers}
                   </span>
                 </div>
                 <Separator className="my-2" />
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">llms.txt</span>
                   <span className={r.checks.llms_txt.pass ? "text-success" : undefined}>
-                    {r.checks.llms_txt.pass ? "Finns" : "Saknas"}
+                    {r.checks.llms_txt.pass ? t.results.found : t.results.missing}
                   </span>
                 </div>
               </CardContent>
@@ -1088,20 +1063,20 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
         <div className="mt-8 space-y-3">
           <Button onClick={handleShare} className="w-full" size="lg">
             <Share2 className="mr-2 h-4 w-4" />
-            {shared ? "Kopierat!" : "Dela ditt resultat"}
+            {shared ? t.results.copied : t.results.shareResult}
           </Button>
           <Button onClick={handleTeamShare} variant="outline" className="w-full" size="lg">
             <Share2 className="mr-2 h-4 w-4" />
-            {teamShared ? "Kopierat!" : "Skicka till ditt team"}
+            {teamShared ? t.results.copied : t.results.sendToTeam}
           </Button>
           <Button variant="outline" className="w-full" size="lg" asChild>
             <a href="https://discord.gg/CSphbTk8En" target="_blank" rel="noopener noreferrer">
-              250+ builders i Discord →
+              {t.results.discordBtn}
             </a>
           </Button>
           <div className="text-center">
             <Button variant="link" className="text-muted-foreground text-sm" asChild>
-              <Link href="/scan">← Scanna en annan sajt</Link>
+              <Link href="/scan">{t.results.scanAnother}</Link>
             </Button>
           </div>
         </div>
@@ -1132,7 +1107,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
               )}
               aria-label="Vad du får på samtalet"
             >
-              {BOOKING_BULLETS.map(line => (
+              {t.results.bookingBullets.map(line => (
                 <li key={line} className="flex items-center justify-center gap-2">
                   <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
                   <span>{line}</span>
@@ -1158,7 +1133,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
               "text-[11px] mt-3 opacity-70 max-w-xs",
               cta.urgency === "high" ? "text-background/80" : "text-muted-foreground"
             )}>
-              Matchning med rätt builder i communityn.
+              {t.results.communityMatch}
             </p>
           </CardContent>
         </Card>
@@ -1168,10 +1143,10 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
         <Card className="mt-10 border-dashed bg-muted/20">
           <CardHeader className="text-center pb-2">
             <CardTitle className="font-mono text-xs font-bold tracking-widest text-muted-foreground">
-              AGENT-KATALOGEN — KOMMER SNART
+              {t.results.catalogTitle}
             </CardTitle>
             <CardDescription className="text-sm">
-              Öppen katalog för agenter mot svenska affärssystem.
+              {t.results.catalogDesc}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap justify-center gap-2 pb-8">
@@ -1185,8 +1160,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
 
         {/* ── DISCLAIMER ──────────────────────────────────────── */}
         <p className="mt-12 text-[11px] text-muted-foreground text-center max-w-md mx-auto leading-relaxed">
-          Det här är en teknisk observation, inte juridisk rådgivning.
-          Compliance-resultaten är generella och baseras inte på en granskning av era specifika policier.
+          {t.results.disclaimer}
         </p>
 
       </div>

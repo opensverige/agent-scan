@@ -7,17 +7,9 @@ import type { ScanResult } from "@/lib/scan-types";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { useLang } from "@/lib/language-context";
 
 type ScanState = "idle" | "scanning" | "not_swedish";
-
-// Exactly what the scanner does, in order — honest and specific
-const SCAN_MESSAGES = [
-  "Kollar åtkomst — robots.txt, sitemap och llms.txt",
-  "Kartlägger API-ytor — 40+ sökvägar och subdomäner",
-  "Söker developer portal — npm, GitHub och semantisk sökning",
-  "Hämtar och renderar dokumentation",
-  "AI-analys — extraherar signaler och sätter betyg",
-] as const;
 
 // Spread evenly across the ~10s scan duration
 const MSG_DELAYS = [0, 2000, 4000, 6000, 8000];
@@ -97,6 +89,7 @@ function isValidDomain(d: string): boolean {
 
 export default function ScannerSection({ initialDomain }: { initialDomain?: string }) {
   const router = useRouter();
+  const { t } = useLang();
   const [state, setState] = useState<ScanState>("idle");
   const [url, setUrl] = useState(initialDomain ?? "");
   const [domain, setDomain] = useState("");
@@ -112,6 +105,7 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
     const set = () => { v.playbackRate = 0.5; };
     v.addEventListener("canplay", set, { once: true });
     if (v.readyState >= 3) set();
+    v.play().catch(() => {});
     return () => v.removeEventListener("canplay", set);
   }, []);
 
@@ -207,26 +201,26 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
         <style>{CSS}</style>
         <div className="px-6 pt-14 pb-16 max-w-[580px] mx-auto" style={{ animation: `ss-fadeup 0.35s ${EASE} both` }}>
           <h1 className="font-serif text-[clamp(28px,6vw,44px)] font-normal leading-[1.1] tracking-[-1px] mb-4">
-            Inte ett svenskt företag
+            {t.scanner.notSwedishHeading}
           </h1>
           <p className="text-base text-muted-foreground leading-relaxed max-w-[420px] mb-6">
-            Vi scannar bara svenska företag och internationella bolag grundade i Sverige — som Spotify, IKEA och Klarna.
+            {t.scanner.notSwedishText}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 mb-8">
             <Button type="button" onClick={() => { setUrl(""); setState("idle"); }} size="lg">
-              Prova en annan domän →
+              {t.scanner.tryAnother}
             </Button>
             <a
-              href={`https://discord.gg/CSphbTk8En`}
+              href="https://discord.gg/CSphbTk8En"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl border-2 border-border text-sm font-medium text-muted-foreground hover:border-primary/30 hover:text-foreground transition-colors duration-150"
             >
-              Är detta fel? Kontakta oss →
+              {t.scanner.contactUs}
             </a>
           </div>
           <p className="text-xs text-muted-foreground/50 max-w-[400px]">
-            Om ditt bolag är grundat i Sverige men inte känns igen — hör av dig på Discord så lägger vi till det.
+            {t.scanner.notSwedishFootnote}
           </p>
         </div>
       </div>
@@ -239,8 +233,8 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
       <div>
         <style>{CSS}</style>
 
-        {/* ── Hero — video loops natively (forward+reverse encoded in file) ── */}
-        <div className="relative min-h-[min(44vh,380px)] overflow-hidden">
+        {/* ── Hero — video + rubrik ── */}
+        <div className="relative overflow-hidden">
           <video
             ref={videoRef}
             src="/assets/hero-video-loop.mp4"
@@ -250,84 +244,79 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
             playsInline
             preload="auto"
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 z-0 h-full min-h-full w-full object-cover opacity-80"
+            className="pointer-events-none absolute inset-0 z-0 h-full min-h-full w-full object-cover opacity-95"
           />
-          {/* Lätt scrim: video syns; text läses via starkare ton under rubrik + brödtext */}
+          {/* Minimalt scrim */}
           <div
             className="pointer-events-none absolute inset-0 z-[1]"
             style={{
               background: [
-                "linear-gradient(180deg, hsl(var(--background) / 0.20) 0%, transparent 50%)",
-                "linear-gradient(0deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.25) 22%, transparent 50%)",
+                "linear-gradient(180deg, hsl(var(--background) / 0.35) 0%, transparent 30%)",
+                "linear-gradient(0deg, hsl(var(--background)) 0%, hsl(var(--background) / 0.55) 18%, transparent 42%)",
               ].join(", "),
             }}
           />
 
-          {/* Hero content */}
-          <div className="relative z-[2] mx-auto max-w-[580px] px-6 pb-12 pt-16 sm:pb-14">
+          {/* Rubrik — höjden styr hela hero-höjden */}
+          <div className="relative z-[2] mx-auto max-w-[580px] px-6 pt-14 pb-[clamp(56px,10vh,96px)]">
             <h1
-              className="mb-5 text-center font-serif text-[clamp(32px,7vw,52px)] font-normal leading-[1.12] tracking-[-1.5px] text-foreground"
-              style={{
-                animation: `ss-fadeup 0.6s ${EASE} 50ms both`,
-                textShadow:
-                  "0 0 28px hsl(var(--background) / 0.95), 0 1px 3px hsl(var(--background) / 0.9), 0 2px 12px hsl(var(--foreground) / 0.08)",
-              }}
+              className="text-center font-serif text-[clamp(38px,9vw,66px)] font-normal leading-[1.08] tracking-[-2px] text-white"
+              style={{ animation: `ss-fadeup 0.6s ${EASE} 50ms both` }}
             >
-              Hur agent-redo är ditt företag?
+              {t.scanner.headline}
             </h1>
+          </div>
+        </div>
 
-            <div
-              className="mx-auto max-w-[520px]"
-              style={{ animation: `ss-fadeup 0.5s ${EASE} 100ms both` }}
-            >
-              <div className="overflow-hidden rounded-2xl border-2 border-border/70 bg-background shadow-lg">
-                <p className="px-4 pb-3 pt-4 text-center text-base leading-relaxed text-foreground sm:px-5 sm:pb-4 sm:pt-5">
-                  AI-agenter försöker redan nå ditt system.
-                  <br />
-                  Vi visar vad de ser — och vad som stoppar dem.
-                </p>
-                <div className="border-t border-border/55 bg-card px-3 py-3 sm:flex sm:flex-row sm:items-stretch sm:gap-2.5 sm:px-4 sm:pb-4">
-                  <div className="flex flex-1 items-center gap-2 rounded-xl border-2 border-border bg-background px-3.5 py-2.5 transition-colors duration-150 focus-within:border-primary/30">
-                    <span className="font-mono text-xs text-muted-foreground shrink-0">https://</span>
-                    <input
-                      value={url}
-                      onChange={e => setUrl(e.target.value)}
-                      onKeyDown={e => e.key === "Enter" && canSubmit && runScan(url)}
-                      placeholder="dittforetag.se"
-                      aria-label="Domännamn att scanna"
-                      autoComplete="url"
-                      spellCheck={false}
-                      className="min-w-0 flex-1 border-none bg-transparent font-mono text-[15px] font-medium text-foreground caret-primary outline-none placeholder:text-muted-foreground/40"
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    onClick={() => runScan(url)}
-                    disabled={!canSubmit}
-                    size="lg"
-                    className="mt-2 w-full shrink-0 sm:mt-0 sm:w-auto"
-                  >
-                    Scanna →
-                  </Button>
-                </div>
+        {/* ── Inputkort — överlappar hero/section-gränsen ── */}
+        <div
+          className="relative z-[4] mx-auto max-w-[520px] px-4 mb-0"
+          style={{ marginTop: "clamp(-48px, -8vh, -80px)", animation: `ss-fadeup 0.5s ${EASE} 100ms both` }}
+        >
+          <div className="overflow-hidden rounded-2xl border border-border/60 bg-background shadow-2xl">
+            <p className="px-4 pb-3 pt-4 text-center text-sm leading-relaxed text-muted-foreground sm:px-5 sm:pb-3 sm:pt-4">
+              {t.scanner.subtext}
+            </p>
+            <div className="border-t border-border/40 bg-card px-3 py-3 sm:flex sm:flex-row sm:items-stretch sm:gap-2.5 sm:px-4 sm:pb-4">
+              <div className="flex flex-1 items-center gap-2 rounded-xl border border-border bg-background px-3.5 py-2.5 transition-colors duration-150 focus-within:border-primary/40">
+                <span className="font-mono text-xs text-muted-foreground shrink-0">https://</span>
+                <input
+                  value={url}
+                  onChange={e => setUrl(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && canSubmit && runScan(url)}
+                  placeholder={t.scanner.placeholder}
+                  aria-label={t.scanner.ariaLabel}
+                  autoComplete="url"
+                  spellCheck={false}
+                  className="min-w-0 flex-1 border-none bg-transparent font-mono text-[15px] font-medium text-foreground caret-primary outline-none placeholder:text-muted-foreground/40"
+                />
               </div>
+              <Button
+                type="button"
+                onClick={() => runScan(url)}
+                disabled={!canSubmit}
+                size="lg"
+                className="mt-2 w-full shrink-0 sm:mt-0 sm:w-auto"
+              >
+                {t.scanner.scanBtn}
+              </Button>
             </div>
           </div>
         </div>
 
         {/* ── Under hero: Varför ── */}
-        <div className="relative z-[4] mx-auto max-w-[580px] px-6 pb-16 pt-8">
+        <div className="relative z-[3] mx-auto max-w-[580px] px-6 pb-16 pt-10">
           <h2
             className="mx-auto mb-3 max-w-[460px] text-center font-serif text-[clamp(28px,5.5vw,40px)] font-normal tracking-[-0.45px] text-foreground"
             style={{ animation: `ss-fadeup 0.4s ${EASE} 210ms both` }}
           >
-            Varför
+            {t.scanner.whyHeading}
           </h2>
           <p
             className="mx-auto max-w-[460px] text-center text-base leading-relaxed text-muted-foreground"
             style={{ animation: `ss-fadeup 0.4s ${EASE} 220ms both` }}
           >
-            Företag som inte syns för agenter blir ointegrerbara. Builders väljer system med öppna API:er — vi visar var ditt står.
+            {t.scanner.whyText}
           </p>
         </div>
       </div>
@@ -339,18 +328,18 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
     <div>
       <style>{CSS}</style>
       <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
-        Skannar {domain}: {SCAN_MESSAGES[activeMsgIdx]}
+        {t.scanner.scanningPrefix} {domain}: {t.scanner.scanMessages[activeMsgIdx]}
       </div>
       <div
         className="px-6 pt-16 pb-16 max-w-[580px] mx-auto"
         style={{ animation: `ss-fadeup 0.35s ${EASE} both` }}
       >
         <div className="text-sm text-muted-foreground mb-8">
-          Kollar <span className="font-mono text-foreground font-semibold">{domain}</span>
+          {t.scanner.scanningPrefix} <span className="font-mono text-foreground font-semibold">{domain}</span>
         </div>
 
         <div className="flex flex-col gap-2.5 mb-8">
-          {(SCAN_MESSAGES as readonly string[]).slice(0, activeMsgIdx + 1).map((msg, i) => {
+          {t.scanner.scanMessages.slice(0, activeMsgIdx + 1).map((msg, i) => {
             const isCurrent = i === activeMsgIdx;
             return (
               <div
