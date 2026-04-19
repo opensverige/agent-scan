@@ -4,6 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import Nav from "./_components/Nav";
 import ScannerSection from "./_components/ScannerSection";
 import CTA from "./_components/CTA";
+import Footer from "./_components/Footer";
 
 export const metadata: Metadata = {
   title: "Hur agent-redo är ditt företag?",
@@ -79,10 +80,7 @@ export default async function ScanPage({ searchParams }: PageProps) {
       <ScannerSection initialDomain={domain} />
       <Separator className="max-w-[580px] mx-auto" />
       <CTA />
-      <footer className="px-6 py-3.5 border-t border-border flex justify-between items-center font-mono text-[10px] text-muted-foreground flex-wrap gap-2">
-        <span>agent.opensverige.se</span>
-        <span>opensverige.se — öppen källkod</span>
-      </footer>
+      <Footer />
     </>
   );
 }

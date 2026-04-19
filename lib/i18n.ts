@@ -33,6 +33,7 @@ export const I18N = {
       contactUs: "Är detta fel? Kontakta oss →",
       notSwedishFootnote:
         "Om ditt bolag är grundat i Sverige men inte känns igen — hör av dig på Discord så lägger vi till det.",
+      privacyCopy: "Anonym · ingen registrering · hashad IP + resultat lagras · radering på begäran",
     },
 
     cta: {
@@ -158,6 +159,9 @@ export const I18N = {
       today: "(idag)",
       scanAgain: "Skanna igen →",
 
+      // AI summary
+      aiSummaryLabel: "Sammanfattad av AI (Claude)",
+
       // Demo
       demoBadge: "DEMO",
       demoText:
@@ -170,6 +174,66 @@ export const I18N = {
       // Disclaimer
       disclaimer:
         "Det här är en teknisk observation, inte juridisk rådgivning. Compliance-resultaten är generella och baseras inte på en granskning av era specifika policier.",
+    },
+
+    footer: {
+      tagline: "opensverige.se — öppen källkod",
+      privacy: "Integritet",
+    },
+
+    privacy: {
+      title: "Integritet",
+      lastUpdated: "Senast uppdaterad: 19 april 2026",
+      intro:
+        "Den här sidan förklarar vad vi samlar in när du scannar en domän på agent.opensverige.se och varför. Kort, ärligt och utan juristprosa.",
+      sections: [
+        {
+          heading: "Vad vi samlar in",
+          body:
+            "När du scannar en domän sparar vi: domännamnet, resultatet av de tekniska checkarna, en hashad version av din IP-adress (SHA-256), tidpunkt samt AI-genererad sammanfattning. Vi sparar inga namn, e-post eller konton — scannern kräver ingen registrering.",
+        },
+        {
+          heading: "Varför",
+          body:
+            "Domän och resultat lagras för att du ska kunna återvända till din rapport och dela den. Hashad IP används för rate-limiting (skydd mot missbruk) — vi kan inte återställa den till en riktig IP-adress, men eftersom den kan kopplas till dig räknas den juridiskt som pseudonymiserad persondata (EU-domstolen, Breyer-domen).",
+        },
+        {
+          heading: "AI-sammanfattning",
+          body:
+            "Sammanfattningen ovanför checkresultaten är genererad av Anthropics Claude-modell utifrån de tekniska checkarna. Den är ingen juridisk rådgivning. Vi märker den tydligt som AI-genererad i enlighet med EU AI Act artikel 50 (tillämpas från 2 augusti 2026).",
+        },
+        {
+          heading: "Underleverantörer",
+          body:
+            "Hosting: Vercel (USA/EU). Databas: Supabase (EU, Frankfurt). AI-analys: Anthropic (USA). Semantisk sökning: Exa (USA). Hämtning: Firecrawl (USA). Mötesbokning: Cal.com (EU). Överföringar till USA sker enligt EU-US Data Privacy Framework.",
+        },
+        {
+          heading: "Webbanalys",
+          body:
+            "Vi använder Vercel Web Analytics som räknar sidvisningar utan cookies och utan att spåra dig mellan sajter. Ingen cookie-banner krävs eftersom vi inte använder cookies för spårning.",
+        },
+        {
+          heading: "Cookies",
+          body:
+            "Vi sätter inga egna cookies. Om du bokar ett möte via Cal.com sätter deras embed cookies när du interagerar med kalendern — det är Cal.com som personuppgiftsansvarig för det.",
+        },
+        {
+          heading: "Lagringstid",
+          body:
+            "Scanresultat och hashad IP sparas tills vidare så att rapporter förblir länkbara. Du kan när som helst begära radering av en specifik domäns resultat — maila info@opensverige.se.",
+        },
+        {
+          heading: "Dina rättigheter",
+          body:
+            "Enligt GDPR har du rätt till tillgång, rättelse, radering, begränsning, dataportabilitet och invändning. Du kan också klaga hos Integritetsskyddsmyndigheten (IMY).",
+        },
+        {
+          heading: "Kontakt",
+          body:
+            "Personuppgiftsansvarig: OpenSverige. Kontakt: info@opensverige.se. Vi svarar så snart vi kan — vi är en community, inte en kundtjänst.",
+        },
+      ] as ReadonlyArray<{ heading: string; body: string }>,
+      backLink: "← Tillbaka till scannern",
     },
   },
 
@@ -204,6 +268,7 @@ export const I18N = {
       contactUs: "Is this wrong? Contact us →",
       notSwedishFootnote:
         "If your company was founded in Sweden but isn't recognized — reach out on Discord and we'll add it.",
+      privacyCopy: "Anonymous · no sign-up · hashed IP + results stored · deletion on request",
     },
 
     cta: {
@@ -315,6 +380,8 @@ export const I18N = {
       today: "(today)",
       scanAgain: "Scan again →",
 
+      aiSummaryLabel: "Summarized by AI (Claude)",
+
       demoBadge: "DEMO",
       demoText:
         "Technical checks are real. Analysis text is generic until ANTHROPIC_API_KEY is added.",
@@ -324,6 +391,66 @@ export const I18N = {
 
       disclaimer:
         "This is a technical observation, not legal advice. Compliance results are general and not based on a review of your specific policies.",
+    },
+
+    footer: {
+      tagline: "opensverige.se — open source",
+      privacy: "Privacy",
+    },
+
+    privacy: {
+      title: "Privacy",
+      lastUpdated: "Last updated: April 19, 2026",
+      intro:
+        "This page explains what we collect when you scan a domain on agent.opensverige.se and why. Short, honest, no legalese.",
+      sections: [
+        {
+          heading: "What we collect",
+          body:
+            "When you scan a domain we store: the domain name, the results of the technical checks, a hashed version of your IP address (SHA-256), a timestamp, and the AI-generated summary. We don't store names, emails or accounts — the scanner requires no sign-up.",
+        },
+        {
+          heading: "Why",
+          body:
+            "Domain and results are stored so you can return to your report and share it. Hashed IP is used for rate limiting (abuse protection) — we can't reverse it to a real IP, but because it can still be linked to you it legally counts as pseudonymised personal data (CJEU, Breyer ruling).",
+        },
+        {
+          heading: "AI summary",
+          body:
+            "The summary above the check results is generated by Anthropic's Claude model based on the technical checks. It is not legal advice. We label it clearly as AI-generated, in line with EU AI Act article 50 (applies from August 2, 2026).",
+        },
+        {
+          heading: "Sub-processors",
+          body:
+            "Hosting: Vercel (US/EU). Database: Supabase (EU, Frankfurt). AI analysis: Anthropic (US). Semantic search: Exa (US). Fetching: Firecrawl (US). Meeting bookings: Cal.com (EU). Transfers to the US rely on the EU-US Data Privacy Framework.",
+        },
+        {
+          heading: "Web analytics",
+          body:
+            "We use Vercel Web Analytics, which counts page views without cookies and without tracking you across sites. No cookie banner is required because we don't use cookies for tracking.",
+        },
+        {
+          heading: "Cookies",
+          body:
+            "We set no cookies of our own. If you book a meeting via Cal.com, their embed sets cookies when you interact with the calendar — Cal.com is the controller for that.",
+        },
+        {
+          heading: "Retention",
+          body:
+            "Scan results and hashed IPs are kept indefinitely so reports remain linkable. You can request deletion of a specific domain's results at any time — email info@opensverige.se.",
+        },
+        {
+          heading: "Your rights",
+          body:
+            "Under GDPR you have the right to access, rectification, erasure, restriction, portability and objection. You can also lodge a complaint with the Swedish Authority for Privacy Protection (IMY).",
+        },
+        {
+          heading: "Contact",
+          body:
+            "Controller: OpenSverige. Contact: info@opensverige.se. We reply as soon as we can — we're a community, not a support desk.",
+        },
+      ] as ReadonlyArray<{ heading: string; body: string }>,
+      backLink: "← Back to the scanner",
     },
   },
 } as const;

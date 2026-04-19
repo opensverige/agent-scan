@@ -302,6 +302,9 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
               </Button>
             </div>
           </div>
+          <p className="mt-3 text-center font-mono text-[10px] text-muted-foreground/70">
+            {t.scanner.privacyCopy}
+          </p>
         </div>
 
         {/* ── Under hero: Varför ── */}

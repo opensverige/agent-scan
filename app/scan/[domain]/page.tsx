@@ -5,6 +5,7 @@ import type { AllChecks } from "@/lib/checks";
 import { computeSeverityCounts } from "@/lib/checks";
 import { getLocalLatestScan } from "@/lib/local-scan-store";
 import Nav from "../_components/Nav";
+import Footer from "../_components/Footer";
 import ResultsPage from "./_components/ResultsPage";
 
 interface PageProps {
@@ -197,10 +198,7 @@ export default async function ScanResultPage({ params }: PageProps) {
         />
       )}
       <ResultsPage domain={domain} initialData={initialData} />
-      <footer className="px-6 py-3.5 border-t border-border flex justify-between items-center font-mono text-[10px] text-muted-foreground flex-wrap gap-2">
-        <span>agent.opensverige.se</span>
-        <span>opensverige.se — öppen källkod</span>
-      </footer>
+      <Footer />
     </>
   );
 }

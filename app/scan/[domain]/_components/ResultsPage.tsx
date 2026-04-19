@@ -500,9 +500,14 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                 </div>
 
                 {r.summary && (
-                  <p className="text-sm text-muted-foreground leading-relaxed w-full border-t border-border/50 pt-4 mt-1">
-                    {r.summary}
-                  </p>
+                  <div className="w-full border-t border-border/50 pt-4 mt-1">
+                    <p className="font-mono text-[10px] tracking-widest text-muted-foreground/70 mb-2">
+                      {t.results.aiSummaryLabel.toUpperCase()}
+                    </p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {r.summary}
+                    </p>
+                  </div>
                 )}
               </div>
 
