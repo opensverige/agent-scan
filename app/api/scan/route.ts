@@ -366,32 +366,55 @@ async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveCh
   ];
 
   // ── Phase 1: parallel quick fetches ──────────────────────────────────────
-  // sitemap_index.xml: large sites use this instead of sitemap.xml
+  // Checks multiple common sitemap paths in parallel — no latency penalty.
   // llms.txt: checked at root AND .well-known — content-validated in phase 2
-  const [robotsRes, sitemapRes, sitemapIndexRes, llmsRes, llmsWellKnownRes, ...probeResultsRaw] = await Promise.all([
+  const [robotsRes, sitemapRes, sitemapIndexRes, sitemapWpRes, sitemapPhpRes, llmsRes, llmsWellKnownRes, ...probeResultsRaw] = await Promise.all([
     fetchSafe(`${base}/robots.txt`),
     fetchSafe(`${base}/sitemap.xml`),
     fetchSafe(`${base}/sitemap_index.xml`),
+    fetchSafe(`${base}/wp-sitemap.xml`),        // WordPress 5.5+ core sitemaps
+    fetchSafe(`${base}/sitemap.php`),           // PHP CMS sitemap generators
     fetchSafe(`${base}/llms.txt`),
     fetchSafe(`${base}/.well-known/llms.txt`),
     ...builderUrls.map(url => fetchSafe(url).then(r => ({ url, ...r ?? { status: 0, body: "", contentType: null } } as ProbeResult))),
     ...complianceUrls.map(url => fetchSafe(url).then(r => ({ url, ...r ?? { status: 0, body: "", contentType: null } } as ProbeResult))),
   ]);
 
-  // ── Phase 2: resolve from phase 1 results ────────────────────────────────
-  // RFC 9309: 404/absent = allow-all, 403 = deny-all, 200 = parse
-  const robotsParsed = robotsRes?.status === 200
+  // ── Phase 1.5: fetch robots.txt-declared sitemap if at non-standard path ──
+  // Many sites declare their sitemap in robots.txt but at a path we haven't probed yet
+  // (e.g. /sitemap-news.xml, /sitemaps/sitemap.xml, www-subdomain variants).
+  const KNOWN_SITEMAP_URLS = new Set([
+    `${base}/sitemap.xml`, `${base}/sitemap_index.xml`,
+    `${base}/wp-sitemap.xml`, `${base}/sitemap.php`,
+  ]);
+  const robotsParsedEarly = robotsRes?.status === 200
     ? parseRobots(robotsRes.body)
     : robotsRes?.status === 403
       ? { allowed: false, sitemapUrl: null }
       : { allowed: true, sitemapUrl: null };
+  let robotsDeclaredSitemapRes = null;
+  if (robotsParsedEarly.sitemapUrl) {
+    const declared = robotsParsedEarly.sitemapUrl;
+    const declaredAbs = declared.startsWith("http")
+      ? declared
+      : `${base}${declared.startsWith("/") ? declared : `/${declared}`}`;
+    if (!KNOWN_SITEMAP_URLS.has(declaredAbs)) {
+      robotsDeclaredSitemapRes = await fetchSafe(declaredAbs);
+    }
+  }
+
+  // ── Phase 2: resolve from phase 1 results ────────────────────────────────
+  // RFC 9309: 404/absent = allow-all, 403 = deny-all, 200 = parse
+  const robotsParsed = robotsParsedEarly;
   const robotsAllowed = robotsParsed.allowed;
 
-  // Sitemap: /sitemap.xml 200 OR /sitemap_index.xml 200 OR robots.txt declares a Sitemap: URL
+  // Sitemap: any 200 response from standard paths OR robots.txt-declared URL
   const sitemapExists =
     sitemapRes?.status === 200 ||
     sitemapIndexRes?.status === 200 ||
-    (robotsRes?.status === 200 && robotsParsed.sitemapUrl !== null);
+    sitemapWpRes?.status === 200 ||
+    sitemapPhpRes?.status === 200 ||
+    robotsDeclaredSitemapRes?.status === 200;
 
   // llms.txt: valid at root OR at .well-known/llms.txt — must be real text, not HTML catch-all
   const llmsValid =
