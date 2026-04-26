@@ -32,6 +32,20 @@ updates:
       # tailwindcss v4 has breaking config changes; pin to v3 majors only.
       - dependency-name: "tailwindcss"
         update-types: ["version-update:semver-major"]
+      # firecrawl-js v4 is 3 majors past our pinned v1 — needs coordinated
+      # migration of lib/scan/firecrawl.ts against the new SDK API.
+      # Closed PR #7 for this reason on 2026-04-26.
+      - dependency-name: "@mendable/firecrawl-js"
+        update-types: ["version-update:semver-major"]
+      # Next.js majors require migration of app router patterns + middleware
+      # APIs. Keep manual.
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
+      # React 20+ will land with new compiler defaults — keep manual.
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
 
   # GitHub Actions — same cadence
   - package-ecosystem: "github-actions"
