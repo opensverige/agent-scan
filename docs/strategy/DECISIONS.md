@@ -67,6 +67,17 @@ Cons:
 
 **Datum:** 2026-04-26
 
+**Reviderat 2026-04-26 senare samma dag:** Bytt från MIT → **FSL-1.1-MIT** efter samtal om Gollum-skydd och säljbarhet.
+
+Anledning: MIT skyddar inte mot AWS/Vercel/Cloudflare som wrappar koden som managed-tjänst. AGPL skulle bara kräva att de publicerar sina ändringar — de gör det knorrande och ändå konkurrerar. FSL kontraktsförbjuder "Competing Use" i två år, varefter koden auto-konverterar till MIT. Ger:
+
+- Strömlinjeformat skydd mot konkurrent-SaaS de första två åren
+- Tydlig copyright-kontroll → säljbart till acquirer
+- Möjlighet att dual-licensa kommersiellt utan komplikation
+- Eventuell övergång till äkta öppen källkod (MIT) på autopilot
+
+Implementerat: LICENSE bytt, CLA.md tillagd, README + CONTRIBUTING uppdaterade.
+
 ---
 
 ## #4 — Inngest + Upstash som bakgrundsjobb-stack

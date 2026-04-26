@@ -75,9 +75,9 @@
 
 ### Retention
 
-- [x] **Inngest SDK installerat + client + handler-route** — `inngest/client.ts` + `app/api/inngest/route.ts`
-- [x] **Inngest cron `retention-cleanup`** — kör 03:00 UTC dagligen, deletar `scan_submissions` äldre än 90 dagar — `inngest/cron-retention.ts`
-- [ ] **Inngest-konto + Vercel-integration** — manuell: skapa konto på inngest.com, koppla till Vercel-projekt. När integrationen är aktiv börjar cron köra automatiskt.
+- [x] ~~Inngest SDK~~ — **borttagen 2026-04-26**. Ersatt med pg_cron (EU, samma DB) — Inngest hade US-only data plane vilket inte passar "Sveriges öppna scanner".
+- [x] **pg_cron `retention-cleanup`** — körs 03:00 UTC dagligen, deletar `scan_submissions` äldre än 90 dagar — `supabase/migrations/006_retention_cron.sql` (active=true, jobid 1)
+- [x] **Verifierat aktivt:** `SELECT * FROM cron.job WHERE jobname='retention-cleanup'` returnerar active=true
 
 ---
 

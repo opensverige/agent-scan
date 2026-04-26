@@ -1,11 +1,12 @@
 # Contributing to agent.opensverige
 
-Tack för att du vill bidra. Det här är ett community-projekt under MIT-licens — vi strävar efter att vara en lågfriktions plats att bygga på.
+Tack för att du vill bidra. Projektet ligger under [Functional Source License (FSL-1.1-MIT)](LICENSE) — källkoden är öppen, men kommersiella konkurrenter får inte wrappa den som managed-tjänst i två år. Efter två år konverterar varje commit automatiskt till MIT.
 
 ## Innan du börjar
 
+- **Läs [CLA.md](CLA.md)** — när du skickar en PR intygar du att din kod kan licensieras under FSL och dual-licensas av oss vid framtida behov. Inget formulär att fylla i; signera commiten med `Signed-off-by: Name <email>`.
 - Issues > PRs för diskussion. Öppna ett issue först om du vill ändra arkitektur, lägga till en ny check, eller förändra UI markant.
-- Triviala fixes (typos, lints, små bugs) behöver ingen pre-diskussion — skicka PR direkt.
+- Triviala fixes (typos, lints, små bugs) behöver ingen pre-diskussion — skicka PR direkt med en signoff.
 
 ## Setup
 

@@ -87,9 +87,17 @@ För större förändringar — öppna ett issue först så vi kan diskutera app
 
 ## Licens
 
-MIT — se [LICENSE](LICENSE).
+[Functional Source License (FSL-1.1-MIT)](LICENSE) — samma modell som Sentry, MariaDB och Keygen.
 
-Vi använder MIT istället för GPL för att maximera adoption. Om du forkar och hostar din egen version — det är okej. Vill du bidra tillbaka — ännu bättre.
+**Vad det betyder i praktiken:**
+- ✅ Du får läsa, forka, modifiera, bidra tillbaka, använda internt, använda i forskning och utbildning
+- ✅ Du får erbjuda professionella tjänster (konsulttjänster, integration) byggda ovanpå
+- ❌ Du får **inte** erbjuda en konkurrerande managed-tjänst (t.ex. "ScanSverige.com" hostad av dig) under två år
+- ✅ Efter två år konverterar varje commit automatiskt till **MIT-licens**
+
+Det här är vårt sätt att hålla källkoden öppen och granskbar samtidigt som ingen större aktör (AWS, Cloudflare, Vercel) kan wrappa och resälja vår produkt. Bidrag välkomnas — se [CONTRIBUTING.md](CONTRIBUTING.md) och [CLA.md](CLA.md).
+
+För kommersiell licensiering eller frågor: info@opensverige.se.
 
 ## Säkerhet
 
