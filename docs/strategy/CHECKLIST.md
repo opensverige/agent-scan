@@ -35,12 +35,13 @@
 
 ### Refaktorering (blockerare för Stage 1)
 
-- [ ] **Skapa `lib/scan/`-katalog** med `discovery.ts`, `compliance.ts`, `builder.ts`, `scoring.ts`, `claude.ts`, `persist.ts`, `rate-limit.ts`
-- [ ] **Skapa `lib/checks/Check.ts`** med standardiserat interface (`id`, `category`, `severity`, `run(ctx) → CheckResult`)
-- [ ] **Migrera 11 nuvarande checks** till `lib/checks/{robots,sitemap,llms,privacy-automation,cookie-bot,ai-content-marking,api-exists,openapi,api-docs,mcp,sandbox}.ts`
-- [ ] **Refaktorera `route.ts`** till tunn orchestrator som anropar `lib/scan/`-modulerna
-- [ ] **Splitta `ResultsPage.tsx`** till `_components/{ScoreRing,AISummary,FindingRow,PlanCard,BuilderAvatarStack,ApiSection,FullReport,ShareSection}.tsx`
-- [ ] **Type-check + lint + build grön** efter varje större split
+- [x] **Skapa `lib/scan/`-katalog** med `fetch.ts`, `robots.ts`, `discovery.ts`, `firecrawl.ts`, `openapi-extractor.ts`, `probe.ts`, `derive.ts`, `rate-limit.ts`, `persist.ts`, `pipeline.ts`
+- [x] **Refaktorera `route.ts`** till tunn handler (~70 rader, var 902) som anropar `lib/scan/pipeline.ts`
+- [x] **Extract derive logic** till egen modul (per arkitekt-council feedback) — eliminerar post-mutation av checks
+- [x] **Type-check + lint + build grön** efter refactor — verifierat med real prod scan av hexagon.com (UUID `d3282d97...`)
+- [ ] **Per-check filer i `lib/checks/`** med standardiserat interface — *deferred* till Stage 1 när vi lägger till G-01..G-06 (då måste vi ändå röra UI)
+- [ ] **CheckResult som discriminated union** — *deferred* till Stage 1, samma anledning
+- [ ] **Splitta `ResultsPage.tsx`** till `_components/`-katalog — Chunk 3
 
 ### Cleanup
 
