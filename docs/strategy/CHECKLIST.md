@@ -54,13 +54,13 @@
 
 ### Compliance prep
 
-- [ ] **`"ai_generated": true`** i alla API-responses som innehåller Claude-text — `app/api/scan/route.ts` output shape
-- [ ] **Ny `app/legal/subprocessors/page.tsx`** — lista Anthropic, Vercel, Supabase, Cloudflare (+ AWS om Bedrock-beslut)
-- [ ] **`public/.well-known/security.txt`** (RFC 9116) — kontaktinfo, expires-datum
+- [x] **`ai_disclosure` field** med `ai_generated`, `model`, `fields` per EU AI Act Art. 50 — `lib/scan-types.ts` + `lib/scan/pipeline.ts`. Maskinläsbart format, sätts på alla scans. Demo-mode = false, real Claude = true.
+- [x] **Ny `app/legal/subprocessors/page.tsx`** — lista Vercel, Supabase, Anthropic, Firecrawl, Exa, Cloudflare, Cal.com med syfte + region + adekvansbeslut
+- [x] **`public/.well-known/security.txt`** (RFC 9116) — kontaktinfo, expires 2027-04-26
 - [ ] **`public/.well-known/security.txt.sig`** — PGP-signatur (kan vänta)
-- [ ] **Uppdatera privacy-policy: PTS för AI Act-frågor + IMY för GDPR** — `lib/i18n.ts` privacy-section
-- [ ] **Uppdatera privacy-policy: explicit retentionstid (90 dagar)** istället för "tills vidare" — `lib/i18n.ts`
-- [ ] **Lägg till Footer-länkar** till `/legal/subprocessors` — `app/scan/_components/Footer.tsx`
+- [x] **Uppdatera privacy-policy: PTS för AI Act-frågor + IMY för GDPR** — `lib/i18n.ts` privacy-section
+- [x] **Uppdatera privacy-policy: explicit retentionstid (90 dagar)** istället för "tills vidare" — `lib/i18n.ts`
+- [x] **Lägg till Footer-länkar** till `/legal/subprocessors` — `app/scan/_components/Footer.tsx`
 
 ### Open source-beslut
 

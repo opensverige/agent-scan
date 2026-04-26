@@ -223,12 +223,12 @@ export const I18N = {
         {
           heading: "Lagringstid",
           body:
-            "Scanresultat och hashad IP sparas tills vidare så att rapporter förblir länkbara. Du kan när som helst begära radering av en specifik domäns resultat — maila info@opensverige.se.",
+            "Scanresultat och hashad IP raderas automatiskt efter 90 dagar (kan förlängas på Builder/Pro-tier). Du kan begära tidigare radering av en specifik domäns resultat — maila info@opensverige.se.",
         },
         {
           heading: "Dina rättigheter",
           body:
-            "Enligt GDPR har du rätt till tillgång, rättelse, radering, begränsning, dataportabilitet och invändning. Du kan också klaga hos Integritetsskyddsmyndigheten (IMY).",
+            "Enligt GDPR har du rätt till tillgång, rättelse, radering, begränsning, dataportabilitet och invändning. Du kan klaga hos Integritetsskyddsmyndigheten (IMY) för GDPR-frågor och hos Post- och telestyrelsen (PTS) för AI Act-frågor (per SOU 2025:101).",
         },
         {
           heading: "Kontakt",
@@ -237,6 +237,73 @@ export const I18N = {
         },
       ] as ReadonlyArray<{ heading: string; body: string }>,
       backLink: "← Tillbaka till scannern",
+    },
+
+    subprocessors: {
+      title: "Underleverantörer",
+      lastUpdated: "Senast uppdaterad: 26 april 2026",
+      intro:
+        "Lista över alla tredje parter som behandlar data å OpenSveriges vägnar när du använder agent.opensverige.se. Vi notifierar minst 30 dagar innan vi lägger till nya underleverantörer.",
+      tableHeaders: {
+        provider: "Leverantör",
+        purpose: "Ändamål",
+        location: "Region",
+        dpf: "Adekvansbeslut",
+      },
+      providers: [
+        {
+          name: "Vercel Inc.",
+          purpose: "Hosting + edge-funktioner (Next.js)",
+          location: "USA / EU",
+          dpf: "EU-US DPF (certifierad)",
+          link: "https://vercel.com/legal/privacy-policy",
+        },
+        {
+          name: "Supabase Inc.",
+          purpose: "Postgres-databas + autentisering",
+          location: "EU (eu-west-2, London)",
+          dpf: "DPA + SCC",
+          link: "https://supabase.com/legal/dpa",
+        },
+        {
+          name: "Anthropic PBC",
+          purpose: "AI-sammanfattningar (Claude API)",
+          location: "USA (Microsoft Azure)",
+          dpf: "SCC + TIA — migrerar till AWS Bedrock Frankfurt",
+          link: "https://trust.anthropic.com",
+        },
+        {
+          name: "Mendable Labs (Firecrawl)",
+          purpose: "Renderar JS-tunga sajter för innehållsanalys",
+          location: "USA",
+          dpf: "SCC",
+          link: "https://www.firecrawl.dev/legal/privacy",
+        },
+        {
+          name: "Exa Labs Inc.",
+          purpose: "Semantisk sökning för dev portal-discovery",
+          location: "USA",
+          dpf: "SCC",
+          link: "https://exa.ai/privacy-policy",
+        },
+        {
+          name: "Cloudflare Inc.",
+          purpose: "DNS + DDoS-skydd för opensverige.se",
+          location: "Globalt (EU-noder)",
+          dpf: "EU-US DPF (certifierad)",
+          link: "https://www.cloudflare.com/trust-hub/gdpr/",
+        },
+        {
+          name: "Cal.com Inc.",
+          purpose: "Mötesbokningar för builder-samtal",
+          location: "EU + USA",
+          dpf: "SCC",
+          link: "https://cal.com/privacy",
+        },
+      ] as ReadonlyArray<{ name: string; purpose: string; location: string; dpf: string; link: string }>,
+      footnote:
+        "Underleverantörer som hanterar persondata har alla DPA (Data Processing Agreement) signerade enligt GDPR Art. 28. Frågor om enskilda flöden? Maila info@opensverige.se.",
+      backLink: "← Tillbaka till integritetspolicy",
     },
   },
 
@@ -444,12 +511,12 @@ export const I18N = {
         {
           heading: "Retention",
           body:
-            "Scan results and hashed IPs are kept indefinitely so reports remain linkable. You can request deletion of a specific domain's results at any time — email info@opensverige.se.",
+            "Scan results and hashed IPs are deleted automatically after 90 days (can be extended on Builder/Pro tiers). You can request earlier deletion of a specific domain's results — email info@opensverige.se.",
         },
         {
           heading: "Your rights",
           body:
-            "Under GDPR you have the right to access, rectification, erasure, restriction, portability and objection. You can also lodge a complaint with the Swedish Authority for Privacy Protection (IMY).",
+            "Under GDPR you have the right to access, rectification, erasure, restriction, portability and objection. Complaints can be lodged with IMY for GDPR matters and with PTS (Swedish Post and Telecom Authority) for AI Act matters (per SOU 2025:101).",
         },
         {
           heading: "Contact",
@@ -458,6 +525,73 @@ export const I18N = {
         },
       ] as ReadonlyArray<{ heading: string; body: string }>,
       backLink: "← Back to the scanner",
+    },
+
+    subprocessors: {
+      title: "Sub-processors",
+      lastUpdated: "Last updated: April 26, 2026",
+      intro:
+        "List of all third parties processing data on behalf of OpenSverige when you use agent.opensverige.se. We notify at least 30 days before adding new sub-processors.",
+      tableHeaders: {
+        provider: "Provider",
+        purpose: "Purpose",
+        location: "Region",
+        dpf: "Adequacy",
+      },
+      providers: [
+        {
+          name: "Vercel Inc.",
+          purpose: "Hosting + edge functions (Next.js)",
+          location: "US / EU",
+          dpf: "EU-US DPF (certified)",
+          link: "https://vercel.com/legal/privacy-policy",
+        },
+        {
+          name: "Supabase Inc.",
+          purpose: "Postgres database + auth",
+          location: "EU (eu-west-2, London)",
+          dpf: "DPA + SCC",
+          link: "https://supabase.com/legal/dpa",
+        },
+        {
+          name: "Anthropic PBC",
+          purpose: "AI summaries (Claude API)",
+          location: "US (Microsoft Azure)",
+          dpf: "SCC + TIA — migrating to AWS Bedrock Frankfurt",
+          link: "https://trust.anthropic.com",
+        },
+        {
+          name: "Mendable Labs (Firecrawl)",
+          purpose: "Renders JS-heavy sites for content analysis",
+          location: "US",
+          dpf: "SCC",
+          link: "https://www.firecrawl.dev/legal/privacy",
+        },
+        {
+          name: "Exa Labs Inc.",
+          purpose: "Semantic search for dev portal discovery",
+          location: "US",
+          dpf: "SCC",
+          link: "https://exa.ai/privacy-policy",
+        },
+        {
+          name: "Cloudflare Inc.",
+          purpose: "DNS + DDoS protection for opensverige.se",
+          location: "Global (EU nodes)",
+          dpf: "EU-US DPF (certified)",
+          link: "https://www.cloudflare.com/trust-hub/gdpr/",
+        },
+        {
+          name: "Cal.com Inc.",
+          purpose: "Meeting bookings for builder calls",
+          location: "EU + US",
+          dpf: "SCC",
+          link: "https://cal.com/privacy",
+        },
+      ] as ReadonlyArray<{ name: string; purpose: string; location: string; dpf: string; link: string }>,
+      footnote:
+        "Sub-processors handling personal data all have signed DPAs under GDPR Art. 28. Questions about specific flows? Email info@opensverige.se.",
+      backLink: "← Back to the privacy policy",
     },
   },
 } as const;

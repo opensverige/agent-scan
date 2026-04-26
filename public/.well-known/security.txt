@@ -1,0 +1,13 @@
+# Security policy for agent.opensverige.se
+# Per RFC 9116 (https://www.rfc-editor.org/rfc/rfc9116.html).
+
+Contact: mailto:info@opensverige.se
+Expires: 2027-04-26T00:00:00.000Z
+Preferred-Languages: sv, en
+Canonical: https://agent.opensverige.se/.well-known/security.txt
+Policy: https://agent.opensverige.se/integritetspolicy
+
+# We welcome responsible disclosure of security issues. Please email
+# info@opensverige.se with details. We aim to acknowledge within 5
+# business days. The Swedish Civil Contingencies Agency (MSB) is the
+# national CSIRT — feel free to copy them on serious incidents.

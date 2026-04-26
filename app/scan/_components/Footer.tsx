@@ -16,6 +16,12 @@ export default function Footer() {
         >
           {t.footer.privacy}
         </Link>
+        <Link
+          href="/legal/subprocessors"
+          className="hover:text-foreground transition-colors"
+        >
+          {t.subprocessors.title}
+        </Link>
         <span>{t.footer.tagline}</span>
       </div>
     </footer>

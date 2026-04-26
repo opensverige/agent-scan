@@ -25,7 +25,7 @@ import {
   type AllChecks,
 } from "@/lib/checks";
 import { analyzeWithClaude, buildDemoAnalysis, type LiveChecks, type BuilderProbeData } from "@/lib/claude";
-import type { McpGithubHint } from "@/lib/scan-types";
+import type { McpGithubHint, AIGenerationDisclosure } from "@/lib/scan-types";
 import { saveLocalLatestScan } from "@/lib/local-scan-store";
 import { scoreApi, type ApiScoreResult } from "@/lib/api-score";
 
@@ -52,6 +52,8 @@ export interface ScanPipelineResult {
   api_score: ApiScoreResult | null;
   mcp_github_hint: McpGithubHint | null;
   scanned_at: string;
+  /** EU AI Act Art. 50 disclosure for AI-generated fields in the response. */
+  ai_disclosure: AIGenerationDisclosure;
 }
 
 /** Run the full scan pipeline for a validated domain. */
@@ -230,6 +232,19 @@ export async function runScanPipeline(domain: string, ipHash: string): Promise<S
     scanned_at: scannedAt,
   });
 
+  // EU AI Act Art. 50 (applies 2 Aug 2026): mark AI-generated content.
+  // We label `summary`, `industry`, and `agent_suggestions` as AI-generated
+  // because Claude produced them. `recommendations` is a hand-curated
+  // mapping from check IDs (see lib/checks.ts RECOMMENDATION_MAP) — not AI.
+  // In demo mode (no Anthropic key) the summary is templated, not AI.
+  const aiDisclosure: AIGenerationDisclosure = isDemo
+    ? { ai_generated: false }
+    : {
+        ai_generated: true,
+        model: "anthropic/claude-sonnet-4-5",
+        fields: ["summary", "industry", "agent_suggestions"],
+      };
+
   return {
     company: finalAnalysis.company,
     industry: finalAnalysis.industry,
@@ -246,5 +261,6 @@ export async function runScanPipeline(domain: string, ipHash: string): Promise<S
     api_score: apiScore ?? null,
     mcp_github_hint: mcpGithubHint ?? null,
     scanned_at: scannedAt,
+    ai_disclosure: aiDisclosure,
   };
 }
