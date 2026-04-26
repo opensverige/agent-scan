@@ -1,0 +1,63 @@
+name: Bug report
+description: Something isn't working — scan returns wrong result, error, etc.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. **Please don't file security issues here** — email security@opensverige.se instead. See [SECURITY.md](../../SECURITY.md).
+
+  - type: input
+    id: domain
+    attributes:
+      label: Affected domain
+      description: Which domain were you scanning when this went wrong?
+      placeholder: example.com
+    validations:
+      required: false
+
+  - type: input
+    id: scan_id
+    attributes:
+      label: Scan ID
+      description: From the URL or API response, e.g. `7aca917e-51d0-4bb5-...`
+    validations:
+      required: false
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to /scan
+        2. Enter '...'
+        3. Click Scanna
+        4. See error
+    validations:
+      required: false
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where did this happen?
+      options:
+        - Web UI (agent.opensverige.se/scan)
+        - Public API (/api/v1/*)
+        - GitHub repo / docs
+        - Other
+    validations:
+      required: true

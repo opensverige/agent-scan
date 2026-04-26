@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: mailto:security@opensverige.se
+    about: Don't open a public issue. Email us — see SECURITY.md.
+  - name: Commercial licensing
+    url: mailto:gustaf@opensverige.se
+    about: Need a commercial license to bypass the FSL non-compete? Email us. See COMMERCIAL.md.
+  - name: Discord community
+    url: https://discord.gg/CSphbTk8En
+    about: 300+ Swedish builders. Quick questions, design feedback, networking.
+  - name: Discussions
+    url: https://github.com/opensverige/agent-scan/discussions
+    about: Architecture proposals, RFC-style debate, broader Q&A.

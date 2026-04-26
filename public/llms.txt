@@ -1,44 +1,37 @@
-# agent.opensverige — AI Readiness Scanner
+# agent.opensverige
 
-> Free, open-source tool that scans any website and reports how ready it is for AI agents. Built for Swedish businesses and developers.
+> Sveriges öppna AI-agent-readiness scanner. Scannar webbplatser för 17 checks fördelade på discoverability, EU-compliance (GDPR + AI Act) och builder-surface (API + MCP). Open source under FSL-1.1-MIT, EU-jurisdiktion, byggd för svenska builders.
 
-## What it does
+## Web
 
-agent.opensverige scans a domain and checks 11 criteria across three categories:
+- [Scanner](https://agent.opensverige.se/scan): Klistra in en domän, få tillbaka 17 strukturerade checks och AI-genererad sammanfattning. Gratis, ingen registrering.
 
-**Discovery** — Can AI agents find and index the site?
-- robots.txt allows AI crawlers (GPTBot, ClaudeBot, PerplexityBot, etc.)
-- sitemap.xml exists and is accessible
-- llms.txt file present for AI-readable site description
+## API
 
-**Compliance** — Does the site meet EU/Swedish regulatory expectations?
-- Privacy automation (GDPR-compliant data processing)
-- Cookie and bot handling
-- AI-generated content marking (EU AI Act transparency)
+- [API reference (Scalar UI)](https://agent.opensverige.se/api-docs): Interaktiv OpenAPI 3.1-referens
+- [OpenAPI 3.1 spec](https://agent.opensverige.se/openapi.yaml): Maskinläsbar spec
+- [API documentation](https://github.com/opensverige/agent-scan/blob/main/docs/API.md): Quickstart, error-koder, EU AI Act-disclosure-mönster
 
-**Builder** — Can developers build AI integrations on top of the site?
-- Public API exists
-- OpenAPI specification available
-- API documentation accessible
-- MCP (Model Context Protocol) server
-- Sandbox/test environment available
+## Methodology
 
-## Score and badge
+- [Scanner methodology](https://github.com/opensverige/agent-scan/blob/main/docs/SCANNER-METHODOLOGY.md): Genomgång av alla 17 checks med källor
 
-Each scan produces a score out of 11 and a badge:
-- 9-11: AI-Ready (green)
-- 6-8: Partial (amber)
-- 0-5: Not ready (red)
+## Open source
 
-## Pages
+- [GitHub repo](https://github.com/opensverige/agent-scan): Källkod under FSL-1.1-MIT
+- [LICENSE](https://github.com/opensverige/agent-scan/blob/main/LICENSE): Functional Source License — 2-årigt no-compete, sen MIT
+- [CONTRIBUTING](https://github.com/opensverige/agent-scan/blob/main/CONTRIBUTING.md): Hur du bidrar
+- [COMMERCIAL](https://github.com/opensverige/agent-scan/blob/main/COMMERCIAL.md): Köp kommersiell licens för att kringgå FSL no-compete
 
-- Scanner: https://agent.opensverige.se/scan
-- API docs: https://agent.opensverige.se/api-docs
-- MCP integration: https://agent.opensverige.se/mcp
+## Legal
 
-## Part of opensverige
+- [Privacy policy](https://agent.opensverige.se/integritetspolicy): Vad vi lagrar, varför, hur länge (90 dagar)
+- [Terms of Service](https://agent.opensverige.se/legal/terms)
+- [Acceptable Use Policy](https://agent.opensverige.se/legal/aup)
+- [AI Disclosure](https://agent.opensverige.se/legal/ai-disclosure): EU AI Act Art. 50
+- [Sub-processors](https://agent.opensverige.se/legal/subprocessors)
 
-agent.opensverige is a tool by opensverige — Sweden's open community for AI agent builders.
-- Community: https://opensverige.se
-- Discord: https://discord.gg/CSphbTk8En
-- Contact: info@opensverige.se
+## Community
+
+- [Discord](https://discord.gg/CSphbTk8En): 300+ svenska builders
+- [opensverige.se](https://opensverige.se): Communityns hubb

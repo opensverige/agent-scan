@@ -1,0 +1,68 @@
+name: Propose a new check
+description: Propose a new agent-readiness check (G-XX) to add to the scanner
+labels: ["check-proposal"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        New checks must align with the methodology principles in [docs/SCANNER-METHODOLOGY.md](../../docs/SCANNER-METHODOLOGY.md). Read that first.
+
+        We score 17 checks today (Stage 1). Roadmap items G-07..G-30 are
+        catalogued in [research/02-agent-readiness-scoring-2026.md](../../docs/strategy/research/02-agent-readiness-scoring-2026.md).
+
+  - type: input
+    id: check_id
+    attributes:
+      label: Proposed check ID
+      placeholder: e.g. canonical_url, json_ld, oauth_discovery
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - discovery
+        - compliance
+        - builder
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - critical
+        - important
+        - info
+    validations:
+      required: true
+
+  - type: textarea
+    id: signal
+    attributes:
+      label: What's the technical signal?
+      description: Concrete HTTP request + expected response shape. Don't write the code, describe it.
+      placeholder: |
+        GET /.well-known/oauth-authorization-server
+        Expect: HTTP 200 + JSON with `issuer` and `authorization_endpoint`
+    validations:
+      required: true
+
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Why does this matter for AI agents?
+      description: Cite a source — RFC, Cloudflare/Anthropic blog post, EDPB guideline, etc. Anti-pattern: "Cloudflare also checks it."
+    validations:
+      required: true
+
+  - type: textarea
+    id: false_positives
+    attributes:
+      label: Anti-patterns and false positives
+      description: How could this check be gameable or wrong? What would make it fail spuriously?
+    validations:
+      required: false

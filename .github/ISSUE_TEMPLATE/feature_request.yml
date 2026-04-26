@@ -1,0 +1,39 @@
+name: Feature request
+description: Suggest something we should build
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Got an idea? Great. **Big architectural changes:** open a discussion first. **Specific user-visible features or new checks:** this template is right.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's the problem you're trying to solve?
+      description: Describe the underlying need, not the proposed solution. Helps us find better solutions you might not have thought of.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: How would you like it to work?
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you've considered
+    validations:
+      required: false
+
+  - type: input
+    id: tier
+    attributes:
+      label: Which tier(s) does this matter for?
+      description: hobby / builder / pro / all
+      placeholder: all
+    validations:
+      required: false

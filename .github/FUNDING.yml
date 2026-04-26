@@ -1,0 +1,9 @@
+# Funding configuration for the GitHub "Sponsor" button.
+# Currently empty — we don't accept donations. Commercial licensing
+# (see /COMMERCIAL.md) and the hosted API tier are the funding model.
+#
+# If we add GitHub Sponsors or Open Collective later, fill these in.
+
+# github: [opensverige]
+# open_collective: opensverige
+custom: ["https://github.com/opensverige/agent-scan/blob/main/COMMERCIAL.md"]

@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: type-check + lint + build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Type-check
+        run: npm run type-check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+        env:
+          # CI uses placeholder env vars — build is static + ISR, doesn't
+          # need real Supabase/Anthropic to compile.
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ci-placeholder
+          IP_HASH_PEPPER: ci-placeholder-not-used-for-real-hashing
+
+      - name: Verify OpenAPI spec is valid YAML
+        run: |
+          node -e "
+          const yaml = require('js-yaml');
+          const fs = require('fs');
+          try {
+            const doc = yaml.load(fs.readFileSync('public/openapi.yaml', 'utf8'));
+            if (!doc.openapi || !doc.paths) throw new Error('Missing required fields');
+            console.log('OpenAPI spec is valid:', doc.info.title, doc.info.version);
+          } catch (e) {
+            console.error('OpenAPI spec invalid:', e.message);
+            process.exit(1);
+          }
+          "

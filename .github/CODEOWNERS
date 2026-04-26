@@ -1,0 +1,30 @@
+# Default owners for everything in the repo. PRs auto-request review from
+# these accounts unless overridden by a more-specific rule below.
+*                                           @gustaf-garnow
+
+# Critical paths get explicit ownership so an accidental approval can't slip in.
+/lib/scan/                                  @gustaf-garnow
+/lib/checks.ts                              @gustaf-garnow
+/lib/api-auth.ts                            @gustaf-garnow
+/lib/api-keys.ts                            @gustaf-garnow
+/lib/ip-hash.ts                             @gustaf-garnow
+/lib/sanctions-check.ts                     @gustaf-garnow
+/app/api/                                   @gustaf-garnow
+/supabase/migrations/                       @gustaf-garnow
+
+# Legal + compliance changes need a second pair of eyes
+/LICENSE                                    @gustaf-garnow
+/CLA.md                                     @gustaf-garnow
+/COMMERCIAL.md                              @gustaf-garnow
+/SECURITY.md                                @gustaf-garnow
+/app/legal/                                 @gustaf-garnow
+/app/integritetspolicy/                     @gustaf-garnow
+/docs/DPA-STATUS.md                         @gustaf-garnow
+/docs/TIA.md                                @gustaf-garnow
+/docs/RoPA.md                               @gustaf-garnow
+/docs/INCIDENT-RESPONSE.md                  @gustaf-garnow
+
+# Docs are open for community contribution but flagged for review
+/docs/                                      @gustaf-garnow
+/README.md                                  @gustaf-garnow
+/CONTRIBUTING.md                            @gustaf-garnow

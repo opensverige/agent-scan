@@ -1,0 +1,108 @@
+# agent.opensverige — full context
+
+Sveriges öppna AI-agent-readiness scanner. Scannar webbplatser för hur väl
+de är förberedda för AI-agenter (Claude, ChatGPT, Cursor, Perplexity).
+
+## What it is
+
+A scanner that checks 17 technical signals across three categories:
+
+- **Discovery (7 checks)** — can agents find and read the site?
+  robots_ok, crawler_access, sitemap_exists, llms_txt, llms_full_txt,
+  markdown_negotiation, ssr_content
+- **Compliance (3 checks)** — does it meet EU regulatory requirements?
+  privacy_automation, cookie_bot_handling, ai_content_marking
+- **Builder (7 checks)** — can devs/agents build against it?
+  api_exists, openapi_spec, api_docs, mcp_server, mcp_well_known,
+  mcp_server_card, sandbox_available
+
+Each check returns pass/fail with severity (critical/important/info).
+Total score becomes a green/yellow/red badge.
+
+## Why we built it
+
+- Cloudflare's isitagentready.com (April 17, 2026) is global English with
+  zero EU compliance checks. We're the Swedish/Nordic alternative.
+- 300+ builders in our Discord need a scanner that respects EU jurisdiction.
+- EU AI Act Art. 50 (effective Aug 2, 2026) requires AI-disclosure
+  patterns no other scanner implements yet.
+
+## How it works
+
+1. User submits a domain via web UI or POST /api/v1/scan
+2. Pipeline (lib/scan/pipeline.ts) fans out parallel HTTP probes:
+   - robots.txt, sitemap variants (.xml, _index, wp-sitemap, .php), llms.txt
+   - Builder paths (~30 well-known API + dev-portal paths)
+   - Compliance paths (privacy-policy, gdpr, cookies)
+   - 3x crawler-UA probes (ClaudeBot, GPTBot, PerplexityBot)
+   - .well-known/mcp + mcp/server-card.json
+   - Markdown content negotiation probe
+3. Firecrawl renders JS-heavy pages (homepage + dev portals)
+4. Exa semantic search finds dev portals at non-standard locations
+5. Anthropic Claude generates: industry classification, summary,
+   3 agent-suggestions
+6. Results persist to Supabase (eu-west-2 London)
+7. Per EU AI Act Art. 50: every response includes ai_disclosure
+   { ai_generated: true, model: "anthropic/claude-sonnet-4-5",
+     fields: ["summary", "industry", "agent_suggestions"] }
+
+## Tech stack
+
+- Next.js 15 (app router) on Vercel
+- TypeScript strict mode
+- Tailwind CSS 3 + shadcn/ui (Radix primitives)
+- Supabase Postgres for scan history + rate limiting (eu-west-2)
+- Anthropic Claude for AI summaries
+- Firecrawl for JS rendering
+- Exa for semantic dev-portal discovery
+- pg_cron for 90-day retention enforcement (EU-native)
+
+## API
+
+Public REST API at /api/v1. OpenAPI 3.1 spec at /openapi.yaml.
+
+POST /api/v1/scan — synchronous, returns full result in 10-30s
+GET /api/v1/scan/{id} — lookup by UUID with ETag/304 support
+
+Authentication: Authorization: Bearer osv_(test|live)_<24chars>
+Rate limits per tier:
+  hobby: 1/min, 15/month
+  builder: 1/min, 300/month
+  pro: 2/min, 2000/month
+
+Alpha: invite-only via Discord. Stage 2B (async + webhooks) on roadmap.
+
+## Licensing
+
+Source-available under FSL-1.1-MIT (Functional Source License). Two-year
+prohibition on competing managed services; auto-converts to MIT after.
+Contact info@opensverige.se for commercial licensing.
+
+## Privacy + retention
+
+Hashed IP (HMAC-SHA256 + server-held pepper) for rate limiting only.
+Scan results + hashed IP retained 90 days, then auto-deleted via pg_cron.
+Anthropic processes domain names + public scan content (no IPs);
+migrating to AWS Bedrock Frankfurt before Aug 2, 2026.
+
+## Compliance
+
+- GDPR: Art. 6(1)(f) legitimate interest. Documented Transfer Impact
+  Assessment per EDPB 01/2020. Register of Processing Activities (Art.
+  30) maintained internally.
+- EU AI Act Art. 50: machine-readable disclosure on all AI-generated
+  output via ai_disclosure field. Deployer (us) vs Provider (Anthropic)
+  delineation per articles 3(3)/(4).
+- DSAR endpoint at /api/dsar with 30-day SLA per Art. 12(3).
+- Sub-processor list at /legal/subprocessors.
+
+## Methodology in detail
+
+See https://github.com/opensverige/agent-scan/blob/main/docs/SCANNER-METHODOLOGY.md
+for full per-check description, sources, and limitations.
+
+## Source
+
+GitHub: github.com/opensverige/agent-scan
+Discord: discord.gg/CSphbTk8En
+Contact: info@opensverige.se
