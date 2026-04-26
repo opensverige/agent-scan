@@ -15,6 +15,7 @@
 //   ↑ deliver this to the user via DM. We never see it again after this.
 
 import { generateApiKey, type ApiKeyTier } from "../lib/api-keys";
+import { checkSanctions } from "../lib/sanctions-check";
 
 interface Args {
   name: string;
@@ -52,6 +53,29 @@ async function main() {
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !supabaseKey) {
     throw new Error("Missing Supabase env. Set NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY");
+  }
+
+  // ── Sanctions screening for paid B2B tiers ──
+  // Hobby is consumer-facing (low risk + low value). Builder/Pro are
+  // commercial customers — screen against EU sanctions list before issuing.
+  if (args.tier === "builder" || args.tier === "pro") {
+    console.log("Sanctions screening (OpenSanctions)...");
+    const sanctions = await checkSanctions({ name: args.name, email: args.email });
+    if (!sanctions.clear) {
+      console.error("");
+      console.error(`SANCTIONS CHECK FAILED for ${args.name}:`);
+      console.error(`  reason: ${sanctions.reason}`);
+      if (sanctions.matches?.length) {
+        console.error("  top matches:");
+        for (const m of sanctions.matches) {
+          console.error(`    - ${m.name} (score ${m.score.toFixed(2)}, ${m.datasets.join("/")})`);
+        }
+      }
+      console.error("");
+      console.error("Key NOT issued. Investigate manually before retrying.");
+      process.exit(2);
+    }
+    console.log(`  ${sanctions.reason}`);
   }
 
   const issued = generateApiKey(args.env);
