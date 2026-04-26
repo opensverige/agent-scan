@@ -19,6 +19,19 @@ updates:
         update-types: ["patch"]
       minor-updates:
         update-types: ["minor"]
+    ignore:
+      # ESLint major bumps must be coordinated with eslint-config-next
+      # (Next.js's peer-dep range tends to lag by a major version).
+      # Auto-merging eslint major broke Vercel build on 2026-04-26.
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      # Same for typescript-eslint family — they peer-depend on eslint
+      # range and must move in sync with it.
+      - dependency-name: "@typescript-eslint/*"
+        update-types: ["version-update:semver-major"]
+      # tailwindcss v4 has breaking config changes; pin to v3 majors only.
+      - dependency-name: "tailwindcss"
+        update-types: ["version-update:semver-major"]
 
   # GitHub Actions — same cadence
   - package-ecosystem: "github-actions"
