@@ -90,14 +90,18 @@
 
 ### De 6 P0-checksen
 
-- [ ] **G-01 llms-full.txt** — `lib/checks/llms-full.ts` — § 2.6
-- [ ] **G-02 Markdown content negotiation** — `lib/checks/markdown-negotiation.ts` — § 2.6
-- [ ] **G-03 SSR-check** — `lib/checks/ssr.ts` — § 2.6
-- [ ] **G-04 Faktisk crawler-åtkomst** (ClaudeBot, GPTBot, PerplexityBot) — `lib/checks/crawler-access.ts` — § 2.6
-- [ ] **G-05 `/.well-known/mcp`** (SEP-1960) — `lib/checks/mcp-discovery.ts` — § 2.6
-- [ ] **G-06 `/.well-known/mcp/server-card.json`** (SEP-1649) — `lib/checks/mcp-server-card.ts` — § 2.6
-- [ ] Lägg till context (stat + source + action) för varje ny check i `lib/check-context.ts`
-- [ ] Lägg till i18n-strängar för varje ny check (SV + EN) — `lib/i18n.ts`
+- [x] **G-01 llms-full.txt** — `checkLlmsFullTxt` i `lib/checks.ts` + probe i `lib/scan/probe.ts`
+- [x] **G-02 Markdown content negotiation** — `checkMarkdownNegotiation` (probe sänder Accept: text/markdown till root)
+- [x] **G-03 SSR-check** — `checkSsrContent` validerar <title> + <h1> + textinnehåll i raw HTML
+- [x] **G-04 Faktisk crawler-åtkomst** (ClaudeBot, GPTBot, PerplexityBot) — 3 parallella User-Agent-probes
+- [x] **G-05 `/.well-known/mcp`** (SEP-1960) — `checkMcpWellKnown` validerar mcp_version + endpoints
+- [x] **G-06 `/.well-known/mcp/server-card.json`** (SEP-1649) — `checkMcpServerCard` validerar serverInfo.name + transport.type
+- [x] **Context** (stat + source + action) tillagt för alla 6 i `lib/check-context.ts` med riktiga källor
+- [x] **Defensiv UI** för legacy DB-rader som saknar nya check IDs — filter undefined i ResultsPage
+- [x] **Hardcoded /11** ersatt med dynamic `data.checks_total` i metadata + share text
+- [x] **Verifierat** end-to-end på vercel.com: 17 checks returneras, 10/14 yellow, alla nya checks fungerar
+- [ ] **Per-check filer i `lib/checks/`** med standardiserat interface — *deferred*, nuvarande monolith fungerar
+- [ ] **CheckResult som discriminated union** — *deferred*, lägger till komplexitet utan blockerande nytta nu
 
 ### Scoring-modell
 

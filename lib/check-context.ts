@@ -63,6 +63,37 @@ export const CHECK_CONTEXT: Record<CheckId, CheckContext> = {
     source: "Cisco AI Readiness Index 2025",
     action: "Erbjud en sandbox/testmiljö så builders kan testa utan att påverka produktionsdata.",
   },
+  // ── Stage 1 — P0 checks per docs/strategy/research/02-agent-readiness-scoring-2026.md § 2.6
+  llms_full_txt: {
+    stat: "llms-full.txt besöks dubbelt så ofta som llms.txt när båda finns. Anthropics version är 481 349 tokens — komplett kontext i en URL.",
+    source: "Mintlify, The value of llms.txt (May 2025)",
+    action: "Generera /llms-full.txt som komplement till llms.txt. Mintlify gör det automatiskt; Anthropic, Cloudflare, Stripe har redan implementerat.",
+  },
+  markdown_negotiation: {
+    stat: "Cloudflare mätte upp till 80% token-reduktion. Vercel såg 500 KB → 2 KB. Claude Code, Cursor och OpenCode skickar Accept: text/markdown by default 2026.",
+    source: "Checkly, State of AI Agent Content Negotiation (Feb 2026)",
+    action: "Servera text/markdown när klienten skickar Accept: text/markdown. Reducerar AI-context-konsumtion ~80%.",
+  },
+  ssr_content: {
+    stat: "GPTBot, ClaudeBot och PerplexityBot kör inte JavaScript. En SPA som renderar allt client-side är osynlig för alla AI-crawlers.",
+    source: "getpassionfruit.com, JS Rendering and AI Crawlers (Mar 2026)",
+    action: "Rendera kritiskt innehåll server-side — minst <title>, <h1> och textinnehåll i rå HTML utan JS.",
+  },
+  crawler_access: {
+    stat: "Vanligaste produktionsfelet 2026: robots.txt säger Allow men WAF (Cloudflare/Akamai/Fastly) blockar AI User-Agents på edge. ClaudeBot-blockning växte 0,5 procentenheter per månad Q1 2026.",
+    source: "TechnologyChecker.io, robots.txt AI Crawlers Q1 2026",
+    action: "Verifiera WAF-config — säkerställ att ClaudeBot/GPTBot/PerplexityBot faktiskt får 200, inte 403/429 från edge-regel.",
+  },
+  mcp_well_known: {
+    stat: "Färre än 15 sajter av Cloudflares top-200 000 hade /.well-known/mcp i april 2026. Tidigt — men det blir standard för MCP-discovery.",
+    source: "Ekamoira, MCP discovery guide (Feb 2026)",
+    action: "Publicera /.well-known/mcp (SEP-1960) med mcp_version + endpoints. Låter Claude Desktop, ChatGPT och Cursor auto-konfigurera.",
+  },
+  mcp_server_card: {
+    stat: "SEP-1649 server-card är komplementet till mcp.json — beskriver capabilities och transport. Cloudflare implementerade detta i sin egen scanner april 2026.",
+    source: "GitHub SEP-1649 (Oct 2025), Cloudflare Agent Readiness blog",
+    action: "Publicera /.well-known/mcp/server-card.json med serverInfo + transport. Låter agenter förstå servern innan de ansluter.",
+  },
 };
 
 export const SEVERITY_CONTEXT = {

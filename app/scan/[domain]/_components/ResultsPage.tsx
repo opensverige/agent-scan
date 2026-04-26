@@ -103,7 +103,13 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
   const apiRingColor = apiScore ? (API_BAND_RING[apiScore.band] ?? "hsl(var(--muted))") : "hsl(var(--muted))";
   const apiBadgeClass = apiScore ? (API_BADGE_CLASS[apiScore.band] ?? "") : "";
 
-  const allChecks = CHECK_DISPLAY_ORDER.map(id => r.checks[id]);
+  // Defensive: filter undefined for legacy DB rows that pre-date Stage 1's
+  // 6 new check IDs (G-01..G-06 added on 2026-04-26). Old rows have 11
+  // checks; new rows have 17. Without this filter, .filter(c => !c.pass)
+  // throws on undefined when rendering an old scan result page.
+  const allChecks = CHECK_DISPLAY_ORDER
+    .map(id => r.checks[id])
+    .filter((c): c is NonNullable<typeof c> => c !== undefined);
   // Scored failures only — exclude N/A (not applicable) and recommendation-only checks.
   const failedCritical = allChecks.filter(c => !c.pass && !c.na && !c.recommendation && c.severity === "critical");
   const failedImportant = allChecks.filter(c => !c.pass && !c.na && !c.recommendation && c.severity === "important");
@@ -145,7 +151,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
     const url = `https://agent.opensverige.se/scan/${domain}`;
     const text = activeTab === "api" && apiScore
       ? t.results.shareApiText(domain, apiScore.totalScore, apiScore.topBlockers.length, url)
-      : t.results.shareSiteText(domain, r.score, sc.critical, sc.important, passedChecks.length, url);
+      : t.results.shareSiteText(domain, r.score, r.checks_total ?? 11, sc.critical, sc.important, passedChecks.length, url);
     if (navigator.share) {
       navigator.share({ title: `${domain} — AI-readiness`, text, url }).catch(() => {});
     } else if (navigator.clipboard) {
@@ -677,6 +683,8 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                   <div className="space-y-2">
                     {CHECK_DISPLAY_ORDER.map(id => {
                       const check = r.checks[id];
+                      // Skip missing IDs from legacy DB rows (pre-Stage-1).
+                      if (!check) return null;
                       return (
                         <div key={id} className="flex items-center gap-2.5">
                           {check.pass

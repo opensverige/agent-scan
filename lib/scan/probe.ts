@@ -12,6 +12,12 @@ import { parseRobots } from "./robots";
 import { isValidLlmsTxt } from "./openapi-extractor";
 import { BUILDER_PATHS, type ProbeResult } from "@/lib/checks";
 
+export interface FetchedResponse {
+  status: number;
+  body: string;
+  contentType: string | null;
+}
+
 export interface ProbeOutput {
   /** robots.txt fetch result + parsed allowed/sitemapUrl. */
   robots: { allowed: boolean; sitemapUrl: string | null };
@@ -23,7 +29,62 @@ export interface ProbeOutput {
   builderProbes: ProbeResult[];
   /** Probe results for compliance paths (privacy, cookie, GDPR pages). */
   complianceProbes: ProbeResult[];
+  // ── Stage 1 — P0 checks (G-01..G-06) ────────────────────────────────────
+  /** /llms-full.txt response (G-01). */
+  llmsFullTxt: FetchedResponse | null;
+  /** GET / with Accept: text/markdown (G-02). */
+  markdownNegotiation: FetchedResponse | null;
+  /** GET / with default User-Agent (G-03 — SSR check uses raw HTML). */
+  homepageHtml: FetchedResponse | null;
+  /** GET / with ClaudeBot User-Agent (G-04). Status only — body not needed. */
+  crawlerClaudeBot: { status: number } | null;
+  /** GET / with GPTBot User-Agent (G-04). */
+  crawlerGptBot: { status: number } | null;
+  /** GET / with PerplexityBot User-Agent (G-04). */
+  crawlerPerplexityBot: { status: number } | null;
+  /** /.well-known/mcp response (G-05). */
+  mcpDiscovery: FetchedResponse | null;
+  /** /.well-known/mcp/server-card.json response (G-06). */
+  mcpServerCard: FetchedResponse | null;
 }
+
+/** Fetch with explicit User-Agent. Used for crawler-access probes (G-04). */
+async function fetchWithUserAgent(url: string, userAgent: string): Promise<{ status: number } | null> {
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": userAgent },
+      redirect: "follow",
+      signal: AbortSignal.timeout(5_000),
+    });
+    return { status: res.status };
+  } catch {
+    return null;
+  }
+}
+
+/** Fetch with explicit Accept header. Used for content-negotiation probe (G-02). */
+async function fetchWithAccept(url: string, accept: string): Promise<FetchedResponse | null> {
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "OpenSverige-Scanner/1.0 (https://opensverige.se/scan)",
+        "Accept": accept,
+      },
+      redirect: "follow",
+      signal: AbortSignal.timeout(5_000),
+    });
+    const body = (await res.text()).slice(0, 100_000);
+    return { status: res.status, body, contentType: res.headers.get("content-type") };
+  } catch {
+    return null;
+  }
+}
+
+const CRAWLER_USER_AGENTS = {
+  claudebot: "Mozilla/5.0 (compatible; ClaudeBot/1.0; +claudebot@anthropic.com)",
+  gptbot: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; GPTBot/1.2; +https://openai.com/gptbot)",
+  perplexitybot: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; PerplexityBot/1.0; +https://perplexity.ai/perplexitybot)",
+} as const;
 
 const COMPLIANCE_PATH_SUFFIXES = [
   "/integritetspolicy",
@@ -85,9 +146,14 @@ export async function runProbes(domain: string): Promise<ProbeOutput> {
   // Phase 1 — fan-out parallel fetches.
   // Sitemap: probe four variants (xml, _index, wp, php) to cover WP/static/PHP CMSes.
   // llms.txt: probe both root and .well-known/ — content-validated separately.
+  // Stage 1 P0 probes: llms-full.txt, markdown negotiation, raw homepage HTML,
+  // 3× crawler-UA homepage probes, MCP well-known + server-card.
   const [
     robotsRes, sitemapRes, sitemapIndexRes, sitemapWpRes, sitemapPhpRes,
     llmsRes, llmsWellKnownRes,
+    llmsFullTxt, markdownNegotiation, homepageHtml,
+    crawlerClaudeBot, crawlerGptBot, crawlerPerplexityBot,
+    mcpDiscovery, mcpServerCard,
     ...probeResultsRaw
   ] = await Promise.all([
     fetchSafe(`${base}/robots.txt`),
@@ -97,6 +163,19 @@ export async function runProbes(domain: string): Promise<ProbeOutput> {
     fetchSafe(`${base}/sitemap.php`),
     fetchSafe(`${base}/llms.txt`),
     fetchSafe(`${base}/.well-known/llms.txt`),
+    // G-01 llms-full.txt
+    fetchSafe(`${base}/llms-full.txt`),
+    // G-02 markdown negotiation — root with Accept: text/markdown
+    fetchWithAccept(base, "text/markdown"),
+    // G-03 SSR — root with default UA, raw HTML
+    fetchSafe(base),
+    // G-04 crawler access — three AI User-Agents
+    fetchWithUserAgent(base, CRAWLER_USER_AGENTS.claudebot),
+    fetchWithUserAgent(base, CRAWLER_USER_AGENTS.gptbot),
+    fetchWithUserAgent(base, CRAWLER_USER_AGENTS.perplexitybot),
+    // G-05 .well-known/mcp + G-06 server-card.json
+    fetchSafe(`${base}/.well-known/mcp`),
+    fetchSafe(`${base}/.well-known/mcp/server-card.json`),
     ...builderUrls.map(url => fetchSafe(url).then(r => ({ url, ...r ?? { status: 0, body: "", contentType: null } } as ProbeResult))),
     ...complianceUrls.map(url => fetchSafe(url).then(r => ({ url, ...r ?? { status: 0, body: "", contentType: null } } as ProbeResult))),
   ]);
@@ -144,5 +223,13 @@ export async function runProbes(domain: string): Promise<ProbeOutput> {
     llmsValid,
     builderProbes,
     complianceProbes,
+    llmsFullTxt,
+    markdownNegotiation,
+    homepageHtml,
+    crawlerClaudeBot,
+    crawlerGptBot,
+    crawlerPerplexityBot,
+    mcpDiscovery,
+    mcpServerCard,
   };
 }

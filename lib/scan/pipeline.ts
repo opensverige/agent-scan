@@ -21,6 +21,8 @@ import {
   checkRobots, checkSitemap, checkLlms,
   complianceChecks, checkMcpServer, checkSandboxAvailable,
   checkApiExists, checkOpenApiSpec, checkApiDocs,
+  checkLlmsFullTxt, checkMarkdownNegotiation, checkSsrContent,
+  checkCrawlerAccess, checkMcpWellKnown, checkMcpServerCard,
   calculateBadge, getTopRecommendations, computeSeverityCounts,
   type AllChecks,
 } from "@/lib/checks";
@@ -100,6 +102,17 @@ export async function runScanPipeline(domain: string, ipHash: string): Promise<S
     api_docs: checkApiDocs(probeOutput.builderProbes),
     mcp_server: checkMcpServer(probeOutput.builderProbes),
     sandbox_available: checkSandboxAvailable(probeOutput.builderProbes),
+    // Stage 1 — P0 checks (G-01..G-06)
+    llms_full_txt: checkLlmsFullTxt(probeOutput.llmsFullTxt),
+    markdown_negotiation: checkMarkdownNegotiation(probeOutput.markdownNegotiation),
+    ssr_content: checkSsrContent(probeOutput.homepageHtml),
+    crawler_access: checkCrawlerAccess({
+      claudebot: probeOutput.crawlerClaudeBot,
+      gptbot: probeOutput.crawlerGptBot,
+      perplexitybot: probeOutput.crawlerPerplexityBot,
+    }),
+    mcp_well_known: checkMcpWellKnown(probeOutput.mcpDiscovery),
+    mcp_server_card: checkMcpServerCard(probeOutput.mcpServerCard),
   };
 
   // ── Compute builder data from probe output ───────────────────────────────

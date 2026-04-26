@@ -148,8 +148,8 @@ export const I18N = {
       scanAnother: "← Scanna en annan sajt",
       shareApiText: (domain: string, score: number, blockers: number, url: string) =>
         `${score < 30 ? "🔴" : score < 70 ? "🟡" : "🟢"} ${domain} fick ${score}/100 i API agent-readiness.\n\n${blockers} blockerare hittade.\n\nHur redo är ditt API? → ${url}`,
-      shareSiteText: (domain: string, score: number, critical: number, important: number, passed: number, url: string) =>
-        `${score <= 3 ? "🔴" : score <= 6 ? "🟡" : "🟢"} ${domain} fick ${score}/11 i AI-readiness.\n\n● ${critical} brister ● ${important} varningar ● ${passed} ok\n\nHur redo är din sajt? → ${url}`,
+      shareSiteText: (domain: string, score: number, total: number, critical: number, important: number, passed: number, url: string) =>
+        `${score / total <= 0.3 ? "🔴" : score / total <= 0.6 ? "🟡" : "🟢"} ${domain} fick ${score}/${total} i AI-readiness.\n\n● ${critical} brister ● ${important} varningar ● ${passed} ok\n\nHur redo är din sajt? → ${url}`,
       teamShareText: (domain: string, score: number, total: number, url: string) =>
         `Jag scannade ${domain} med agent.opensverige.se — vi fick ${score}/${total}. Här är vad vi kan fixa: ${url}`,
 
@@ -441,8 +441,8 @@ export const I18N = {
       scanAnother: "← Scan another site",
       shareApiText: (domain: string, score: number, blockers: number, url: string) =>
         `${score < 30 ? "🔴" : score < 70 ? "🟡" : "🟢"} ${domain} scored ${score}/100 in API agent-readiness.\n\n${blockers} blockers found.\n\nHow ready is your API? → ${url}`,
-      shareSiteText: (domain: string, score: number, critical: number, important: number, passed: number, url: string) =>
-        `${score <= 3 ? "🔴" : score <= 6 ? "🟡" : "🟢"} ${domain} scored ${score}/11 in AI-readiness.\n\n● ${critical} issues ● ${important} warnings ● ${passed} ok\n\nHow ready is your site? → ${url}`,
+      shareSiteText: (domain: string, score: number, total: number, critical: number, important: number, passed: number, url: string) =>
+        `${score / total <= 0.3 ? "🔴" : score / total <= 0.6 ? "🟡" : "🟢"} ${domain} scored ${score}/${total} in AI-readiness.\n\n● ${critical} issues ● ${important} warnings ● ${passed} ok\n\nHow ready is your site? → ${url}`,
       teamShareText: (domain: string, score: number, total: number, url: string) =>
         `I scanned ${domain} with agent.opensverige.se — we scored ${score}/${total}. Here's what we can fix: ${url}`,
 

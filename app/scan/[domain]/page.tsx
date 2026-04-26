@@ -137,14 +137,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const badgeLabel = data.badge === "green" ? "REDO" : data.badge === "yellow" ? "DELVIS REDO" : "INTE REDO";
   const sc = data.severity_counts;
-  const description = `${domain} fick ${data.score}/11 i AI-readiness. ${sc.critical} brister, ${sc.important} varningar, ${data.score} ok. Scanna din sajt gratis.`;
-  const ogImageUrl = `https://agent.opensverige.se/api/og?domain=${encodeURIComponent(domain)}&score=${data.score}&max=11&status=${encodeURIComponent(badgeLabel)}`;
+  const total = data.checks_total ?? 11;
+  const description = `${domain} fick ${data.score}/${total} i AI-readiness. ${sc.critical} brister, ${sc.important} varningar, ${data.score} ok. Scanna din sajt gratis.`;
+  const ogImageUrl = `https://agent.opensverige.se/api/og?domain=${encodeURIComponent(domain)}&score=${data.score}&max=${total}&status=${encodeURIComponent(badgeLabel)}`;
 
   return {
-    title: `${domain} — ${badgeLabel} (${data.score}/11) | agent.opensverige`,
+    title: `${domain} — ${badgeLabel} (${data.score}/${total}) | agent.opensverige`,
     description,
     openGraph: {
-      title: `${domain} fick ${data.score}/11 i AI-readiness`,
+      title: `${domain} fick ${data.score}/${total} i AI-readiness`,
       description: data.summary || description,
       url: `https://agent.opensverige.se/scan/${domain}`,
       siteName: "agent.opensverige",
@@ -153,7 +154,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     },
     twitter: {
       card: "summary_large_image",
-      title: `${domain} — ${data.score}/11 AI Readiness`,
+      title: `${domain} — ${data.score}/${total} AI Readiness`,
       description: data.summary || description,
       images: [ogImageUrl],
     },
@@ -177,7 +178,7 @@ export default async function ScanResultPage({ params }: PageProps) {
     "mainEntity": {
       "@type": "Rating",
       "ratingValue": initialData.score,
-      "bestRating": 11,
+      "bestRating": initialData.checks_total ?? 11,
       "worstRating": 0,
       "ratingExplanation": initialData.summary,
     },
