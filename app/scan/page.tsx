@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Separator } from "@/components/ui/separator";
 import Nav from "./_components/Nav";
 import ScannerSection from "./_components/ScannerSection";
+import LiveCounter from "./_components/LiveCounter";
 import CTA from "./_components/CTA";
 import Footer from "./_components/Footer";
 
@@ -78,6 +79,9 @@ export default async function ScanPage({ searchParams }: PageProps) {
       />
       <Nav />
       <ScannerSection initialDomain={domain} />
+      <div className="px-6 pb-10">
+        <LiveCounter />
+      </div>
       <Separator className="max-w-[580px] mx-auto" />
       <CTA />
       <Footer />

@@ -1,7 +1,7 @@
 // app/scan/[domain]/_components/ResultsPage.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import type { ScanResult } from "@/lib/scan-types";
 import type { ApiScoreResult } from "@/lib/api-score";
@@ -52,12 +52,6 @@ const API_BADGE_CLASS: Record<string, string> = {
   not_ready:   "bg-destructive/10 text-destructive border-destructive/30",
 };
 
-const MARKETPLACE_SYSTEMS = [
-  { name: "Fortnox", planned: 4 },
-  { name: "Visma", planned: 2 },
-  { name: "BankID", planned: 1 },
-];
-
 const CONTEXT_STAT_BOX =
   "rounded-md border border-amber-200/60 bg-amber-50 px-3 py-2.5 dark:border-amber-800/45 dark:bg-amber-950/35";
 const CONTEXT_STAT_PRIMARY = "text-xs leading-relaxed mb-1 text-amber-950 dark:text-amber-50";
@@ -105,6 +99,55 @@ function ScoreRing({ score, total, ringColor }: { score: number; total: number; 
         <span className="font-mono text-5xl font-extrabold leading-none">{display}</span>
         <span className="font-mono text-sm text-muted-foreground mt-1">/{total}</span>
       </div>
+    </div>
+  );
+}
+
+// ── AI Summary (expandable with gradient fade) ──────────────────────────────
+
+function AISummary({ text, label, showMore, showLess }: { text: string; label: string; showMore: string; showLess: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const [needsTruncation, setNeedsTruncation] = useState(false);
+  const textRef = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    const el = textRef.current;
+    if (!el) return;
+    setNeedsTruncation(el.scrollHeight > el.clientHeight + 2);
+  }, [text]);
+
+  return (
+    <div className="w-full border-t border-border/50 pt-4 mt-1">
+      <p className="font-mono text-[10px] tracking-widest text-muted-foreground/70 mb-2">
+        {label.toUpperCase()}
+      </p>
+      <div className="relative">
+        <p
+          ref={textRef}
+          className={cn(
+            "text-sm text-muted-foreground leading-relaxed overflow-hidden transition-[max-height] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+            expanded ? "max-h-[1000px]" : "max-h-[4.5rem]"
+          )}
+        >
+          {text}
+        </p>
+        {!expanded && needsTruncation && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-12"
+            style={{ background: "linear-gradient(to bottom, transparent, hsl(var(--card)))" }}
+          />
+        )}
+      </div>
+      {needsTruncation && (
+        <button
+          type="button"
+          onClick={() => setExpanded(v => !v)}
+          className="mt-1 font-mono text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {expanded ? showLess : showMore} {expanded ? "↑" : "↓"}
+        </button>
+      )}
     </div>
   );
 }
@@ -500,14 +543,12 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                 </div>
 
                 {r.summary && (
-                  <div className="w-full border-t border-border/50 pt-4 mt-1">
-                    <p className="font-mono text-[10px] tracking-widest text-muted-foreground/70 mb-2">
-                      {t.results.aiSummaryLabel.toUpperCase()}
-                    </p>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {r.summary}
-                    </p>
-                  </div>
+                  <AISummary
+                    text={r.summary}
+                    label={t.results.aiSummaryLabel}
+                    showMore={t.results.aiSummaryShowMore}
+                    showLess={t.results.aiSummaryShowLess}
+                  />
                 )}
               </div>
 
@@ -737,12 +778,6 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
 
           {/* Footer — tab-oberoende */}
           <CardFooter className="flex flex-col gap-2 px-6 pb-6 border-t border-border/50 pt-4 mt-1">
-            <Button className="w-full" size="lg" onClick={handleShare}>
-              {shared
-                ? <><Check className="h-4 w-4 mr-2" /> Kopierat</>
-                : <><Share2 className="h-4 w-4 mr-2" /> Dela din score</>
-              }
-            </Button>
             <Button variant="link" className="text-muted-foreground text-sm h-auto py-1" asChild>
               <Link href="/scan"><RotateCcw className="h-3.5 w-3.5 mr-1" /> Scanna en annan sajt</Link>
             </Button>
@@ -1064,28 +1099,6 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
           </CollapsibleContent>
         </Collapsible>
 
-        {/* ── AVSLUTANDE CTAs ──────────────────────────────────── */}
-        <div className="mt-8 space-y-3">
-          <Button onClick={handleShare} className="w-full" size="lg">
-            <Share2 className="mr-2 h-4 w-4" />
-            {shared ? t.results.copied : t.results.shareResult}
-          </Button>
-          <Button onClick={handleTeamShare} variant="outline" className="w-full" size="lg">
-            <Share2 className="mr-2 h-4 w-4" />
-            {teamShared ? t.results.copied : t.results.sendToTeam}
-          </Button>
-          <Button variant="outline" className="w-full" size="lg" asChild>
-            <a href="https://discord.gg/CSphbTk8En" target="_blank" rel="noopener noreferrer">
-              {t.results.discordBtn}
-            </a>
-          </Button>
-          <div className="text-center">
-            <Button variant="link" className="text-muted-foreground text-sm" asChild>
-              <Link href="/scan">{t.results.scanAnother}</Link>
-            </Button>
-          </div>
-        </div>
-
         {/* ── DYNAMISK CTA ─────────────────────────────────────── */}
         <Card className={cn(
           "mt-8",
@@ -1144,29 +1157,27 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
         </Card>
 
 
-{/* ── AGENT-KATALOGEN ──────────────────────────────────── */}
-        <Card className="mt-10 border-dashed bg-muted/20">
-          <CardHeader className="text-center pb-2">
-            <CardTitle className="font-mono text-xs font-bold tracking-widest text-muted-foreground">
-              {t.results.catalogTitle}
-            </CardTitle>
-            <CardDescription className="text-sm">
-              {t.results.catalogDesc}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-wrap justify-center gap-2 pb-8">
-            {MARKETPLACE_SYSTEMS.map(sys => (
-              <Badge key={sys.name} variant="secondary" className="font-mono text-xs">
-                {sys.name} · {sys.planned} planerade
-              </Badge>
-            ))}
-          </CardContent>
-        </Card>
-
         {/* ── DISCLAIMER ──────────────────────────────────────── */}
         <p className="mt-12 text-[11px] text-muted-foreground text-center max-w-md mx-auto leading-relaxed">
           {t.results.disclaimer}
         </p>
+
+        {/* ── DELA / SKICKA / SCANNA EN ANNAN ──────────────────── */}
+        <div className="mt-8 space-y-3">
+          <Button onClick={handleShare} className="w-full" size="lg">
+            <Share2 className="mr-2 h-4 w-4" />
+            {shared ? t.results.copied : t.results.shareResult}
+          </Button>
+          <Button onClick={handleTeamShare} variant="outline" className="w-full" size="lg">
+            <Share2 className="mr-2 h-4 w-4" />
+            {teamShared ? t.results.copied : t.results.sendToTeam}
+          </Button>
+          <div className="text-center">
+            <Button variant="link" className="text-muted-foreground text-sm" asChild>
+              <Link href="/scan">{t.results.scanAnother}</Link>
+            </Button>
+          </div>
+        </div>
 
       </div>
     </div>

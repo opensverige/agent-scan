@@ -36,6 +36,12 @@ export const I18N = {
       privacyCopy: "Anonym · ingen registrering · hashad IP + resultat lagras · radering på begäran",
     },
 
+    liveCounter: {
+      totalLabel: "scans",
+      last24hLabel: "senaste 24h",
+      eyebrow: "uppdateras",
+    },
+
     cta: {
       heading1: "300+ builders bygger redan.",
       heading2: "Häng med.",
@@ -161,6 +167,8 @@ export const I18N = {
 
       // AI summary
       aiSummaryLabel: "Sammanfattad av AI (Claude)",
+      aiSummaryShowMore: "Visa mer",
+      aiSummaryShowLess: "Visa mindre",
 
       // Demo
       demoBadge: "DEMO",
@@ -269,6 +277,12 @@ export const I18N = {
       notSwedishFootnote:
         "If your company was founded in Sweden but isn't recognized — reach out on Discord and we'll add it.",
       privacyCopy: "Anonymous · no sign-up · hashed IP + results stored · deletion on request",
+    },
+
+    liveCounter: {
+      totalLabel: "scans",
+      last24hLabel: "last 24h",
+      eyebrow: "live",
     },
 
     cta: {
@@ -381,6 +395,8 @@ export const I18N = {
       scanAgain: "Scan again →",
 
       aiSummaryLabel: "Summarized by AI (Claude)",
+      aiSummaryShowMore: "Show more",
+      aiSummaryShowLess: "Show less",
 
       demoBadge: "DEMO",
       demoText:
