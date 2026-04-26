@@ -36,3 +36,8 @@ Thumbs.db
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local Claude / Playwright artifacts
+.claude/
+.playwright-mcp/
+prod-counter-*.png

@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { createHash } from "crypto";
+import { getIpHash } from "@/lib/ip-hash";
 
 type Badge = "green" | "yellow" | "red";
 type Point = { pass: boolean; label: string };
@@ -181,12 +181,8 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Missing domain" }, { status: 400 });
   }
 
-  // Rate limit check
-  const rawIp =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    req.headers.get("x-real-ip") ??
-    "unknown";
-  const ipHash = createHash("sha256").update(rawIp).digest("hex");
+  // Rate limit check — uses HMAC-SHA256(ip, IP_HASH_PEPPER) from lib/ip-hash.ts
+  const ipHash = getIpHash(req);
 
   if (await isRateLimited(ipHash)) {
     return Response.json(

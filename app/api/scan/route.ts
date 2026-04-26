@@ -10,6 +10,7 @@ import {
   type BuilderProbeData,
 } from "@/lib/claude";
 import { saveLocalLatestScan } from "@/lib/local-scan-store";
+import { getIpHash } from "@/lib/ip-hash";
 import {
   checkRobots, checkSitemap, checkLlms,
   complianceChecks, checkMcpServer, checkSandboxAvailable,
@@ -571,12 +572,7 @@ async function runAllChecks(domain: string): Promise<{ checks: AllChecks; liveCh
   return { checks, liveChecks, builderData };
 }
 
-async function getIpHash(req: NextRequest): Promise<string> {
-  const forwarded = req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? "";
-  const ip = forwarded.split(",")[0].trim() || "unknown";
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(ip));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
-}
+// IP hashing moved to lib/ip-hash.ts (HMAC-SHA256 + pepper).
 
 // Returns { perIpOk, globalOk } — both must be true to proceed.
 // Global daily limit: configurable via DAILY_SCAN_LIMIT env var (default 200).
@@ -718,10 +714,7 @@ export async function POST(req: NextRequest) {
 
   // Swedish filter removed — scanner is open to all domains.
   const bypassSwedishCheck = true;
-  const [, ipHash] = await Promise.all([
-    Promise.resolve(null),
-    getIpHash(req),
-  ]);
+  const ipHash = getIpHash(req);
   const swedishCheck = { pass: true as const, reason: "bypass_env" as const };
 
   const { perIpOk, globalOk } = await checkRateLimits(ipHash);
