@@ -10,7 +10,7 @@ export const I18N = {
     },
 
     scanner: {
-      headline: "Hur agent-redo är ditt företag?",
+      headline: "Hur agent-redo är din sajt?",
       subtext: "Vi visar vad AI-agenter ser — och vad som stoppar dem.",
       placeholder: "dittforetag.se",
       ariaLabel: "Domännamn att scanna",
@@ -53,7 +53,7 @@ export const I18N = {
     results: {
       // Scorecard header
       scanResultsBadge: "SCAN RESULTAT",
-      headline: "Hur agent-redo är ditt företag?",
+      headline: "Hur agent-redo är din sajt?",
       tabSite: "Sajt",
       tabApi: "API",
       comingSoon: "Kommer snart",
@@ -315,7 +315,7 @@ export const I18N = {
     },
 
     scanner: {
-      headline: "How AI-ready is your company?",
+      headline: "How agent-ready is your site?",
       subtext: "We show what AI agents see — and what's stopping them.",
       placeholder: "yourcompany.com",
       ariaLabel: "Domain name to scan",
@@ -357,7 +357,7 @@ export const I18N = {
 
     results: {
       scanResultsBadge: "SCAN RESULTS",
-      headline: "How AI-ready is your company?",
+      headline: "How agent-ready is your site?",
       tabSite: "Site",
       tabApi: "API",
       comingSoon: "Coming soon",

@@ -18,7 +18,7 @@ När du öppnar en PR mot detta repo bekräftar du att:
 
 1. **Du äger upphovsrätten till den kod du bidrar med**, eller har explicit tillstånd från upphovsrättsinnehavaren att licensiera den.
 2. **Din kod licensieras under FSL-1.1-MIT** (samma som resten av projektet).
-3. **OpenSverige får dual-licensa din kod** under valfri licens (inklusive kommersiella licenser) vid framtida behov, utan att meddela dig.
+3. **Copyright-innehavarna (för närvarande Felipe och Gustaf Garnow, framtida AB eller acquirer) får dual-licensa din kod** under valfri licens (inklusive kommersiella licenser) vid framtida behov, utan att meddela dig.
 4. **Du frånsäger dig inga moraliska rättigheter eller upphovsrätt** — du behåller copyright, men beviljar oss en bred licens att använda bidraget.
 
 Detta är samma modell som Sentry, Linear, MariaDB och Vercel använder.

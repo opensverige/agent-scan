@@ -67,6 +67,8 @@ Cons:
 
 **Datum:** 2026-04-26
 
+**Copyright-innehavare:** Felipe och Gustaf Garnow (kodbidragare per 2026-04-26). Innan publik launch eller framtida sale: överväg överföring till AB för tydligare juridiskt subjekt.
+
 **Reviderat 2026-04-26 senare samma dag:** Bytt från MIT → **FSL-1.1-MIT** efter samtal om Gollum-skydd och säljbarhet.
 
 Anledning: MIT skyddar inte mot AWS/Vercel/Cloudflare som wrappar koden som managed-tjänst. AGPL skulle bara kräva att de publicerar sina ändringar — de gör det knorrande och ändå konkurrerar. FSL kontraktsförbjuder "Competing Use" i två år, varefter koden auto-konverterar till MIT. Ger:

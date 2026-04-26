@@ -8,10 +8,10 @@ import CTA from "./_components/CTA";
 import Footer from "./_components/Footer";
 
 export const metadata: Metadata = {
-  title: "Hur agent-redo är ditt företag?",
+  title: "Hur agent-redo är din sajt?",
   description: "Gratis AI-readiness scanner. 11 checks. Öppet.",
   openGraph: {
-    title: "Hur agent-redo är ditt företag?",
+    title: "Hur agent-redo är din sajt?",
     description: "Gratis AI-readiness scanner — 11 checks. Öppet.",
     url: "https://agent.opensverige.se",
     siteName: "agent.opensverige",
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Hur agent-redo är ditt företag?",
+    title: "Hur agent-redo är din sajt?",
     description: "Gratis AI-readiness scanner — agent.opensverige.se",
     images: ["https://agent.opensverige.se/assets/og-default.png"],
   },
