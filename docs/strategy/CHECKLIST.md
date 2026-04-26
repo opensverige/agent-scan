@@ -75,8 +75,9 @@
 
 ### Retention
 
-- [ ] **Inngest setup** (account, signing key) — beroende: Beslut #4 (kan göras tidigare)
-- [ ] **Inngest cron `retention-cleanup`** — kör dagligen, deletar rader äldre än 90 dagar — `inngest/cron-retention.ts`
+- [x] **Inngest SDK installerat + client + handler-route** — `inngest/client.ts` + `app/api/inngest/route.ts`
+- [x] **Inngest cron `retention-cleanup`** — kör 03:00 UTC dagligen, deletar `scan_submissions` äldre än 90 dagar — `inngest/cron-retention.ts`
+- [ ] **Inngest-konto + Vercel-integration** — manuell: skapa konto på inngest.com, koppla till Vercel-projekt. När integrationen är aktiv börjar cron köra automatiskt.
 
 ---
 
