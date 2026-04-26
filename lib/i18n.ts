@@ -226,9 +226,14 @@ export const I18N = {
             "Scanresultat och hashad IP raderas automatiskt efter 90 dagar (kan förlängas på Builder/Pro-tier). Du kan begära tidigare radering av en specifik domäns resultat — maila info@opensverige.se.",
         },
         {
+          heading: "Automatiserad behandling och profilering",
+          body:
+            "Tjänsten gör automatiserade tekniska bedömningar (badge grön/gul/röd) av domäner — inte av personer direkt. För juridiska personer omfattas inte beslutet av GDPR Art. 22. För enskild firma eller frilansares portfolio (där domänen är kopplad till en fysisk person) kan badge-bedömningen kvalificeras som automatiserat beslut med rättsliga eller liknande väsentliga effekter (Art. 22). I sådana fall har du rätt att begära mänsklig granskning, framföra din ståndpunkt och bestrida resultatet — maila info@opensverige.se. Vi profilerar inte besökare och bygger inte beteendemönster över tid.",
+        },
+        {
           heading: "Dina rättigheter",
           body:
-            "Enligt GDPR har du rätt till tillgång, rättelse, radering, begränsning, dataportabilitet och invändning. Du kan klaga hos Integritetsskyddsmyndigheten (IMY) för GDPR-frågor och hos Post- och telestyrelsen (PTS) för AI Act-frågor (per SOU 2025:101).",
+            "Enligt GDPR har du rätt till tillgång, rättelse, radering, begränsning, dataportabilitet och invändning. För automatiserade beslut (Art. 22) har du dessutom rätt till mänsklig granskning. Du kan klaga hos Integritetsskyddsmyndigheten (IMY) för GDPR-frågor och hos Post- och telestyrelsen (PTS) för AI Act-frågor (per SOU 2025:101).",
         },
         {
           heading: "Kontakt",
@@ -669,9 +674,14 @@ export const I18N = {
             "Scan results and hashed IPs are deleted automatically after 90 days (can be extended on Builder/Pro tiers). You can request earlier deletion of a specific domain's results — email info@opensverige.se.",
         },
         {
+          heading: "Automated decision-making and profiling",
+          body:
+            "The service makes automated technical assessments (green/yellow/red badge) of domains — not of individuals directly. For legal persons (companies), the decision is outside GDPR Art. 22 scope. For sole traders or a freelancer's portfolio (where the domain is linked to a natural person), the badge assessment may qualify as an automated decision producing legal or similarly significant effects (Art. 22). In such cases you have the right to request human review, express your point of view and contest the result — email info@opensverige.se. We do not profile visitors or build behavioural patterns over time.",
+        },
+        {
           heading: "Your rights",
           body:
-            "Under GDPR you have the right to access, rectification, erasure, restriction, portability and objection. Complaints can be lodged with IMY for GDPR matters and with PTS (Swedish Post and Telecom Authority) for AI Act matters (per SOU 2025:101).",
+            "Under GDPR you have the right to access, rectification, erasure, restriction, portability and objection. For automated decisions (Art. 22) you also have the right to human review. Complaints can be lodged with IMY for GDPR matters and with PTS (Swedish Post and Telecom Authority) for AI Act matters (per SOU 2025:101).",
         },
         {
           heading: "Contact",
