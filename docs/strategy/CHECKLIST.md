@@ -41,7 +41,7 @@
 - [x] **Type-check + lint + build grön** efter refactor — verifierat med real prod scan av hexagon.com (UUID `d3282d97...`)
 - [ ] **Per-check filer i `lib/checks/`** med standardiserat interface — *deferred* till Stage 1 när vi lägger till G-01..G-06 (då måste vi ändå röra UI)
 - [ ] **CheckResult som discriminated union** — *deferred* till Stage 1, samma anledning
-- [ ] **Splitta `ResultsPage.tsx`** till `_components/`-katalog — Chunk 3
+- [x] **Splitta `ResultsPage.tsx`** till `_components/`-katalog — `ScoreRing`, `AISummary`, `SeverityIcon`, `FindingRow`, `PlanCard`, `BuilderAvatarStack` + `constants.ts` + `booking-cta.ts`. ResultsPage 1185→907 rader.
 
 ### Cleanup
 

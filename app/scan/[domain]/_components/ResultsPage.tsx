@@ -1,12 +1,11 @@
 // app/scan/[domain]/_components/ResultsPage.tsx
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import type { ScanResult } from "@/lib/scan-types";
 import type { ApiScoreResult } from "@/lib/api-score";
 import { ApiScoreSection } from "./ApiScoreSection";
-import type { CheckResult } from "@/lib/checks";
 import { CHECK_DISPLAY_ORDER } from "@/lib/checks";
 import { CHECK_CONTEXT, SEVERITY_CONTEXT } from "@/lib/check-context";
 import { REGULATORY_UPDATES } from "@/lib/regulatory-updates";
@@ -20,296 +19,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/language-context";
-import type { Translations } from "@/lib/i18n";
 import {
   AlertTriangle, Calendar, Check, CheckCircle2, ChevronDown,
   Code2, FileJson, FileText, Github, Globe, Lock, RotateCcw, Search, Share2,
   Shield, XCircle, Zap,
 } from "lucide-react";
-
-// ── Constants ──────────────────────────────────────────────────────────────
-
-
-const BADGE_RING = {
-  green:  { ringColor: "hsl(var(--success))",    badgeVariant: "default"     as const },
-  yellow: { ringColor: "#c9a55a",                 badgeVariant: "secondary"   as const },
-  red:    { ringColor: "hsl(var(--destructive))", badgeVariant: "destructive" as const },
-} as const;
-
-const API_BAND_RING: Record<string, string> = {
-  agent_ready: "hsl(var(--success))",
-  strong:      "hsl(var(--success))",
-  dev_ready:   "#c9a55a",
-  partial:     "#c9a55a",
-  not_ready:   "hsl(var(--destructive))",
-};
-
-const API_BADGE_CLASS: Record<string, string> = {
-  agent_ready: "bg-success/10 text-success border-success/30",
-  strong:      "bg-success/10 text-success border-success/30",
-  dev_ready:   "bg-amber-50 text-amber-800 border-amber-200",
-  partial:     "bg-amber-50 text-amber-800 border-amber-200",
-  not_ready:   "bg-destructive/10 text-destructive border-destructive/30",
-};
-
-const CONTEXT_STAT_BOX =
-  "rounded-md border border-amber-200/60 bg-amber-50 px-3 py-2.5 dark:border-amber-800/45 dark:bg-amber-950/35";
-const CONTEXT_STAT_PRIMARY = "text-xs leading-relaxed mb-1 text-amber-950 dark:text-amber-50";
-const CONTEXT_STAT_SECONDARY = "text-[11px] italic text-amber-900 dark:text-amber-200";
-
-const RING_R = 60;
-const RING_CIRC = Math.round(2 * Math.PI * RING_R);
-
-// ── Score Ring ──────────────────────────────────────────────────────────────
-
-function ScoreRing({ score, total, ringColor }: { score: number; total: number; ringColor: string }) {
-  const [filled, setFilled] = useState(0);
-  const [display, setDisplay] = useState(0);
-
-  useEffect(() => {
-    const finalFilled = (score / total) * RING_CIRC;
-    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReduced) { setFilled(finalFilled); setDisplay(score); return; }
-    let raf = 0;
-    const timer = setTimeout(() => setFilled(finalFilled), 50);
-    const start = performance.now();
-    const tick = (now: number) => {
-      const t = Math.min((now - start) / 700, 1);
-      const ease = t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
-      setDisplay(Math.round(ease * score));
-      if (t < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => { clearTimeout(timer); cancelAnimationFrame(raf); };
-  }, [score, total]);
-
-  return (
-    <div className="relative shrink-0" style={{ width: 150, height: 150 }}>
-      <svg width={150} height={150} viewBox="0 0 150 150">
-        <circle cx={75} cy={75} r={RING_R} fill="none" className="stroke-muted" strokeWidth={8} />
-        <circle
-          cx={75} cy={75} r={RING_R} fill="none"
-          stroke={ringColor} strokeWidth={8} strokeLinecap="round"
-          strokeDasharray={`${filled} ${RING_CIRC - filled}`}
-          className="transition-[stroke-dasharray] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]"
-          transform="rotate(-90 75 75)"
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-        <span className="font-mono text-5xl font-extrabold leading-none">{display}</span>
-        <span className="font-mono text-sm text-muted-foreground mt-1">/{total}</span>
-      </div>
-    </div>
-  );
-}
-
-// ── AI Summary (expandable with gradient fade) ──────────────────────────────
-
-function AISummary({ text, label, showMore, showLess }: { text: string; label: string; showMore: string; showLess: string }) {
-  const [expanded, setExpanded] = useState(false);
-  const [needsTruncation, setNeedsTruncation] = useState(false);
-  const textRef = useRef<HTMLParagraphElement>(null);
-
-  useEffect(() => {
-    const el = textRef.current;
-    if (!el) return;
-    setNeedsTruncation(el.scrollHeight > el.clientHeight + 2);
-  }, [text]);
-
-  return (
-    <div className="w-full border-t border-border/50 pt-4 mt-1">
-      <p className="font-mono text-[10px] tracking-widest text-muted-foreground/70 mb-2">
-        {label.toUpperCase()}
-      </p>
-      <div className="relative">
-        <p
-          ref={textRef}
-          className={cn(
-            "text-sm text-muted-foreground leading-relaxed overflow-hidden transition-[max-height] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
-            expanded ? "max-h-[1000px]" : "max-h-[4.5rem]"
-          )}
-        >
-          {text}
-        </p>
-        {!expanded && needsTruncation && (
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-12"
-            style={{ background: "linear-gradient(to bottom, transparent, hsl(var(--card)))" }}
-          />
-        )}
-      </div>
-      {needsTruncation && (
-        <button
-          type="button"
-          onClick={() => setExpanded(v => !v)}
-          className="mt-1 font-mono text-[11px] text-muted-foreground hover:text-foreground transition-colors"
-        >
-          {expanded ? showLess : showMore} {expanded ? "↑" : "↓"}
-        </button>
-      )}
-    </div>
-  );
-}
-
-// ── Severity icon ───────────────────────────────────────────────────────────
-
-function SeverityIcon({ result, size = "h-5 w-5" }: { result: CheckResult; size?: string }) {
-  if (result.pass) return <CheckCircle2 className={cn(size, "text-success shrink-0")} />;
-  if (result.na) return <Search className={cn(size, "text-muted-foreground/40 shrink-0")} />;
-  if (result.recommendation) return <Zap className={cn(size, "text-primary/70 shrink-0")} />;
-  if (result.severity === "critical") return <XCircle className={cn(size, "text-destructive shrink-0")} />;
-  if (result.severity === "important") return <AlertTriangle className={cn(size, "text-amber-500 shrink-0")} />;
-  return <Search className={cn(size, "text-muted-foreground shrink-0")} />;
-}
-
-// ── Finding accordion row ───────────────────────────────────────────────────
-
-function FindingRow({ check, index }: { check: CheckResult; index: number }) {
-  const ctx = CHECK_CONTEXT[check.id];
-  return (
-    <AccordionItem
-      value={`finding-${check.id}`}
-      className="border rounded-lg px-4 animate-in fade-in slide-in-from-bottom-2"
-      style={{ animationDelay: `${index * 80}ms`, animationFillMode: "both" }}
-    >
-      <AccordionTrigger className="hover:no-underline py-3 min-h-[44px]">
-        <div className="flex items-center gap-3 text-left">
-          <SeverityIcon result={check} />
-          <span className="text-base font-medium">{check.label}</span>
-        </div>
-      </AccordionTrigger>
-      <AccordionContent>
-        <div className="pl-8 pb-1 space-y-2.5">
-          {check.detail && <p className="text-sm text-muted-foreground">{check.detail}</p>}
-          <div className={CONTEXT_STAT_BOX}>
-            <p className={CONTEXT_STAT_PRIMARY}>{ctx.stat}</p>
-            <p className={CONTEXT_STAT_SECONDARY}>— {ctx.source}</p>
-          </div>
-          <div className="flex items-start gap-1.5">
-            <span className="text-primary font-bold text-xs shrink-0 mt-0.5">→</span>
-            <span className="text-xs text-foreground/70 leading-snug">{ctx.action}</span>
-          </div>
-          <p className="text-[10px] font-mono text-muted-foreground/55 leading-tight">
-            <span className="capitalize">{check.category}</span>
-            <span className="text-muted-foreground/35 px-1.5" aria-hidden>·</span>
-            <span className="capitalize">{check.severity}</span>
-          </p>
-        </div>
-      </AccordionContent>
-    </AccordionItem>
-  );
-}
-
-// ── Plan step card ──────────────────────────────────────────────────────────
-
-const PLAN_BOOKING_PHRASE = "Boka möte 15 min";
-
-function PlanCardRichText({ text }: { text: string }) {
-  if (!text.includes(PLAN_BOOKING_PHRASE)) {
-    return <>{text}</>;
-  }
-  const [before, after] = text.split(PLAN_BOOKING_PHRASE);
-  return (
-    <>
-      {before}
-      <a
-        href="#boka-mote"
-        className="font-semibold text-primary underline decoration-primary/40 underline-offset-[3px] transition-[color,text-decoration-color] duration-200 hover:text-primary/90 hover:decoration-primary"
-        style={{ transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)" }}
-      >
-        {PLAN_BOOKING_PHRASE}
-      </a>
-      {after}
-    </>
-  );
-}
-
-function PlanCard({ text, index, priority, labelCritical, labelImportant }: { text: string; index: number; priority: "high" | "medium" | null; labelCritical: string; labelImportant: string }) {
-  return (
-    <Card className={cn("transition-all", index === 0 && "border-2 border-foreground")}>
-      <CardContent className="flex gap-4 items-start py-4 px-4">
-        <div className={cn(
-          "flex items-center justify-center w-8 h-8 rounded-full shrink-0 font-mono text-sm font-bold",
-          index === 0 ? "bg-foreground text-background" : "bg-muted text-muted-foreground"
-        )}>
-          {index + 1}
-        </div>
-        <p className="text-base font-semibold leading-relaxed flex-1 min-w-0 self-center" style={{ lineHeight: 1.6 }}>
-          <PlanCardRichText text={text} />
-        </p>
-        {priority === "high" && (
-          <Badge variant="destructive" className="text-xs shrink-0">{labelCritical}</Badge>
-        )}
-        {priority === "medium" && (
-          <Badge className="text-xs shrink-0 bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100">{labelImportant}</Badge>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-// ── Booking CTA ─────────────────────────────────────────────────────────────
-
-function getBookingCTA(
-  activeTab: "sajt" | "api",
-  siteScore: number,
-  apiScore: ApiScoreResult | null | undefined,
-  domain: string,
-  tr: Translations["results"]
-) {
-  if (activeTab === "api" && apiScore) {
-    if (apiScore.totalScore < 30) {
-      return { headline: tr.ctaHighApiHeadline, subtext: tr.ctaHighApiSubtext(domain), buttonText: tr.ctaBookFree, urgency: "high" as const };
-    }
-    return { headline: tr.ctaMedApiHeadline, subtext: tr.ctaMedApiSubtext(domain), buttonText: tr.ctaBook, urgency: "medium" as const };
-  }
-  if (siteScore <= 3) {
-    return { headline: tr.ctaHighSiteHeadline, subtext: tr.ctaHighSiteSubtext(domain), buttonText: tr.ctaBookFree, urgency: "high" as const };
-  }
-  if (siteScore <= 6) {
-    return { headline: tr.ctaMedSiteHeadline, subtext: tr.ctaMedSiteSubtext(domain), buttonText: tr.ctaBookFree, urgency: "medium" as const };
-  }
-  return { headline: tr.ctaLowHeadline, subtext: tr.ctaLowSubtext(domain), buttonText: tr.ctaBookCall, urgency: "low" as const };
-}
-
-const BUILDER_AVATAR_URLS = [
-  "https://randomuser.me/api/portraits/women/65.jpg",
-  "https://randomuser.me/api/portraits/men/32.jpg",
-  "https://randomuser.me/api/portraits/women/68.jpg",
-  "https://randomuser.me/api/portraits/men/45.jpg",
-] as const;
-
-function BuilderAvatarStack({ urgency }: { urgency: "high" | "medium" | "low" }) {
-  return (
-    <div className="mt-4 flex justify-center" role="img" aria-label="Exempel på builders i communityn">
-      <div className="flex items-center">
-        {BUILDER_AVATAR_URLS.map((src, i) => (
-          <span
-            key={src}
-            className={cn(
-              "relative inline-block h-10 w-10 overflow-hidden rounded-full border-2 bg-muted shadow-sm",
-              urgency === "high" ? "border-background" : "border-border",
-              i > 0 && "-ml-3"
-            )}
-            style={{ zIndex: i + 1 }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={src} alt="" width={40} height={40} className="h-full w-full object-cover" loading="lazy" decoding="async" />
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-function getStepPriority(i: number, criticalCount: number, importantCount: number): "high" | "medium" | null {
-  if (criticalCount > 0 && i < Math.min(criticalCount, 3)) return "high";
-  if (importantCount > 0 && i < criticalCount + Math.min(importantCount, 2)) return "medium";
-  return null;
-}
+import { BADGE_RING, API_BAND_RING, API_BADGE_CLASS, CONTEXT_STAT_BOX, CONTEXT_STAT_PRIMARY, CONTEXT_STAT_SECONDARY } from "./constants";
+import { ScoreRing } from "./ScoreRing";
+import { AISummary } from "./AISummary";
+import { SeverityIcon } from "./SeverityIcon";
+import { FindingRow } from "./FindingRow";
+import { PlanCard } from "./PlanCard";
+import { BuilderAvatarStack } from "./BuilderAvatarStack";
+import { getBookingCTA, getStepPriority } from "./booking-cta";
 
 function getDefaultTab(_data: ScanResult | null): "sajt" | "api" {
   return "sajt";
@@ -1145,7 +867,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
               {cta.buttonText}
             </Button>
 
-            <BuilderAvatarStack urgency={cta.urgency} />
+            <BuilderAvatarStack urgency={cta.urgency} label={t.results.builderAvatarLabel} />
 
             <p className={cn(
               "text-[11px] mt-3 opacity-70 max-w-xs",
