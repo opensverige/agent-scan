@@ -3,15 +3,40 @@
 
 import { cn } from "@/lib/utils";
 
-// TODO(stage-0-cleanup): replace with actual community builder avatars (or remove entirely).
-// Using random faces from randomuser.me as "community builders" is misrepresentation —
-// see docs/strategy/CHECKLIST.md Stage 0 cleanup item.
-const BUILDER_AVATAR_URLS = [
-  "https://randomuser.me/api/portraits/women/65.jpg",
-  "https://randomuser.me/api/portraits/men/32.jpg",
-  "https://randomuser.me/api/portraits/women/68.jpg",
-  "https://randomuser.me/api/portraits/men/45.jpg",
-] as const;
+// Neutral abstract avatars — generated as deterministic SVG circles with
+// varying hues. Better than stock photos of strangers presented as community
+// members (which was misleading social proof). When we have real builder
+// profiles to show, replace with actual avatars + opt-in consent.
+const AVATAR_COUNT = 4;
+const AVATAR_HUES = [12, 34, 188, 220];
+
+function AbstractAvatar({ hue }: { hue: number }) {
+  // Each avatar is a flat-tone circle with a slightly darker inner ring —
+  // visually rhythmic but explicitly non-photographic. No identity claims.
+  return (
+    <svg
+      viewBox="0 0 40 40"
+      width={40}
+      height={40}
+      className="h-full w-full"
+      aria-hidden
+    >
+      <defs>
+        <linearGradient id={`avatar-grad-${hue}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={`hsl(${hue} 60% 70%)`} />
+          <stop offset="100%" stopColor={`hsl(${hue} 50% 55%)`} />
+        </linearGradient>
+      </defs>
+      <circle cx={20} cy={20} r={20} fill={`url(#avatar-grad-${hue})`} />
+      <circle cx={20} cy={16} r={6} fill={`hsl(${hue} 55% 80%)`} opacity={0.55} />
+      <path
+        d="M 8 36 Q 20 22 32 36 Z"
+        fill={`hsl(${hue} 55% 80%)`}
+        opacity={0.45}
+      />
+    </svg>
+  );
+}
 
 /**
  * Avatar stack shown under the booking CTA. Visual social proof.
@@ -21,9 +46,9 @@ export function BuilderAvatarStack({ urgency, label }: { urgency: "high" | "medi
   return (
     <div className="mt-4 flex justify-center" role="img" aria-label={label}>
       <div className="flex items-center">
-        {BUILDER_AVATAR_URLS.map((src, i) => (
+        {Array.from({ length: AVATAR_COUNT }, (_, i) => i).map((i) => (
           <span
-            key={src}
+            key={i}
             className={cn(
               "relative inline-block h-10 w-10 overflow-hidden rounded-full border-2 bg-muted shadow-sm",
               urgency === "high" ? "border-background" : "border-border",
@@ -31,8 +56,7 @@ export function BuilderAvatarStack({ urgency, label }: { urgency: "high" | "medi
             )}
             style={{ zIndex: i + 1 }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={src} alt="" width={40} height={40} className="h-full w-full object-cover" loading="lazy" decoding="async" />
+            <AbstractAvatar hue={AVATAR_HUES[i]} />
           </span>
         ))}
       </div>

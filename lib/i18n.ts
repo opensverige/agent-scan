@@ -141,15 +141,10 @@ export const I18N = {
       communityMatch: "Matchning med rätt builder i communityn.",
       builderAvatarLabel: "Exempel på builders i communityn",
 
-      // Agent catalog
-      catalogTitle: "AGENT-KATALOGEN — KOMMER SNART",
-      catalogDesc: "Öppen katalog för agenter mot svenska affärssystem.",
-
       // Sharing
       shareResult: "Dela ditt resultat",
       sendToTeam: "Skicka till ditt team",
       copied: "Kopierat!",
-      discordBtn: "250+ builders i Discord →",
       scanAnother: "← Scanna en annan sajt",
       shareApiText: (domain: string, score: number, blockers: number, url: string) =>
         `${score < 30 ? "🔴" : score < 70 ? "🟡" : "🟢"} ${domain} fick ${score}/100 i API agent-readiness.\n\n${blockers} blockerare hittade.\n\nHur redo är ditt API? → ${url}`,
@@ -373,13 +368,9 @@ export const I18N = {
       communityMatch: "Matched with the right builder in the community.",
       builderAvatarLabel: "Example builders in the community",
 
-      catalogTitle: "AGENT CATALOG — COMING SOON",
-      catalogDesc: "Open catalog for agents targeting Swedish business systems.",
-
       shareResult: "Share your result",
       sendToTeam: "Send to your team",
       copied: "Copied!",
-      discordBtn: "250+ builders on Discord →",
       scanAnother: "← Scan another site",
       shareApiText: (domain: string, score: number, blockers: number, url: string) =>
         `${score < 30 ? "🔴" : score < 70 ? "🟡" : "🟢"} ${domain} scored ${score}/100 in API agent-readiness.\n\n${blockers} blockers found.\n\nHow ready is your API? → ${url}`,

@@ -45,12 +45,12 @@
 
 ### Cleanup
 
-- [ ] **Ta bort `BUILDER_AVATAR_URLS`** randomuser-bilder eller ersätt med generiska SVG-shapes — `_components/BuilderAvatarStack.tsx:276-281`
-- [ ] **Ta bort död i18n** (`catalogTitle`, `catalogDesc` SV+EN) — `lib/i18n.ts`
-- [ ] **Ta bort `t.results.discordBtn`** (Discord-knappen är borttagen) — `lib/i18n.ts`
-- [ ] **Ta bort `t.results.builderAvatarLabel`** ELLER använd den i `BuilderAvatarStack.tsx:285` — välj
-- [ ] **DELETE Klarna-duplikat** — `DELETE FROM scan_submissions WHERE domain='klarna.com' AND ip_hash='seed-historical-2026-04-26';`
-- [ ] **Hantera 33 seed-scansen** — radera eller re-scanna riktigt — beroende: Beslut #2
+- [x] **Ta bort `BUILDER_AVATAR_URLS`** — ersatt med deterministiska SVG-avatars i `BuilderAvatarStack.tsx`. Inga fler randomuser-foton.
+- [x] **Ta bort död i18n** (`catalogTitle`, `catalogDesc` SV+EN) — `lib/i18n.ts`
+- [x] **Ta bort `t.results.discordBtn`** (Discord-knappen är borttagen) — `lib/i18n.ts`
+- [x] **Använd `t.results.builderAvatarLabel`** i `BuilderAvatarStack.tsx` (löst i Chunk 3)
+- [x] **DELETE Klarna-duplikat** — done via SQL, returned `c3477b2a-324d-4e51-b684-12eee0f1a976`
+- [ ] **Hantera 33 seed-scansen** — re-scanna riktigt (per Beslut #2). Bakgrundsjobb.
 
 ### Compliance prep
 
