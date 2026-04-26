@@ -151,6 +151,11 @@ export function complianceChecks(evidence?: ComplianceEvidence): [CheckResult, C
   const noAiEvidence = aiHay.trim().length === 0;
 
   const hasPrivacyAutomationInfo = !noPrivacyEvidence && /automatiserad|automated decision|profilering|profiling|art\.\s*22|artikel\s*22|machine-?made decision/.test(privacyHay);
+  // Softer signal: site mentions AI tools by name in privacy policy. Doesn't
+  // qualify as Art. 22 awareness, but tells us the site is at least AI-aware.
+  // We use this to differentiate the FAIL message: "no AI mention at all" vs
+  // "AI tools mentioned but no formal Art. 22 vocabulary".
+  const mentionsAiTools = !noPrivacyEvidence && /\b(claude|chatgpt|gpt-?[345]|perplexity|ai-agent|ai agent|ai-verktyg|ai-tj[aä]nst|llm|model context protocol|mcp|anthropic|openai)\b/.test(privacyHay);
   const hasCookieBotHandling = !noCookieEvidence && /bot|crawler|user-agent|icke-m[aä]nsklig|non-human|machine client|agent/.test(cookieHay);
   const hasAiLabelingInfo = !noAiEvidence && /ai-generated|ai generated|syntetisk|watermark|maskinl[aä]sbar m[aä]rkning|article\s*50|art\.\s*50|eu ai act/.test(aiHay);
 
@@ -163,12 +168,16 @@ export function complianceChecks(evidence?: ComplianceEvidence): [CheckResult, C
         ? 'Integritetspolicy: ingen policy-sida hittad (ej bedömd)'
         : hasPrivacyAutomationInfo
           ? 'Integritetspolicy nämner automatiserad behandling'
-          : 'Integritetspolicy: ingen tydlig info om automatiserad behandling',
+          : mentionsAiTools
+            ? 'AI-verktyg nämns men inga Art. 22-formuleringar'
+            : 'Integritetspolicy: ingen tydlig info om automatiserad behandling',
       detail: noPrivacyEvidence
         ? 'Vi hittade ingen publik integritetspolicy att analysera'
         : hasPrivacyAutomationInfo
           ? 'Hittade signaler kopplade till GDPR Art. 22 i publikt material'
-          : 'Ingen tydlig Art. 22/profilering-signal hittad i publikt material',
+          : mentionsAiTools
+            ? 'Policy refererar AI-verktyg (Claude / ChatGPT / Perplexity etc.) men saknar formell Art. 22-vokabulär ("automatiserat beslutsfattande", "profilering"). Halvvägs framme — komplettera med GDPR-explicit text om automatiserade beslut och rätt till mänsklig granskning.'
+            : 'Ingen tydlig Art. 22/profilering-signal hittad i publikt material',
       category: 'compliance',
       severity: 'critical',
       hardcoded: false,
@@ -418,7 +427,32 @@ export function checkMarkdownNegotiation(probe: { status: number; body: string; 
  * G-03: Server-side rendering. Critical content must appear in raw HTML
  * without JavaScript execution. GPTBot, ClaudeBot, PerplexityBot do NOT
  * run JS — a SPA that renders client-side is invisible to AI crawlers.
+ *
+ * Detection strategy: strip scripts/styles/tags from the response body
+ * and measure how much actual user-visible text remains. A real
+ * server-rendered landing page has thousands of stripped characters; a
+ * SPA shell (`<div id="root"></div><script src="bundle.js">`) has under
+ * a few hundred.
+ *
+ * Why not require <h1>: many design-forward landing pages style their
+ * hero heading as <div> + CSS (e.g. headless.design). The h1 absence
+ * is a SEO/accessibility concern, not a SSR concern, and we shouldn't
+ * conflate them.
  */
+const SSR_TEXT_THRESHOLD = 500;
+
+function stripHtmlForTextCount(body: string): string {
+  return body
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&[a-z]+;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function checkSsrContent(probe: { status: number; body: string; contentType: string | null } | null): CheckResult {
   if (!probe || probe.status !== 200) {
     return {
@@ -430,20 +464,30 @@ export function checkSsrContent(probe: { status: number; body: string; contentTy
     };
   }
   const body = probe.body;
-  const hasTitle = /<title[^>]*>[^<]+<\/title>/i.test(body);
-  const hasH1 = /<h1[^>]*>[^<]+<\/h1>/i.test(body);
-  const textMatch = body.match(/<(?:p|main|article|section)[^>]*>([\s\S]{200,})/i);
-  const hasText = !!textMatch;
-  const valid = hasTitle && hasH1 && hasText;
+  const hasTitle = /<title[^>]*>\s*\S[\s\S]*?<\/title>/i.test(body);
+  const text = stripHtmlForTextCount(body);
+  const textLength = text.length;
+  const hasContent = textLength >= SSR_TEXT_THRESHOLD;
+  const valid = hasTitle && hasContent;
+
+  if (valid) {
+    return {
+      id: 'ssr_content',
+      pass: true,
+      label: `Innehåll renderas server-side — agenter ser ${textLength.toLocaleString('sv-SE')} tecken`,
+      category: 'discovery',
+      severity: 'critical',
+    };
+  }
+  // Differentiate the failure mode: missing title vs SPA shell
+  const reason = !hasTitle
+    ? 'Saknar <title>-element i HTML.'
+    : `Bara ${textLength} tecken text i HTML — sannolikt en SPA-shell som renderar med JavaScript.`;
   return {
     id: 'ssr_content',
-    pass: valid,
-    label: valid
-      ? 'Innehåll renderas server-side — agenter ser allt'
-      : 'JS-render krävs — AI-crawlers ser tom sida',
-    detail: valid
-      ? undefined
-      : `Saknar ${[!hasTitle && '<title>', !hasH1 && '<h1>', !hasText && 'textinnehåll i HTML'].filter(Boolean).join(', ')}. GPTBot/ClaudeBot/PerplexityBot kör inte JavaScript.`,
+    pass: false,
+    label: 'JS-render krävs — AI-crawlers ser tom sida',
+    detail: `${reason} GPTBot/ClaudeBot/PerplexityBot kör inte JavaScript.`,
     category: 'discovery',
     severity: 'critical',
   };
