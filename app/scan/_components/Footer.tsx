@@ -9,12 +9,30 @@ export default function Footer() {
   return (
     <footer className="px-6 py-3.5 border-t border-border flex justify-between items-center font-mono text-[10px] text-muted-foreground flex-wrap gap-2">
       <span>agent.opensverige.se</span>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap justify-end">
         <Link
           href="/integritetspolicy"
           className="hover:text-foreground transition-colors"
         >
           {t.footer.privacy}
+        </Link>
+        <Link
+          href="/legal/terms"
+          className="hover:text-foreground transition-colors"
+        >
+          {t.terms.title}
+        </Link>
+        <Link
+          href="/legal/aup"
+          className="hover:text-foreground transition-colors"
+        >
+          {t.aup.title}
+        </Link>
+        <Link
+          href="/legal/ai-disclosure"
+          className="hover:text-foreground transition-colors"
+        >
+          {t.aiDisclosure.title}
         </Link>
         <Link
           href="/legal/subprocessors"

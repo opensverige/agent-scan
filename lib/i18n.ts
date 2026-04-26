@@ -239,6 +239,161 @@ export const I18N = {
       backLink: "← Tillbaka till scannern",
     },
 
+    terms: {
+      title: "Användarvillkor",
+      lastUpdated: "Senast uppdaterad: 26 april 2026",
+      intro:
+        "Det här är de juridiska villkoren för agent.opensverige.se och dess publika API. Skrivna i klartext utan jurist-jargong.",
+      sections: [
+        {
+          heading: "Vem vi är",
+          body:
+            "agent.opensverige.se drivs av Felipe och Gustaf Garnow (community-projekt, Sverige). Kontakt: info@opensverige.se. Tjänsten är open source under FSL-1.1-MIT — källkoden finns på github.com/opensverige/agent-scan.",
+        },
+        {
+          heading: "Vad tjänsten är",
+          body:
+            "En teknisk scanner som mäter hur väl en webbplats är förberedd för AI-agenter. Vi gör HTTP-requests mot publika ytor av domäner och returnerar 17 strukturerade checks. Resultaten är tekniska observationer, inte juridisk rådgivning.",
+        },
+        {
+          heading: "Vad du får göra",
+          body:
+            "Använda webb-UI:t gratis utan registrering. Använda /v1/* API:et med en utfärdad API-nyckel inom din tier-quota. Bygga vidare på resultat (screenshots, citera badges, integrera i dina egna verktyg). Kontakta oss i Discord eller via mail vid frågor.",
+        },
+        {
+          heading: "Vad du inte får göra",
+          body:
+            "Bryta mot vår Acceptable Use Policy (se /legal/aup). Försöka kringgå rate-limits eller auth. Re-identifiera hashade IP-adresser. Resälja tjänsten som konkurrerande managed service (FSL-licens-villkor). Skanna domäner du inte har rätt att scanna när Pro-tier domain verification lanseras.",
+        },
+        {
+          heading: "API-nycklar",
+          body:
+            "Du ansvarar för att hålla din nyckel hemlig. Misstänker du att den läckt — be oss revoka den och utfärda en ny. Vi loggar nyckel-prefix (16 tecken, ej hela nyckeln) för audit. Vi kan revoka nycklar som missbrukas.",
+        },
+        {
+          heading: "AI-genererat innehåll",
+          body:
+            "Sammanfattningar genereras av Anthropic Claude. De märks maskinläsbart i API-svaret via ai_disclosure-fältet (EU AI Act Art. 50). Innehållet är ej granskat av människa — du ansvarar för att verifiera påståenden innan du använder dem för affärsbeslut.",
+        },
+        {
+          heading: "Tillgänglighet och fel",
+          body:
+            "Vi gör vårt bästa men ger ingen formell SLA på Hobby-tier. Builder/Pro-tier får 99,5% uptime när de lanseras. Tjänsten kan vara nere för underhåll. Scan-kvalitet beror på externa faktorer (Anthropic, Firecrawl, Exa). Inga garantier för specifika resultat.",
+        },
+        {
+          heading: "Ansvarsbegränsning",
+          body:
+            "Vi friskriver oss från ansvar för indirekta skador, missade affärsmöjligheter eller felaktiga beslut baserade på scan-resultat. Maximalt totalansvar = vad du betalat oss de senaste 12 månaderna. Konsumentskyddsregler i Sverige står över denna klausul där tillämpligt.",
+        },
+        {
+          heading: "Uppsägning",
+          body:
+            "Du kan sluta använda tjänsten när du vill. Vi kan stänga av nycklar som bryter mot AUP eller dessa villkor. Vid uppsägning av betal-tier: ingen återbetalning av innevarande månad, men inga framtida debiteringar.",
+        },
+        {
+          heading: "Lag och jurisdiktion",
+          body:
+            "Svensk lag tillämpas. Tvister avgörs i svensk allmän domstol. Konsumenter behåller rätten att stämma i sitt hemland enligt EU-konsumentregler.",
+        },
+        {
+          heading: "Ändringar",
+          body:
+            "Vi kan uppdatera dessa villkor. Materiella ändringar meddelas via mail till nyckel-innehavare minst 30 dagar i förväg. Triviala ändringar (typos, klargöranden) görs utan notis.",
+        },
+      ] as ReadonlyArray<{ heading: string; body: string }>,
+      backLink: "← Tillbaka till integritetspolicy",
+    },
+
+    aup: {
+      title: "Acceptable Use Policy",
+      lastUpdated: "Senast uppdaterad: 26 april 2026",
+      intro:
+        "Det här är reglerna för hur du får använda agent.opensverige.se och vårt API. Brott leder till avstängning av nyckel utan återbetalning.",
+      sections: [
+        {
+          heading: "Vad som är förbjudet",
+          body:
+            "Skanna domäner du inte äger eller har explicit tillstånd att scanna i kommersiella syften (när Pro-tier lanseras kräver vi DNS-verifiering). Skanna i syfte att kartlägga konkurrenters infrastruktur för angreppsändamål. Använda resultat för att förtala eller skada tredje parts rykte. Generera fake-trafik mot tredjepartssajter via våra probes.",
+        },
+        {
+          heading: "Re-identifiering",
+          body:
+            "Du får inte försöka re-identifiera personer från hashade IP-adresser eller andra pseudonymiserade fält i våra svar. Det är förbjudet enligt GDPR och bryter våra ToS.",
+        },
+        {
+          heading: "Rate limiting och fair use",
+          body:
+            "Respektera per-tier-quota. Försök inte kringgå rate-limit via flera nycklar för samma användning — det räknas som missbruk. Hobby-tier är för individuell utforskning, inte produktion. Builder/Pro för team-användning.",
+        },
+        {
+          heading: "Återförsäljning",
+          body:
+            "Återförsälj inte vår API som en konkurrerande managed service (förbjudet av FSL-licensen i 2 år). White-label-rapporter på Pro-tier är OK när de lanseras. Bygga ovanpå för dina egna kunder är OK. Kontakta oss för dual-license om du vill kringgå denna regel.",
+        },
+        {
+          heading: "Crawler-etikett",
+          body:
+            "Vår scanner respekterar målets robots.txt och rate-limit-headers. Om du upptäcker att vi inte gör det — rapportera direkt. Om du forkar koden, behåll detta beteende.",
+        },
+        {
+          heading: "Säkerhet",
+          body:
+            "Rapportera säkerhetsproblem privat till info@opensverige.se enligt vår security.txt. Försök inte exploit:a sårbarheter i produktion. Bug bounty kommer i Stage 5.",
+        },
+        {
+          heading: "Konsekvenser",
+          body:
+            "Vi kan avstänga nycklar som bryter dessa regler. Allvarliga brott (re-identifiering, kartläggning för angrepp) rapporteras till Polisen och PTS. Vi förbehåller oss rätten att stämma för skadestånd vid kommersiell skada.",
+        },
+      ] as ReadonlyArray<{ heading: string; body: string }>,
+      backLink: "← Tillbaka till integritetspolicy",
+    },
+
+    aiDisclosure: {
+      title: "AI-disclosure",
+      lastUpdated: "Senast uppdaterad: 26 april 2026",
+      intro:
+        "Tjänsten använder AI för att generera sammanfattningar och rekommendationer. Den här sidan beskriver hur, var och varför — i linje med EU AI Act Art. 50 (gäller från 2 augusti 2026).",
+      sections: [
+        {
+          heading: "Vilken AI vi använder",
+          body:
+            "Anthropics Claude (modell claude-sonnet-4-5). Anropas server-side från Vercel-funktionen som kör en scan. Vi planerar migrera till AWS Bedrock i Frankfurt (eu-central-1) före 2 augusti 2026 för att hålla data i EU.",
+        },
+        {
+          heading: "Vad AI:n genererar",
+          body:
+            "Tre fält i scan-svaret: summary (kortfattad text om sajtens AI-readiness), industry (branschklassificering), agent_suggestions (3 förslag på AI-agenter företaget kan bygga). Inga andra fält är AI-genererade — alla checks är deterministiska kodregler.",
+        },
+        {
+          heading: "Maskinläsbar märkning",
+          body:
+            "Varje API-svar innehåller ett ai_disclosure-objekt: { ai_generated: bool, model: string, fields: string[] }. När AI-genererat innehåll finns sätts ai_generated: true med exakt vilka fält och vilken modell. Detta uppfyller Art. 50(2)-kravet på maskinläsbar märkning.",
+        },
+        {
+          heading: "Mänsklig granskning",
+          body:
+            "AI-output granskas inte av människa innan den serveras. Du som använder summary i din UI eller affärsbeslut bör verifiera påståenden mot underliggande checks. Vill du ha mänsklig granskning av en specifik scan — maila info@opensverige.se.",
+        },
+        {
+          heading: "Risk-klassificering enligt AI Act",
+          body:
+            "Vår tjänst räknas som minimal/limited risk-AI under Art. 50. Inga högriskscenarier (rekrytering, kreditbedömning, brottsbekämpning). Vi är deployer (artikel 3(4)), Anthropic är provider (artikel 3(3)) — Anthropic ansvarar för teknisk märkning, vi ansvarar för informationsskyldighet mot dig.",
+        },
+        {
+          heading: "Dina rättigheter",
+          body:
+            "Du har rätt att få veta att text är AI-genererad (uppfyllt via ai_disclosure-fältet). Vid badge-bedömning av en frilansares portfolio (potentiellt automatiserat beslutsfattande, GDPR Art. 22) kan du begära mänsklig granskning via info@opensverige.se.",
+        },
+        {
+          heading: "Träningsdata",
+          body:
+            "Vi tränar inga modeller på era scan-data. Anthropic enligt deras egna villkor (trust.anthropic.com): API-data används inte för modellträning by default på enterprise-tier.",
+        },
+      ] as ReadonlyArray<{ heading: string; body: string }>,
+      backLink: "← Tillbaka till integritetspolicy",
+    },
+
     subprocessors: {
       title: "Underleverantörer",
       lastUpdated: "Senast uppdaterad: 26 april 2026",
@@ -525,6 +680,161 @@ export const I18N = {
         },
       ] as ReadonlyArray<{ heading: string; body: string }>,
       backLink: "← Back to the scanner",
+    },
+
+    terms: {
+      title: "Terms of Service",
+      lastUpdated: "Last updated: April 26, 2026",
+      intro:
+        "Plain-English legal terms for agent.opensverige.se and its public API. No legalese.",
+      sections: [
+        {
+          heading: "Who we are",
+          body:
+            "agent.opensverige.se is run by Felipe and Gustaf Garnow (community project, Sweden). Contact: info@opensverige.se. The service is open source under FSL-1.1-MIT — code at github.com/opensverige/agent-scan.",
+        },
+        {
+          heading: "What the service does",
+          body:
+            "A technical scanner that measures how prepared a website is for AI agents. We make HTTP requests against public surfaces of domains and return 17 structured checks. Results are technical observations, not legal advice.",
+        },
+        {
+          heading: "What you may do",
+          body:
+            "Use the web UI free, no signup. Use the /v1/* API with an issued key within your tier quota. Build on results (screenshots, citing badges, integrating into your tools). Reach out via Discord or email with questions.",
+        },
+        {
+          heading: "What you may not do",
+          body:
+            "Violate our Acceptable Use Policy (see /legal/aup). Bypass rate limits or auth. Re-identify hashed IPs. Resell as a competing managed service (FSL license restriction). Scan domains you don't have authorisation to scan when Pro-tier domain verification launches.",
+        },
+        {
+          heading: "API keys",
+          body:
+            "You're responsible for keeping your key secret. If you suspect a leak, ask us to revoke it and we'll issue a new one. We log key prefixes (16 chars, never the full key) for audit. We may revoke keys that abuse the service.",
+        },
+        {
+          heading: "AI-generated content",
+          body:
+            "Summaries are generated by Anthropic Claude. They are marked machine-readably in API responses via the ai_disclosure field (EU AI Act Art. 50). Content is not human-reviewed — you are responsible for verifying claims before using them in business decisions.",
+        },
+        {
+          heading: "Availability and errors",
+          body:
+            "We do our best but provide no formal SLA on Hobby tier. Builder/Pro tiers will get 99.5% uptime when launched. Service may be down for maintenance. Scan quality depends on external factors (Anthropic, Firecrawl, Exa). No guarantees on specific results.",
+        },
+        {
+          heading: "Limitation of liability",
+          body:
+            "We disclaim liability for indirect damages, missed business opportunities, or wrong decisions based on scan results. Maximum total liability = what you paid us in the past 12 months. Swedish consumer protection laws override this clause where applicable.",
+        },
+        {
+          heading: "Termination",
+          body:
+            "You can stop using the service any time. We may revoke keys that violate AUP or these terms. Termination of paid tier: no refund of current month, but no future charges.",
+        },
+        {
+          heading: "Law and jurisdiction",
+          body:
+            "Swedish law applies. Disputes resolved in Swedish courts. Consumers retain the right to sue in their home country under EU consumer rules.",
+        },
+        {
+          heading: "Changes",
+          body:
+            "We may update these terms. Material changes are emailed to key holders at least 30 days in advance. Trivial changes (typos, clarifications) ship without notice.",
+        },
+      ] as ReadonlyArray<{ heading: string; body: string }>,
+      backLink: "← Back to the privacy policy",
+    },
+
+    aup: {
+      title: "Acceptable Use Policy",
+      lastUpdated: "Last updated: April 26, 2026",
+      intro:
+        "Rules for using agent.opensverige.se and our API. Violations result in key revocation without refund.",
+      sections: [
+        {
+          heading: "What's prohibited",
+          body:
+            "Scanning domains you don't own or have explicit permission to scan in commercial contexts (Pro tier will require DNS verification at launch). Scanning to map competitor infrastructure for attack purposes. Using results to defame third parties. Generating fake traffic against third-party sites via our probes.",
+        },
+        {
+          heading: "Re-identification",
+          body:
+            "You may not attempt to re-identify individuals from hashed IPs or other pseudonymised fields in our responses. Prohibited by GDPR and our ToS.",
+        },
+        {
+          heading: "Rate limiting and fair use",
+          body:
+            "Respect per-tier quotas. Don't try to bypass rate limits via multiple keys for the same workload — counts as abuse. Hobby tier is for individual exploration, not production. Builder/Pro for team use.",
+        },
+        {
+          heading: "Resale",
+          body:
+            "Don't resell our API as a competing managed service (forbidden by FSL license for 2 years). White-label reports on Pro tier are OK at launch. Building on top for your own customers is OK. Contact us for a dual license to bypass this rule.",
+        },
+        {
+          heading: "Crawler etiquette",
+          body:
+            "Our scanner respects target robots.txt and rate-limit headers. If you find we don't, report it. If you fork the code, preserve this behaviour.",
+        },
+        {
+          heading: "Security",
+          body:
+            "Report security issues privately to info@opensverige.se per our security.txt. Don't exploit vulnerabilities in production. Bug bounty coming in Stage 5.",
+        },
+        {
+          heading: "Consequences",
+          body:
+            "We may revoke keys that violate these rules. Serious violations (re-identification, attack mapping) reported to Swedish Police and PTS. We reserve the right to sue for damages from commercial harm.",
+        },
+      ] as ReadonlyArray<{ heading: string; body: string }>,
+      backLink: "← Back to the privacy policy",
+    },
+
+    aiDisclosure: {
+      title: "AI Disclosure",
+      lastUpdated: "Last updated: April 26, 2026",
+      intro:
+        "The service uses AI to generate summaries and recommendations. This page describes how, where and why — in line with EU AI Act Art. 50 (effective 2 August 2026).",
+      sections: [
+        {
+          heading: "Which AI we use",
+          body:
+            "Anthropic Claude (model claude-sonnet-4-5). Called server-side from the Vercel function running a scan. We plan to migrate to AWS Bedrock in Frankfurt (eu-central-1) before 2 August 2026 to keep data in the EU.",
+        },
+        {
+          heading: "What the AI generates",
+          body:
+            "Three fields in the scan response: summary (short text about the site's AI-readiness), industry (industry classification), agent_suggestions (3 AI-agent ideas for the company to build). No other fields are AI-generated — all checks are deterministic code rules.",
+        },
+        {
+          heading: "Machine-readable disclosure",
+          body:
+            "Every API response includes an ai_disclosure object: { ai_generated: bool, model: string, fields: string[] }. When AI content is present, ai_generated: true with the exact fields and model. Satisfies Art. 50(2) machine-readable marking requirement.",
+        },
+        {
+          heading: "Human review",
+          body:
+            "AI output is not human-reviewed before being served. If you use the summary in your UI or business decisions, verify claims against the underlying checks. To request human review of a specific scan, email info@opensverige.se.",
+        },
+        {
+          heading: "AI Act risk classification",
+          body:
+            "Our service is minimal/limited risk under Art. 50. No high-risk scenarios (recruitment, credit scoring, law enforcement). We are the deployer (article 3(4)); Anthropic is the provider (article 3(3)) — Anthropic handles technical marking, we handle informing you.",
+        },
+        {
+          heading: "Your rights",
+          body:
+            "You have the right to know that text is AI-generated (satisfied via the ai_disclosure field). For badge assessments of an individual's portfolio (potentially automated decision-making under GDPR Art. 22), you can request human review via info@opensverige.se.",
+        },
+        {
+          heading: "Training data",
+          body:
+            "We do not train any models on your scan data. Anthropic, per their terms (trust.anthropic.com): API data is not used for model training by default on the enterprise tier.",
+        },
+      ] as ReadonlyArray<{ heading: string; body: string }>,
+      backLink: "← Back to the privacy policy",
     },
 
     subprocessors: {
