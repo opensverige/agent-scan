@@ -134,25 +134,28 @@
 
 ### API key infrastructure
 
-- [ ] **DB-tabell `api_keys`** — `id`, `user_id`, `key_hash`, `key_prefix`, `tier`, `created_at`, `last_used_at`, `revoked_at`
-- [ ] **Stripe-stil keys** (`osv_test_*`, `osv_live_*`) — `lib/api-keys.ts`
-- [ ] **Endpoint `POST /api/keys`** — utfärdar ny key, returnerar bara en gång
-- [ ] **Endpoint `DELETE /api/keys/{id}`** — revoke
-- [ ] **Middleware:** validera `Authorization: Bearer osv_*` på `/api/v1/*` — `middleware.ts`
+- [x] **DB-tabell `api_keys`** — `id`, `key_hash`, `key_prefix`, `tier`, `name`, `email`, `created_at`, `last_used_at`, `revoked_at`, `scan_count`, `notes` — `supabase/migrations/007_api_keys.sql`
+- [x] **`scan_submissions.api_key_id`** FK för per-key-attribution + rate limiting
+- [x] **Stripe-stil keys** (`osv_test_*`, `osv_live_*`, 24-byte base64url secret) — `lib/api-keys.ts`
+- [x] **Issue-script** för alpha-keys — `scripts/issue-key.ts` (tsx + service role)
+- [x] **Auth helper** — `lib/api-auth.ts` (`authenticate()` validates Bearer token + bumps last_used_at)
+- [ ] ~~Public POST/DELETE /api/keys~~ — *deferred* till Stage 3 (user signup-flow). Alpha hanteras via script.
 
 ### Rate limiting
 
-- [ ] **Upstash-konto** — beroende: Beslut #4
-- [ ] **`lib/rate-limit.ts`** med Upstash REST API
-- [ ] **Tier-baserade gränser:** Hobby 1/30min, Builder 1/2min, Pro 1/30s
-- [ ] **`RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset` headers** på alla responses
+- [x] **DB-baserad rate limit** istället för Upstash — `lib/api-auth.ts` `enforceRateLimit()`. Räknar rader i `scan_submissions` per `api_key_id` per tidsfönster. Stays in EU (samma Postgres som datan).
+- [x] **Tier-quotas** per `lib/api-keys.ts` `TIER_QUOTAS`: hobby 1/min+15/mo, builder 1/min+300/mo, pro 2/min+2000/mo
+- [x] **`Retry-After` header** på 429 + `retry_after_seconds` i error body
+- [ ] **`RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset` (RFC 9331) headers** — kommer i Stage 5 P1-checks (G-10)
 
 ### Public API endpoints
 
-- [ ] **`POST /api/v1/scan`** → 202 + Location-header — `app/api/v1/scan/route.ts`
-- [ ] **`GET /api/v1/scan/{id}`** med ETag + polling-best-practice — `app/api/v1/scan/[id]/route.ts`
-- [ ] **`POST /api/v1/scan/bulk`** för Pro — `app/api/v1/scan/bulk/route.ts`
-- [ ] **`GET /api/v1/account/usage`** — quota tracking
+- [x] **`POST /api/v1/scan`** — synkron (returnerar 200 med full result, max 60s). Verifierat e2e med trustly.com → 4/11 yellow + Claude summary.
+- [x] **`GET /api/v1/scan/{id}`** med ETag + 304-stöd — verifierat e2e: ETag `"8a8f5bae21b9a23e"`, `If-None-Match` returnerar 304.
+- [x] **CORS preflight** (OPTIONS) — public APIs supports cross-origin
+- [ ] **`POST /api/v1/scan` async (202 + Location)** — *Stage 2B* när vi behöver det
+- [ ] **`POST /api/v1/scan/bulk`** för Pro — *Stage 3*
+- [ ] **`GET /api/v1/account/usage`** — *Stage 3*
 
 ### Idempotency + Webhooks
 
@@ -166,15 +169,15 @@
 
 ### OpenAPI spec
 
-- [ ] **`public/openapi.yaml`** — full spec för v1
-- [ ] **`/api-docs`-sida** med Scalar/Swagger UI — `app/api-docs/page.tsx`
-- [ ] **Spec valideras i CI** (om OSS) — Spectral lint
+- [x] **`public/openapi.yaml`** — OpenAPI 3.1, fullständiga schemas för ScanRequest, ScanResult, CheckResult, AIDisclosure, Error
+- [x] **`/api-docs`-sida** med Scalar UI (CDN-loaded, dark theme) — `app/api-docs/_components/ScalarReference.tsx`. Live i prod.
+- [ ] **Spec valideras i CI** med Spectral — *deferred* tills GitHub Actions landar
 
 ### Docs
 
-- [ ] **`docs/API.md`** — fullständig API-referens
-- [ ] **`docs/QUICKSTART.md`** — "scan din första domän på 5 minuter"
-- [ ] **Code samples i 4 språk** (curl, Node, Python, Go)
+- [x] **`docs/API.md`** — quickstart, alla endpoints, error-koder, EU AI Act-disclosure-mönster, versionspolicy
+- [ ] **`docs/QUICKSTART.md`** — *deferred*; quickstart finns redan i API.md + Scalar UI
+- [ ] **Code samples i 4 språk** (curl, Node, Python, Go) — Scalar UI auto-genererar curl/Node/PHP/Python/Ruby snippets från specet
 
 ### Alpha-bjudningar
 
