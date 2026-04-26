@@ -24,8 +24,8 @@
     "js-yaml": "^4.1.1",
     "lucide-react": "^0.460.0",
     "next": "15.5.15",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
     "tailwind-merge": "^2.5.4"
   },
   "overrides": {
@@ -39,7 +39,7 @@
     "autoprefixer": "^10.4.20",
     "eslint": "^10.2.1",
     "eslint-config-next": "15.5.10",
-    "postcss": "^8.5.11",
+    "postcss": "^8.5.12",
     "tailwindcss": "^3.4.15",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.6.3"
