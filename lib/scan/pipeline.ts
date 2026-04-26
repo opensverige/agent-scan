@@ -59,7 +59,11 @@ export interface ScanPipelineResult {
 }
 
 /** Run the full scan pipeline for a validated domain. */
-export async function runScanPipeline(domain: string, ipHash: string): Promise<ScanPipelineResult> {
+export async function runScanPipeline(
+  domain: string,
+  ipHash: string,
+  options: { apiKeyId?: string | null } = {},
+): Promise<ScanPipelineResult> {
   const firecrawlKey = process.env.FIRECRAWL_API_KEY;
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   const companyName = domain.split(".")[0] ?? domain;
@@ -232,6 +236,7 @@ export async function runScanPipeline(domain: string, ipHash: string): Promise<S
     domain, checks, badge, score, total,
     summary: finalAnalysis.summary,
     recommendations, ipHash,
+    apiKeyId: options.apiKeyId,
   }).catch(() => null);
 
   // Local fallback so dev/preview environments without Supabase can still

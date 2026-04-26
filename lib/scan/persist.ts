@@ -18,6 +18,8 @@ export interface PersistArgs {
   summary: string;
   recommendations: string[];
   ipHash: string;
+  /** Set when scan came via /v1/* API (Stage 2A). Null for web-UI scans. */
+  apiKeyId?: string | null;
 }
 
 export async function saveToSupabase(args: PersistArgs): Promise<string | null> {
@@ -25,7 +27,7 @@ export async function saveToSupabase(args: PersistArgs): Promise<string | null> 
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return null;
 
-  const { domain, checks, badge, score, total, summary, recommendations, ipHash } = args;
+  const { domain, checks, badge, score, total, summary, recommendations, ipHash, apiKeyId } = args;
 
   const discovery = [checks.robots_ok, checks.sitemap_exists, checks.llms_txt];
   const compliance = [checks.privacy_automation, checks.cookie_bot_handling, checks.ai_content_marking];
@@ -48,6 +50,7 @@ export async function saveToSupabase(args: PersistArgs): Promise<string | null> 
     has_llms_txt: checks.llms_txt.pass, has_api: checks.api_exists.pass,
     has_openapi_spec: checks.openapi_spec.pass, has_api_docs: checks.api_docs.pass,
     checks_json: checks, claude_summary: summary, recommendations, ip_hash: ipHash,
+    ...(apiKeyId ? { api_key_id: apiKeyId } : {}),
   };
 
   // Backward-compatible payload for older scan_submissions schemas.

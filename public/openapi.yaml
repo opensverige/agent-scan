@@ -1,0 +1,258 @@
+openapi: 3.1.0
+info:
+  title: agent.opensverige API
+  version: 1.0.0-alpha
+  summary: AI-agent-readiness scanner for Swedish-focused websites.
+  description: |
+    Public REST API for the agent.opensverige.se scanner. Submit a domain,
+    get back a structured analysis of how AI-ready the site is — robots.txt,
+    llms.txt, OpenAPI presence, MCP discoverability, EU AI Act + GDPR
+    compliance signals, and more.
+
+    Per [EU AI Act Art. 50](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32024R1689)
+    (effective 2 Aug 2026), every response includes an `ai_disclosure`
+    object listing which fields were AI-generated and which model produced
+    them. Downstream consumers can rely on this being present.
+
+    Methodology: see
+    [SCANNER-METHODOLOGY.md](https://github.com/opensverige/agent-scan/blob/main/docs/SCANNER-METHODOLOGY.md).
+
+    This is the v1.0.0-alpha — invite-only. Stage 2B will add async
+    submission + webhook delivery; the sync request/response shape stays
+    stable across the upgrade.
+  contact:
+    name: OpenSverige
+    email: info@opensverige.se
+    url: https://agent.opensverige.se
+  license:
+    name: FSL-1.1-MIT
+    url: https://github.com/opensverige/agent-scan/blob/main/LICENSE
+
+servers:
+  - url: https://agent.opensverige.se/api/v1
+    description: Production
+
+security:
+  - apiKeyAuth: []
+
+paths:
+  /scan:
+    post:
+      operationId: createScan
+      summary: Run a new scan
+      description: |
+        Submit a domain. The endpoint runs the full 17-check scan
+        synchronously — typically completes in 10-30 seconds. Wait up to
+        60 s before timing out.
+
+        Rate limits per tier:
+          - hobby: 1 scan/min, 15/month
+          - builder: 1 scan/min, 300/month
+          - pro: 2 scans/min, 2 000/month
+
+        On rate-limit hit, returns 429 with `retry_after_seconds`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScanRequest'
+            examples:
+              swedish_company:
+                summary: Standard Swedish domain
+                value: { domain: "klarna.com" }
+      responses:
+        "200":
+          description: Scan complete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanResult'
+        "400":
+          $ref: '#/components/responses/InvalidRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+  /scan/{id}:
+    get:
+      operationId: getScan
+      summary: Look up a previous scan by ID
+      description: |
+        Returns the scan with the given UUID. Any valid API key can read
+        any scan_id — scans are public-by-URL by design.
+
+        Supports `If-None-Match` for ETag-based polling. Returns 304 if
+        unchanged.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Scan found
+          headers:
+            ETag:
+              schema: { type: string }
+              description: Hash of {scan_id, scanned_at}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanResult'
+        "304":
+          description: Not modified — use cached response
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          description: No scan with this ID
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: 'osv_(test|live)_*'
+      description: |
+        Issue keys via OpenSverige Discord (alpha invite-only). Format:
+        `osv_test_<24chars>` for test keys, `osv_live_<24chars>` for
+        production. Never expose keys client-side.
+
+  schemas:
+    ScanRequest:
+      type: object
+      required: [domain]
+      properties:
+        domain:
+          type: string
+          example: example.com
+          description: |
+            The bare domain to scan (no protocol, no path). Strips
+            `https://` and trailing paths automatically. Must be a public
+            TLD — internal domains (`.local`, `.internal`) rejected.
+
+    CheckResult:
+      type: object
+      required: [id, pass, label, category, severity]
+      properties:
+        id:
+          type: string
+          example: robots_ok
+        pass:
+          type: boolean
+        label:
+          type: string
+          example: "Sajten tillåter AI-agenter (robots.txt)"
+        detail:
+          type: string
+        category:
+          type: string
+          enum: [discovery, compliance, builder]
+        severity:
+          type: string
+          enum: [critical, important, info]
+        na:
+          type: boolean
+          description: True if the check doesn't apply to this site (e.g. sandbox without an API)
+        recommendation:
+          type: boolean
+          description: True if the check is a soft recommendation, not a scored blocker
+
+    AIDisclosure:
+      type: object
+      required: [ai_generated]
+      description: |
+        EU AI Act Art. 50 disclosure. Identifies which response fields
+        were generated by an LLM.
+      properties:
+        ai_generated:
+          type: boolean
+        model:
+          type: string
+          example: anthropic/claude-sonnet-4-5
+        fields:
+          type: array
+          items: { type: string }
+          example: [summary, industry, agent_suggestions]
+
+    ScanResult:
+      type: object
+      required: [scan_id, badge, score, checks_total, checks, scanned_at, ai_disclosure]
+      properties:
+        scan_id:
+          type: string
+          format: uuid
+        company:
+          type: string
+        industry:
+          type: string
+        summary:
+          type: string
+          description: AI-generated summary. Disclosed via `ai_disclosure`.
+        badge:
+          type: string
+          enum: [green, yellow, red]
+        score:
+          type: integer
+        checks_total:
+          type: integer
+        checks:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/CheckResult'
+        recommendations:
+          type: array
+          items: { type: string }
+        severity_counts:
+          type: object
+          properties:
+            critical: { type: integer }
+            important: { type: integer }
+            info: { type: integer }
+        scanned_at:
+          type: string
+          format: date-time
+        ai_disclosure:
+          $ref: '#/components/schemas/AIDisclosure'
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              example: invalid_domain
+            message:
+              type: string
+              example: "'example' is not a valid public domain."
+            retry_after_seconds:
+              type: integer
+
+  responses:
+    InvalidRequest:
+      description: Malformed request
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Unauthorized:
+      description: Missing or invalid API key
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    RateLimited:
+      description: Quota exceeded
+      headers:
+        Retry-After:
+          schema: { type: integer }
+          description: Seconds to wait before retrying
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    ServerError:
+      description: Internal error
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }

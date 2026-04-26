@@ -1,35 +1,30 @@
 // app/api-docs/page.tsx
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+//
+// API reference UI for the public scanner API. Renders /openapi.yaml via
+// Scalar — modern dark-mode-friendly OpenAPI viewer.
+//
+// We use a tiny client component (ScalarReference) to load Scalar from
+// their CDN. Keeping it client-side avoids bundling the (large) Scalar
+// React lib while still giving us a fully-functional reference UI.
 
-export const metadata = {
-  title: "API — Kommer snart | agent.opensverige",
-  description: "Programmatisk åtkomst till AI Readiness Scanner. Scanna domäner, hämta scores, jämför system.",
+import type { Metadata } from "next";
+import Nav from "../scan/_components/Nav";
+import Footer from "../scan/_components/Footer";
+import ScalarReference from "./_components/ScalarReference";
+
+export const metadata: Metadata = {
+  title: "API reference — agent.opensverige",
+  description:
+    "OpenAPI 3.1 reference for the agent.opensverige scanner API. Endpoints, auth, error codes.",
+  robots: { index: true, follow: true },
 };
 
 export default function ApiDocsPage() {
   return (
-    <div className="max-w-2xl mx-auto py-16 px-4 text-center">
-      <Badge className="mb-4">Kommer snart</Badge>
-      <h1 className="text-2xl font-bold mb-2">agent.opensverige API</h1>
-      <p className="text-muted-foreground mb-6">
-        Programmatisk åtkomst till AI Readiness Scanner. Scanna domäner,
-        hämta scores, jämför system.
-      </p>
-      <Card className="text-left bg-muted/30">
-        <CardContent className="py-4 font-mono text-sm space-y-1">
-          <p className="text-muted-foreground"># Kommer snart</p>
-          <p>GET /api/v1/scan?domain=fortnox.se</p>
-          <p>GET /api/v1/score/fortnox.se</p>
-          <p>GET /api/v1/compare?a=fortnox.se&amp;b=visma.net</p>
-        </CardContent>
-      </Card>
-      <Button className="mt-6" asChild>
-        <a href="https://discord.gg/CSphbTk8En" target="_blank" rel="noopener noreferrer">
-          Ge input i Discord →
-        </a>
-      </Button>
-    </div>
+    <>
+      <Nav />
+      <ScalarReference />
+      <Footer />
+    </>
   );
 }
