@@ -4,7 +4,7 @@
 
 **Do not** open a public GitHub issue.
 
-Email `security@opensverige.se` with:
+Email `gustaf.garnow@gmail.com` with:
 
 - a description of the vulnerability
 - steps to reproduce

@@ -88,7 +88,7 @@ For commercial licensing (waive the non-compete): see [COMMERCIAL.md](COMMERCIAL
 
 ## Security
 
-Email `security@opensverige.se`. Don't open public issues. See [SECURITY.md](SECURITY.md).
+Email `gustaf.garnow@gmail.com`. Don't open public issues. See [SECURITY.md](SECURITY.md).
 
 ## Privacy
 
