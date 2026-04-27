@@ -178,7 +178,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
             <div className={`rounded-lg border px-4 py-2.5 flex items-center justify-between gap-3 ${isStale ? "border-warning/40 bg-warning/5" : "border-border/40"}`}>
               <p className="text-xs text-muted-foreground">
                 {isStale ? <span className="text-warning font-medium">{t.results.staleWarning} </span> : null}
-                {t.results.scannedAt} {dateStr ?? "—"}
+                {t.results.scannedAt} {dateStr ?? "·"}
                 {daysOld !== null && daysOld > 0 ? ` ${t.results.daysAgo(daysOld)}` : daysOld === 0 ? ` ${t.results.today}` : null}
               </p>
               <div className="flex items-center gap-3 shrink-0">
@@ -477,7 +477,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                       <Separator />
                       <div className="px-6 py-5">
                         <h3 className="font-mono text-[10px] font-bold tracking-widest text-muted-foreground mb-1">
-                          DIN PLAN — API
+                          DIN PLAN · API
                         </h3>
                         <p className="text-sm text-muted-foreground mb-4">Så blir ditt API agent-redo.</p>
                         <div className="space-y-3">
@@ -582,7 +582,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                   <AccordionContent className="px-4 pb-4">
                     <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
                       {SEVERITY_CONTEXT.critical.text}{" "}
-                      <span className="opacity-60">— {SEVERITY_CONTEXT.critical.source}</span>
+                      <span className="opacity-60">· {SEVERITY_CONTEXT.critical.source}</span>
                     </p>
                     <div className="space-y-1">
                       {failedCritical.map(check => {
@@ -593,7 +593,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                             {check.detail && <p className="text-xs text-muted-foreground">{check.detail}</p>}
                             <div className={CONTEXT_STAT_BOX}>
                               <p className={CONTEXT_STAT_PRIMARY}>{ctx.stat}</p>
-                              <p className={CONTEXT_STAT_SECONDARY}>— {ctx.source}</p>
+                              <p className={CONTEXT_STAT_SECONDARY}>· {ctx.source}</p>
                             </div>
                             <div className="flex items-start gap-1.5">
                               <span className="text-primary font-bold text-xs shrink-0">→</span>
@@ -619,7 +619,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                   <AccordionContent className="px-4 pb-4">
                     <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
                       {SEVERITY_CONTEXT.important.text}{" "}
-                      <span className="opacity-60">— {SEVERITY_CONTEXT.important.source}</span>
+                      <span className="opacity-60">· {SEVERITY_CONTEXT.important.source}</span>
                     </p>
                     <div className="space-y-1">
                       {failedImportant.map(check => {
@@ -630,7 +630,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                             {check.detail && <p className="text-xs text-muted-foreground">{check.detail}</p>}
                             <div className={CONTEXT_STAT_BOX}>
                               <p className={CONTEXT_STAT_PRIMARY}>{ctx.stat}</p>
-                              <p className={CONTEXT_STAT_SECONDARY}>— {ctx.source}</p>
+                              <p className={CONTEXT_STAT_SECONDARY}>· {ctx.source}</p>
                             </div>
                             <div className="flex items-start gap-1.5">
                               <span className="text-primary font-bold text-xs shrink-0">→</span>

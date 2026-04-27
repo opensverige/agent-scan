@@ -31,7 +31,7 @@ export function FindingRow({ check, index }: { check: CheckResult; index: number
           {check.detail && <p className="text-sm text-muted-foreground">{check.detail}</p>}
           <div className={CONTEXT_STAT_BOX}>
             <p className={CONTEXT_STAT_PRIMARY}>{ctx.stat}</p>
-            <p className={CONTEXT_STAT_SECONDARY}>— {ctx.source}</p>
+            <p className={CONTEXT_STAT_SECONDARY}>· {ctx.source}</p>
           </div>
           <div className="flex items-start gap-1.5">
             <span className="text-primary font-bold text-xs shrink-0 mt-0.5">→</span>

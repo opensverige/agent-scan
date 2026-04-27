@@ -99,7 +99,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const ogImageUrl = "https://agent.opensverige.se/assets/og-default.png";
 
   return {
-    title: `${result.row.domain} — ${badgeLabel} (${data.score}/${total}) | agent.opensverige`,
+    title: `${result.row.domain} · ${badgeLabel} (${data.score}/${total}) | agent.opensverige`,
     description,
     openGraph: {
       title: `${result.row.domain} fick ${data.score}/${total} i AI-readiness`,
@@ -113,7 +113,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     },
     twitter: {
       card: "summary_large_image",
-      title: `${result.row.domain} — ${data.score}/${total} AI Readiness`,
+      title: `${result.row.domain} · ${data.score}/${total} AI Readiness`,
       description,
       images: [ogImageUrl],
     },

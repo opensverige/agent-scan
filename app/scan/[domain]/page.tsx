@@ -139,7 +139,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!data) {
     return {
-      title: `${domain} — Scanna din sajt | OpenSverige`,
+      title: `${domain} · Scanna din sajt | OpenSverige`,
       description: "Scanna din sajt och se hur redo du är för AI-agenter.",
     };
   }
@@ -152,7 +152,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const ogImageUrl = "https://agent.opensverige.se/assets/og-default.png";
 
   return {
-    title: `${domain} — ${badgeLabel} (${data.score}/${total}) | agent.opensverige`,
+    title: `${domain} · ${badgeLabel} (${data.score}/${total}) | agent.opensverige`,
     description,
     openGraph: {
       title: `${domain} fick ${data.score}/${total} i AI-readiness`,
@@ -168,7 +168,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     },
     twitter: {
       card: "summary_large_image",
-      title: `${domain} — ${data.score}/${total} AI Readiness`,
+      title: `${domain} · ${data.score}/${total} AI Readiness`,
       description,
       images: [ogImageUrl],
     },

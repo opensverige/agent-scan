@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   description: "Gratis AI-readiness scanner. 11 checks. Öppet.",
   openGraph: {
     title: "Hur agent-redo är din sajt?",
-    description: "Gratis AI-readiness scanner — 11 checks. Öppet.",
+    description: "Gratis AI-readiness scanner. 11 checks, öppet.",
     url: "https://agent.opensverige.se",
     siteName: "agent.opensverige",
     type: "website",
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Hur agent-redo är din sajt?",
-    description: "Gratis AI-readiness scanner — agent.opensverige.se",
+    description: "Gratis AI-readiness scanner. agent.opensverige.se",
     images: ["https://agent.opensverige.se/assets/og-default.png"],
   },
 };

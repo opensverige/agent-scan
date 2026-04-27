@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 export const metadata = {
-  title: "MCP-server — Kommer snart | agent.opensverige",
+  title: "MCP-server · Kommer snart | agent.opensverige",
   description: "Koppla AI Readiness Scanner direkt till Claude, Cursor eller Windsurf via Model Context Protocol.",
 };
 

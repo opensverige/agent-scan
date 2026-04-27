@@ -5,7 +5,7 @@ export type CheckId =
   | 'privacy_automation' | 'cookie_bot_handling' | 'ai_content_marking'
   | 'api_exists' | 'openapi_spec' | 'api_docs'
   | 'mcp_server' | 'sandbox_available'
-  // Stage 1 — P0 checks per docs/strategy/research/02-agent-readiness-scoring-2026.md § 2.6
+  // Stage 1, P0 checks per docs/strategy/research/02-agent-readiness-scoring-2026.md § 2.6
   | 'llms_full_txt' | 'markdown_negotiation' | 'ssr_content'
   | 'crawler_access' | 'mcp_well_known' | 'mcp_server_card';
 
@@ -40,7 +40,7 @@ export interface AllChecks {
   api_docs: CheckResult;
   mcp_server: CheckResult;
   sandbox_available: CheckResult;
-  // Stage 1 — P0 checks
+  // Stage 1, P0 checks
   llms_full_txt: CheckResult;
   markdown_negotiation: CheckResult;
   ssr_content: CheckResult;
@@ -144,7 +144,7 @@ export function complianceChecks(evidence?: ComplianceEvidence): [CheckResult, C
   const cookieHay = normalizedText(evidence?.cookieText);
   const aiHay = normalizedText(evidence?.aiText);
 
-  // N/A when we couldn't find any policy pages at all — no evidence means we can't score.
+  // N/A when we couldn't find any policy pages at all, no evidence means we can't score.
   // This avoids penalising sites that simply don't have crawlable policy pages.
   const noPrivacyEvidence = privacyHay.trim().length === 0;
   const noCookieEvidence = cookieHay.trim().length === 0;
@@ -176,7 +176,7 @@ export function complianceChecks(evidence?: ComplianceEvidence): [CheckResult, C
         : hasPrivacyAutomationInfo
           ? 'Hittade signaler kopplade till GDPR Art. 22 i publikt material'
           : mentionsAiTools
-            ? 'Policy refererar AI-verktyg (Claude / ChatGPT / Perplexity etc.) men saknar formell Art. 22-vokabulär ("automatiserat beslutsfattande", "profilering"). Halvvägs framme — komplettera med GDPR-explicit text om automatiserade beslut och rätt till mänsklig granskning.'
+            ? 'Policy refererar AI-verktyg (Claude / ChatGPT / Perplexity etc.) men saknar formell Art. 22-vokabulär ("automatiserat beslutsfattande", "profilering"). Halvvägs framme, komplettera med GDPR-explicit text om automatiserade beslut och rätt till mänsklig granskning.'
             : 'Ingen tydlig Art. 22/profilering-signal hittad i publikt material',
       category: 'compliance',
       severity: 'critical',
@@ -374,11 +374,11 @@ export function checkSandboxAvailable(probes: ProbeResult[]): CheckResult {
   };
 }
 
-// ── Stage 1 — P0 checks (G-01..G-06) ─────────────────────────────────────────
+// ── Stage 1, P0 checks (G-01..G-06) ─────────────────────────────────────────
 // Per docs/strategy/research/02-agent-readiness-scoring-2026.md § 2.6.
 // These bring us to feature parity with Cloudflare's isitagentready.com.
 
-/** G-01: /llms-full.txt — single-URL full Markdown context for agents. */
+/** G-01: /llms-full.txt, single-URL full Markdown context for agents. */
 export function checkLlmsFullTxt(probe: { status: number; body: string; contentType: string | null } | null): CheckResult {
   const contentType = probe?.contentType?.toLowerCase() ?? "";
   const isHtml = contentType.includes("text/html") ||
@@ -392,9 +392,9 @@ export function checkLlmsFullTxt(probe: { status: number; body: string; contentT
     id: 'llms_full_txt',
     pass: !!valid,
     label: valid
-      ? 'llms-full.txt finns — agenter får komplett kontext'
-      : 'Ingen llms-full.txt — agenter saknar djupkontext',
-    detail: valid ? undefined : 'llms-full.txt är komplementet till llms.txt — komplett Markdown-konkatenering av sajten i en URL. Anthropic, Cloudflare och Stripe har alla redan implementerat detta.',
+      ? 'llms-full.txt finns, agenter får komplett kontext'
+      : 'Ingen llms-full.txt, agenter saknar djupkontext',
+    detail: valid ? undefined : 'llms-full.txt är komplementet till llms.txt, komplett Markdown-konkatenering av sajten i en URL. Anthropic, Cloudflare och Stripe har alla redan implementerat detta.',
     category: 'discovery',
     severity: 'important',
   };
@@ -416,7 +416,7 @@ export function checkMarkdownNegotiation(probe: { status: number; body: string; 
     pass: !!valid,
     label: valid
       ? 'Markdown content negotiation aktiv'
-      : 'Ingen Markdown content negotiation — agenter får full HTML',
+      : 'Ingen Markdown content negotiation, agenter får full HTML',
     detail: valid ? undefined : 'Servera text/markdown när klienten skickar Accept: text/markdown. Reducerar context-konsumtion ~80% för Claude Code, Cursor, OpenCode.',
     category: 'discovery',
     severity: 'important',
@@ -426,7 +426,7 @@ export function checkMarkdownNegotiation(probe: { status: number; body: string; 
 /**
  * G-03: Server-side rendering. Critical content must appear in raw HTML
  * without JavaScript execution. GPTBot, ClaudeBot, PerplexityBot do NOT
- * run JS — a SPA that renders client-side is invisible to AI crawlers.
+ * run JS, a SPA that renders client-side is invisible to AI crawlers.
  *
  * Detection strategy: strip scripts/styles/tags from the response body
  * and measure how much actual user-visible text remains. A real
@@ -458,7 +458,7 @@ export function checkSsrContent(probe: { status: number; body: string; contentTy
     return {
       id: 'ssr_content',
       pass: false,
-      label: 'SSR-check ej körd — kunde inte hämta sidan',
+      label: 'SSR-check ej körd, kunde inte hämta sidan',
       category: 'discovery',
       severity: 'critical',
     };
@@ -474,7 +474,7 @@ export function checkSsrContent(probe: { status: number; body: string; contentTy
     return {
       id: 'ssr_content',
       pass: true,
-      label: `Innehåll renderas server-side — agenter ser ${textLength.toLocaleString('sv-SE')} tecken`,
+      label: `Innehåll renderas server-side, agenter ser ${textLength.toLocaleString('sv-SE')} tecken`,
       category: 'discovery',
       severity: 'critical',
     };
@@ -482,11 +482,11 @@ export function checkSsrContent(probe: { status: number; body: string; contentTy
   // Differentiate the failure mode: missing title vs SPA shell
   const reason = !hasTitle
     ? 'Saknar <title>-element i HTML.'
-    : `Bara ${textLength} tecken text i HTML — sannolikt en SPA-shell som renderar med JavaScript.`;
+    : `Bara ${textLength} tecken text i HTML, sannolikt en SPA-shell som renderar med JavaScript.`;
   return {
     id: 'ssr_content',
     pass: false,
-    label: 'JS-render krävs — AI-crawlers ser tom sida',
+    label: 'JS-render krävs, AI-crawlers ser tom sida',
     detail: `${reason} GPTBot/ClaudeBot/PerplexityBot kör inte JavaScript.`,
     category: 'discovery',
     severity: 'critical',
@@ -495,7 +495,7 @@ export function checkSsrContent(probe: { status: number; body: string; contentTy
 
 /**
  * G-04: Actual AI-crawler access. robots.txt allow-rules are necessary
- * but not sufficient — WAFs (Cloudflare/Akamai/Fastly) often block AI
+ * but not sufficient, WAFs (Cloudflare/Akamai/Fastly) often block AI
  * User-Agents at the edge regardless of robots.txt. We probe with the
  * actual User-Agent strings to verify reality matches policy.
  */
@@ -520,10 +520,10 @@ export function checkCrawlerAccess(probes: CrawlerAccessProbes): CheckResult {
     id: 'crawler_access',
     pass: allOk,
     label: allOk
-      ? 'AI-crawlers kommer in — robots.txt + WAF samarbetar'
+      ? 'AI-crawlers kommer in, robots.txt + WAF samarbetar'
       : someOk
         ? `WAF blockerar några crawlers: ${blocked.join(', ')}`
-        : 'WAF blockerar alla AI-crawlers — robots.txt-regler ignoreras',
+        : 'WAF blockerar alla AI-crawlers, robots.txt-regler ignoreras',
     detail: allOk
       ? undefined
       : 'Vanligaste produktionsfelet 2026: robots.txt säger Allow men Cloudflare/Akamai-regel blockerar User-Agent. Verifiera WAF-konfigen.',
@@ -542,7 +542,7 @@ export function checkMcpWellKnown(probe: { status: number; body: string; content
     return {
       id: 'mcp_well_known',
       pass: false,
-      label: 'Ingen /.well-known/mcp — MCP-klienter kan inte auto-konfigurera',
+      label: 'Ingen /.well-known/mcp, MCP-klienter kan inte auto-konfigurera',
       detail: 'SEP-1960 discovery manifest. Cloudflare implementerade detta i sin egen scanner april 2026.',
       category: 'builder',
       severity: 'info',
@@ -567,7 +567,7 @@ export function checkMcpWellKnown(probe: { status: number; body: string; content
     id: 'mcp_well_known',
     pass: valid,
     label: valid
-      ? '/.well-known/mcp publicerad — MCP-klienter kan auto-konfigurera'
+      ? '/.well-known/mcp publicerad, MCP-klienter kan auto-konfigurera'
       : '/.well-known/mcp finns men saknar mcp_version / endpoints',
     category: 'builder',
     severity: 'info',
@@ -584,7 +584,7 @@ export function checkMcpServerCard(probe: { status: number; body: string; conten
     return {
       id: 'mcp_server_card',
       pass: false,
-      label: 'Inget MCP server-card — capabilities ej discoverable',
+      label: 'Inget MCP server-card, capabilities ej discoverable',
       detail: 'SEP-1649 server-card.json beskriver kapabiliteter + transport för agenter som vill förstå servern innan de ansluter.',
       category: 'builder',
       severity: 'info',
@@ -611,7 +611,7 @@ export function checkMcpServerCard(probe: { status: number; body: string; conten
     id: 'mcp_server_card',
     pass: valid,
     label: valid
-      ? 'MCP server-card publicerad — agenter ser kapabiliteter'
+      ? 'MCP server-card publicerad, agenter ser kapabiliteter'
       : 'server-card.json saknar serverInfo.name eller transport.type',
     category: 'builder',
     severity: 'info',
@@ -635,7 +635,7 @@ export function calculateBadge(checks: AllChecks): { badge: ScanBadge; score: nu
 // â”€â”€ Severity counts (failing checks only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function computeSeverityCounts(checks: AllChecks): { critical: number; important: number; info: number } {
-  // N/A and recommendation-only checks are excluded — not actionable failures.
+  // N/A and recommendation-only checks are excluded, not actionable failures.
   const failing = Object.values(checks).filter(c => !c.pass && !c.na && !c.recommendation);
   return {
     critical: failing.filter(c => c.severity === 'critical').length,
@@ -648,13 +648,13 @@ export function computeSeverityCounts(checks: AllChecks): { critical: number; im
 
 const RECOMMENDATION_MAP: Record<CheckId, string> = {
   llms_txt: 'Lägg till /llms.txt som beskriver ditt API och dina tjänster för AI-agenter.',
-  llms_full_txt: 'Lägg till /llms-full.txt — komplett Markdown-konkatenering av sajten i en URL. Anthropic, Cloudflare och Stripe har redan implementerat det.',
+  llms_full_txt: 'Lägg till /llms-full.txt, komplett Markdown-konkatenering av sajten i en URL. Anthropic, Cloudflare och Stripe har redan implementerat det.',
   markdown_negotiation: 'Servera text/markdown när Accept: text/markdown skickas. Reducerar AI-context ~80%.',
-  ssr_content: 'Rendera kritiskt innehåll server-side. AI-crawlers kör inte JavaScript — utan SSR är sajten osynlig.',
-  crawler_access: 'Verifiera WAF-config — robots.txt säger Allow men Cloudflare/Akamai-regel kan blockera User-Agent. Vanligaste produktionsfelet 2026.',
+  ssr_content: 'Rendera kritiskt innehåll server-side. AI-crawlers kör inte JavaScript, utan SSR är sajten osynlig.',
+  crawler_access: 'Verifiera WAF-config, robots.txt säger Allow men Cloudflare/Akamai-regel kan blockera User-Agent. Vanligaste produktionsfelet 2026.',
   privacy_automation: 'Uppdatera integritetspolicyn med info om automatiserad behandling (GDPR Art. 22).',
   mcp_server:
-    'Vi hittade ingen MCP-koppling — agenter når er inte direkt utan manuell integration. Vill ni bolla nästa steg? Boka möte 15 min om ni vill.',
+    'Vi hittade ingen MCP-koppling, agenter når er inte direkt utan manuell integration. Vill ni bolla nästa steg? Boka möte 15 min om ni vill.',
   mcp_well_known: 'Publicera /.well-known/mcp (SEP-1960) så MCP-klienter (Claude, ChatGPT, Cursor) kan auto-konfigurera.',
   mcp_server_card: 'Publicera /.well-known/mcp/server-card.json (SEP-1649) så agenter kan se kapabiliteter innan de ansluter.',
   openapi_spec: 'Publicera en OpenAPI-spec så agenter och builders kan mappa ditt API automatiskt.',
@@ -668,7 +668,7 @@ const RECOMMENDATION_MAP: Record<CheckId, string> = {
 };
 
 const RECOMMENDATION_PRIORITY: CheckId[] = [
-  // Critical first — content invisibility blockers
+  // Critical first, content invisibility blockers
   'ssr_content', 'crawler_access',
   // Then context-quality (Markdown nego + llms.txt + spec)
   'markdown_negotiation', 'llms_txt', 'llms_full_txt', 'openapi_spec',
@@ -690,12 +690,12 @@ export function getTopRecommendations(checks: AllChecks, count = 3): string[] {
 
 // Fixed display order for Zeigarnik checklist
 export const CHECK_DISPLAY_ORDER: CheckId[] = [
-  // Discovery — can agents find + read the site?
+  // Discovery, can agents find + read the site?
   'robots_ok', 'crawler_access', 'sitemap_exists', 'llms_txt', 'llms_full_txt',
   'markdown_negotiation', 'ssr_content',
-  // Compliance — does it meet EU regulatory requirements?
+  // Compliance, does it meet EU regulatory requirements?
   'privacy_automation', 'cookie_bot_handling', 'ai_content_marking',
-  // Builder — can devs/agents build against it?
+  // Builder, can devs/agents build against it?
   'api_exists', 'openapi_spec', 'api_docs',
   'mcp_server', 'mcp_well_known', 'mcp_server_card',
   'sandbox_available',

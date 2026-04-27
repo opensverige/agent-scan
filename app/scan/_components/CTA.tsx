@@ -11,7 +11,7 @@ export default function CTA() {
   function handleShare() {
     const url = "https://agent.opensverige.se/scan";
     const text =
-      "Sveriges första öppna AI-readiness scanner för företag — agent.opensverige.se";
+      "Sveriges första öppna AI-readiness scanner för företag. agent.opensverige.se";
     if (navigator.share) {
       navigator.share({ title: "agent.opensverige", text, url }).catch(() => {});
     } else if (navigator.clipboard) {
