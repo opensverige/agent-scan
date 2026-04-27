@@ -146,6 +146,11 @@ export const I18N = {
       sendToTeam: "Skicka till ditt team",
       copied: "Kopierat!",
       scanAnother: "← Scanna en annan sajt",
+      shareSection: "Dela resultatet",
+      shareCopyDmText: "Kopiera DM-text",
+      shareLinkedin: "Dela på LinkedIn",
+      shareX: "Dela på X",
+      stickyShare: "Dela",
       shareApiText: (domain: string, score: number, blockers: number, url: string) =>
         `${score < 30 ? "🔴" : score < 70 ? "🟡" : "🟢"} ${domain} fick ${score}/100 i API agent-readiness.\n\n${blockers} blockerare hittade.\n\nHur redo är ditt API? → ${url}`,
       shareSiteText: (domain: string, score: number, total: number, critical: number, important: number, passed: number, url: string) =>
@@ -599,6 +604,11 @@ export const I18N = {
       sendToTeam: "Send to your team",
       copied: "Copied!",
       scanAnother: "← Scan another site",
+      shareSection: "Share the result",
+      shareCopyDmText: "Copy DM text",
+      shareLinkedin: "Share on LinkedIn",
+      shareX: "Share on X",
+      stickyShare: "Share",
       shareApiText: (domain: string, score: number, blockers: number, url: string) =>
         `${score < 30 ? "🔴" : score < 70 ? "🟡" : "🟢"} ${domain} scored ${score}/100 in API agent-readiness.\n\n${blockers} blockers found.\n\nHow ready is your API? → ${url}`,
       shareSiteText: (domain: string, score: number, total: number, critical: number, important: number, passed: number, url: string) =>

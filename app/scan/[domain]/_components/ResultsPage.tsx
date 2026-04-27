@@ -31,6 +31,7 @@ import { SeverityIcon } from "./SeverityIcon";
 import { FindingRow } from "./FindingRow";
 import { PlanCard } from "./PlanCard";
 import { BuilderAvatarStack } from "./BuilderAvatarStack";
+import { ShareBlock, StickyShareButton } from "./ShareBlock";
 import { getBookingCTA, getStepPriority } from "./booking-cta";
 
 function getDefaultTab(_data: ScanResult | null): "sajt" | "api" {
@@ -43,8 +44,6 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
   const { t } = useLang();
   const [result, setResult] = useState<ScanResult | null>(initialData);
   const [notFound, setNotFound] = useState(false);
-  const [shared, setShared] = useState(false);
-  const [teamShared, setTeamShared] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"sajt" | "api">(() => getDefaultTab(initialData));
 
@@ -132,38 +131,9 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
 
   const cta = getBookingCTA(activeTab, r.score, apiScore, domain, t.results);
 
-  function handleTeamShare() {
-    const url = `https://agent.opensverige.se/scan/${domain}`;
-    const text = t.results.teamShareText(domain, r.score, r.checks_total ?? 11, url);
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(() => setTeamShared(true)).catch(() => {});
-    } else {
-      const ta = document.createElement("textarea");
-      ta.value = text; ta.style.cssText = "position:fixed;opacity:0;pointer-events:none";
-      document.body.appendChild(ta); ta.focus(); ta.select();
-      try { document.execCommand("copy"); setTeamShared(true); } catch {}
-      document.body.removeChild(ta);
-    }
-    setTimeout(() => setTeamShared(false), 2500);
-  }
-
-  function handleShare() {
-    const url = `https://agent.opensverige.se/scan/${domain}`;
-    const text = activeTab === "api" && apiScore
-      ? t.results.shareApiText(domain, apiScore.totalScore, apiScore.topBlockers.length, url)
-      : t.results.shareSiteText(domain, r.score, r.checks_total ?? 11, sc.critical, sc.important, passedChecks.length, url);
-    if (navigator.share) {
-      navigator.share({ title: `${domain} — AI-readiness`, text, url }).catch(() => {});
-    } else if (navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(() => setShared(true)).catch(() => {});
-    } else {
-      const ta = document.createElement("textarea");
-      ta.value = text; ta.style.cssText = "position:fixed;opacity:0;pointer-events:none";
-      document.body.appendChild(ta); ta.focus(); ta.select();
-      try { document.execCommand("copy"); setShared(true); } catch {}
-      document.body.removeChild(ta);
-    }
-  }
+  // Legacy share handlers and state (handleShare, handleTeamShare, shared,
+  // teamShared) were removed when ShareBlock + StickyShareButton became the
+  // canonical share surface. ShareBlock owns its own copy state.
 
   return (
     <div className="pb-20">
@@ -276,6 +246,22 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                     label={t.results.aiSummaryLabel}
                     showMore={t.results.aiSummaryShowMore}
                     showLess={t.results.aiSummaryShowLess}
+                  />
+                )}
+
+                {r.scan_id && !r.scan_id.startsWith("local-") && (
+                  <ShareBlock
+                    domain={domain}
+                    score={r.score}
+                    total={r.checks_total ?? 11}
+                    passedChecks={passedChecks.map(c => ({ id: c.id, label: c.label }))}
+                    failedChecks={allFailed.map(c => ({ id: c.id, label: c.label }))}
+                    scanId={r.scan_id}
+                    shareLabel={t.results.shareSection}
+                    copyLabel={t.results.shareCopyDmText}
+                    copiedLabel={t.results.copied}
+                    linkedinLabel={t.results.shareLinkedin}
+                    xLabel={t.results.shareX}
                   />
                 )}
               </div>
@@ -892,24 +878,26 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
           {t.results.disclaimer}
         </p>
 
-        {/* ── DELA / SKICKA / SCANNA EN ANNAN ──────────────────── */}
-        <div className="mt-8 space-y-3">
-          <Button onClick={handleShare} className="w-full" size="lg">
-            <Share2 className="mr-2 h-4 w-4" />
-            {shared ? t.results.copied : t.results.shareResult}
+        {/* ── SCANNA EN ANNAN (share moved to hero zone) ────────────── */}
+        <div className="mt-8 text-center">
+          <Button variant="link" className="text-muted-foreground text-sm" asChild>
+            <Link href="/scan">{t.results.scanAnother}</Link>
           </Button>
-          <Button onClick={handleTeamShare} variant="outline" className="w-full" size="lg">
-            <Share2 className="mr-2 h-4 w-4" />
-            {teamShared ? t.results.copied : t.results.sendToTeam}
-          </Button>
-          <div className="text-center">
-            <Button variant="link" className="text-muted-foreground text-sm" asChild>
-              <Link href="/scan">{t.results.scanAnother}</Link>
-            </Button>
-          </div>
         </div>
 
       </div>
+
+      {/* Sticky share pill — catches users who scroll past the hero share */}
+      {r.scan_id && !r.scan_id.startsWith("local-") && (
+        <StickyShareButton
+          scanId={r.scan_id}
+          domain={domain}
+          score={r.score}
+          total={r.checks_total ?? 11}
+          shareLabel={t.results.stickyShare}
+          copiedLabel={t.results.copied}
+        />
+      )}
     </div>
   );
 }
