@@ -42,14 +42,19 @@ async function getLatestScan(domain: string): Promise<ScanResult | null> {
   ]));
 
   const headers = { apikey: key, Authorization: `Bearer ${key}` };
-  const modernSelect = "badge,checks_passed,checks_json,claude_summary,recommendations,scanned_at";
-  const legacySelect = "badge,checks_passed,checks_json,scanned_at";
+  // `id` and `checks_total` are required by ResultsPage's ShareBlock and the
+  // metadata `score/total` formatter. Older rows pre-dating these columns
+  // simply fall back to null / undefined and ShareBlock gates itself out.
+  const modernSelect = "id,badge,checks_passed,checks_total,checks_json,claude_summary,recommendations,scanned_at";
+  const legacySelect = "id,badge,checks_passed,checks_json,scanned_at";
 
   const toScanResult = (
     candidateDomain: string,
     row: {
+      id?: string;
       badge: string;
       checks_passed: number;
+      checks_total?: number | null;
       checks_json: AllChecks;
       claude_summary?: string | null;
       recommendations?: unknown;
@@ -62,12 +67,13 @@ async function getLatestScan(domain: string): Promise<ScanResult | null> {
     agent_suggestions: [],
     badge: row.badge as ScanResult["badge"],
     score: row.checks_passed,
+    checks_total: row.checks_total ?? undefined,
     checks: row.checks_json,
     recommendations: Array.isArray(row.recommendations)
       ? row.recommendations.filter((v): v is string => typeof v === "string")
       : [],
     severity_counts: computeSeverityCounts(row.checks_json),
-    scan_id: null,
+    scan_id: row.id ?? null,
     isDemo: false,
     scanned_at: row.scanned_at ?? new Date(0).toISOString(),
   });
@@ -80,8 +86,10 @@ async function getLatestScan(domain: string): Promise<ScanResult | null> {
       );
       if (modernRes.ok) {
         const modernRows = await modernRes.json() as Array<{
+          id: string;
           badge: string;
           checks_passed: number;
+          checks_total: number | null;
           checks_json: AllChecks;
           claude_summary: string | null;
           recommendations: unknown;
@@ -98,6 +106,7 @@ async function getLatestScan(domain: string): Promise<ScanResult | null> {
       );
       if (!legacyRes.ok) continue;
       const legacyRows = await legacyRes.json() as Array<{
+        id: string;
         badge: string;
         checks_passed: number;
         checks_json: AllChecks;
