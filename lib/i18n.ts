@@ -15,9 +15,10 @@ export const I18N = {
       placeholder: "dittforetag.se",
       ariaLabel: "Domännamn att scanna",
       scanBtn: "Scanna →",
-      whyHeading: "Varför",
+      whyHeading: "Agenter handlar redan. Syns du?",
       whyText:
-        "Företag som inte syns för agenter blir ointegrerbara. Builders väljer system med öppna API:er — vi visar var ditt står.",
+        "ChatGPT och Claude handlar åt sina användare — bokar bord, jämför priser, hämtar data. De följer länkar och anropar API:er, men bara där grunderna finns. Utan dem försvinner du tyst ur svaren.",
+      whyProof: "13 checks · 30 sekunder · öppet på GitHub",
       scanMessages: [
         "Kollar åtkomst — robots.txt, sitemap och llms.txt",
         "Kartlägger API-ytor — 40+ sökvägar och subdomäner",
@@ -487,9 +488,10 @@ export const I18N = {
       placeholder: "yourcompany.com",
       ariaLabel: "Domain name to scan",
       scanBtn: "Scan →",
-      whyHeading: "Why",
+      whyHeading: "Agents are already buying. Are you visible?",
       whyText:
-        "Companies invisible to agents become unintegrable. Builders choose systems with open APIs — we show where yours stands.",
+        "ChatGPT and Claude already act on behalf of their users — booking tables, comparing prices, pulling data. They follow links and call APIs, but only where the basics exist. Without them, you quietly drop out of the answers.",
+      whyProof: "13 checks · 30 seconds · open on GitHub",
       scanMessages: [
         "Checking access — robots.txt, sitemap and llms.txt",
         "Mapping API surfaces — 40+ paths and subdomains",

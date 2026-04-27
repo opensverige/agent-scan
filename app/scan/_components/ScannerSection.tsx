@@ -321,6 +321,12 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
           >
             {t.scanner.whyText}
           </p>
+          <p
+            className="mx-auto mt-5 max-w-[460px] text-center font-mono text-[10px] uppercase tracking-widest text-muted-foreground/60"
+            style={{ animation: `ss-fadeup 0.4s ${EASE} 230ms both` }}
+          >
+            {t.scanner.whyProof}
+          </p>
         </div>
       </div>
     );
