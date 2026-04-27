@@ -94,32 +94,36 @@ export function ShareBlock({
       <p className="text-sm text-foreground/85 mb-4 leading-snug">
         {nudgeLabel}
       </p>
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      {/* Grid keeps each cell at exactly 1/3 width regardless of label
+          length. min-w-0 + truncate on inner span lets text shrink rather
+          than overflow when the container narrows. px-3 overrides the
+          size="lg" default px-8 so the labels actually fit at sm:. */}
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <Button
           onClick={handleCopy}
           variant="default"
           size="lg"
-          className="flex-1 font-mono"
+          className="min-w-0 px-3 font-mono"
           aria-label={copyLabel}
         >
           {copied
-            ? <><Check className="h-4 w-4 mr-2" /> {copiedLabel}</>
-            : <><Copy className="h-4 w-4 mr-2" /> {copyLabel}</>}
+            ? <><Check className="h-4 w-4 mr-2 shrink-0" /> <span className="truncate">{copiedLabel}</span></>
+            : <><Copy className="h-4 w-4 mr-2 shrink-0" /> <span className="truncate">{copyLabel}</span></>}
         </Button>
-        <Button asChild variant="outline" size="lg" className="flex-1">
+        <Button asChild variant="outline" size="lg" className="min-w-0 px-3">
           <a href={linkedinUrl} target="_blank" rel="noopener noreferrer">
-            <Linkedin className="h-4 w-4 mr-2" />
-            {linkedinLabel}
+            <Linkedin className="h-4 w-4 mr-2 shrink-0" />
+            <span className="truncate">{linkedinLabel}</span>
           </a>
         </Button>
-        <Button asChild variant="outline" size="lg" className="flex-1">
+        <Button asChild variant="outline" size="lg" className="min-w-0 px-3">
           <a href={xUrl} target="_blank" rel="noopener noreferrer">
-            <span className="font-bold mr-2 text-base leading-none" aria-hidden>𝕏</span>
-            {xLabel}
+            <span className="font-bold mr-2 text-base leading-none shrink-0" aria-hidden>𝕏</span>
+            <span className="truncate">{xLabel}</span>
           </a>
         </Button>
       </div>
-      <p className="mt-3 font-mono text-[10px] text-muted-foreground/50 truncate">
+      <p className="mt-3 font-mono text-[10px] text-muted-foreground truncate">
         {url}
       </p>
     </div>

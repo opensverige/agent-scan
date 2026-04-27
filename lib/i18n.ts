@@ -11,29 +11,29 @@ export const I18N = {
 
     scanner: {
       headline: "Hur agent-redo är din sajt?",
-      subtext: "Vi visar vad AI-agenter ser — och vad som stoppar dem.",
+      subtext: "Vi visar vad AI-agenter ser och vad som stoppar dem.",
       placeholder: "dittforetag.se",
       ariaLabel: "Domännamn att scanna",
       scanBtn: "Scanna →",
       whyHeading: "Agenter handlar redan. Syns du?",
       whyText:
-        "ChatGPT och Claude handlar åt sina användare — bokar bord, jämför priser, hämtar data. De följer länkar och anropar API:er, men bara där grunderna finns. Utan dem försvinner du tyst ur svaren.",
+        "ChatGPT och Claude handlar åt sina användare: bokar bord, jämför priser, hämtar data. De följer länkar och anropar API:er, men bara där grunderna finns. Utan dem försvinner du tyst ur svaren.",
       whyProof: "13 checks · 30 sekunder · öppet på GitHub",
       scanMessages: [
-        "Kollar åtkomst — robots.txt, sitemap och llms.txt",
-        "Kartlägger API-ytor — 40+ sökvägar och subdomäner",
-        "Söker developer portal — npm, GitHub och semantisk sökning",
+        "Kollar åtkomst: robots.txt, sitemap och llms.txt",
+        "Kartlägger API-ytor: 40+ sökvägar och subdomäner",
+        "Söker developer portal: npm, GitHub och semantisk sökning",
         "Hämtar och renderar dokumentation",
-        "AI-analys — extraherar signaler och sätter betyg",
+        "AI-analys: extraherar signaler och sätter betyg",
       ] as string[],
       scanningPrefix: "Kollar",
       notSwedishHeading: "Inte ett svenskt företag",
       notSwedishText:
-        "Vi scannar bara svenska företag och internationella bolag grundade i Sverige — som Spotify, IKEA och Klarna.",
+        "Vi scannar bara svenska företag och internationella bolag grundade i Sverige, som Spotify, IKEA och Klarna.",
       tryAnother: "Prova en annan domän →",
       contactUs: "Är detta fel? Kontakta oss →",
       notSwedishFootnote:
-        "Om ditt bolag är grundat i Sverige men inte känns igen — hör av dig på Discord så lägger vi till det.",
+        "Om ditt bolag är grundat i Sverige men inte känns igen, hör av dig på Discord så lägger vi till det.",
       privacyCopy: "Anonym · ingen registrering · hashad IP + resultat lagras · radering på begäran",
     },
 
@@ -100,7 +100,7 @@ export const I18N = {
       // MCP
       mcpNote:
         "Kontrolleras via offentliga, oautentiserade anrop. Saker bakom inloggning kan finnas men syns inte här.",
-      mcpGithubHint: "Möjlig MCP-server hittad på GitHub —",
+      mcpGithubHint: "Möjlig MCP-server hittad på GitHub:",
       mcpGithubVerify: "Kan vara officiell eller community-skapad. Verifiera med leverantören.",
 
       // Technical data (builder view)
@@ -123,13 +123,13 @@ export const I18N = {
       ctaHighApiHeadline: "Ditt API pratar inte med agenter.",
       ctaHighApiSubtext: (domain: string) =>
         `En builder från communityn visar vad ${domain} behöver för att AI-agenter ska kunna koppla in sig.`,
-      ctaMedApiHeadline: "Ditt API har potential — men brister kvar.",
+      ctaMedApiHeadline: "Ditt API har potential, men brister kvar.",
       ctaMedApiSubtext: (domain: string) =>
         `Prata med en builder om hur ${domain} kan bli en plattform som agenter bygger mot.`,
       ctaHighSiteHeadline: "AI-agenter ser er knappt.",
       ctaHighSiteSubtext: (domain: string) =>
         `Builder från communityn hjälper ${domain} bli agent-redo.`,
-      ctaMedSiteHeadline: "Grund finns — fler steg kvar.",
+      ctaMedSiteHeadline: "Grund finns, fler steg kvar.",
       ctaMedSiteSubtext: (domain: string) =>
         `En builder visar vad ${domain} behöver för agent-integration.`,
       ctaLowHeadline: "Du ligger före de flesta. Vad är nästa steg?",
@@ -148,7 +148,7 @@ export const I18N = {
       copied: "Kopierat!",
       scanAnother: "← Scanna en annan sajt",
       shareSection: "Dela resultatet",
-      shareNudge: "Visa nätverket att du tar AI-readiness på allvar — och sprid AI-vakenheten i Sverige.",
+      shareNudge: "Visa nätverket att du tar AI-readiness på allvar. Sprid AI-vakenheten i Sverige.",
       shareCopyDmText: "Kopiera DM-text",
       shareLinkedin: "Dela på LinkedIn",
       shareX: "Dela på X",
@@ -159,10 +159,10 @@ export const I18N = {
       shareSiteText: (domain: string, score: number, total: number, critical: number, important: number, passed: number, url: string) =>
         `${score / total <= 0.3 ? "🔴" : score / total <= 0.6 ? "🟡" : "🟢"} ${domain} fick ${score}/${total} i AI-readiness.\n\n● ${critical} brister ● ${important} varningar ● ${passed} ok\n\nHur redo är din sajt? → ${url}`,
       teamShareText: (domain: string, score: number, total: number, url: string) =>
-        `Jag scannade ${domain} med agent.opensverige.se — vi fick ${score}/${total}. Här är vad vi kan fixa: ${url}`,
+        `Jag scannade ${domain} med agent.opensverige.se. Vi fick ${score}/${total}. Här är vad vi kan fixa: ${url}`,
 
       // Timestamps
-      staleWarning: "Föråldrat resultat —",
+      staleWarning: "Föråldrat resultat:",
       scannedAt: "Scannades",
       daysAgo: (n: number) => `(${n} dagar sedan)`,
       today: "(idag)",
@@ -188,8 +188,9 @@ export const I18N = {
     },
 
     footer: {
-      tagline: "opensverige.se — öppen källkod",
+      tagline: "opensverige.se · öppen källkod",
       privacy: "Integritet",
+      builtBy: "Skapad av",
     },
 
     privacy: {
@@ -201,12 +202,12 @@ export const I18N = {
         {
           heading: "Vad vi samlar in",
           body:
-            "När du scannar en domän sparar vi: domännamnet, resultatet av de tekniska checkarna, en hashad version av din IP-adress (SHA-256), tidpunkt samt AI-genererad sammanfattning. Vi sparar inga namn, e-post eller konton — scannern kräver ingen registrering.",
+            "När du scannar en domän sparar vi: domännamnet, resultatet av de tekniska checkarna, en hashad version av din IP-adress (SHA-256), tidpunkt samt AI-genererad sammanfattning. Vi sparar inga namn, e-post eller konton: scannern kräver ingen registrering.",
         },
         {
           heading: "Varför",
           body:
-            "Domän och resultat lagras för att du ska kunna återvända till din rapport och dela den. Hashad IP används för rate-limiting (skydd mot missbruk) — vi kan inte återställa den till en riktig IP-adress, men eftersom den kan kopplas till dig räknas den juridiskt som pseudonymiserad persondata (EU-domstolen, Breyer-domen).",
+            "Domän och resultat lagras för att du ska kunna återvända till din rapport och dela den. Hashad IP används för rate-limiting (skydd mot missbruk): vi kan inte återställa den till en riktig IP-adress, men eftersom den kan kopplas till dig räknas den juridiskt som pseudonymiserad persondata (EU-domstolen, Breyer-domen).",
         },
         {
           heading: "AI-sammanfattning",
@@ -226,17 +227,17 @@ export const I18N = {
         {
           heading: "Cookies",
           body:
-            "Vi sätter inga egna cookies. Om du bokar ett möte via Cal.com sätter deras embed cookies när du interagerar med kalendern — det är Cal.com som personuppgiftsansvarig för det.",
+            "Vi sätter inga egna cookies. Om du bokar ett möte via Cal.com sätter deras embed cookies när du interagerar med kalendern: det är Cal.com som personuppgiftsansvarig för det.",
         },
         {
           heading: "Lagringstid",
           body:
-            "Scanresultat och hashad IP raderas automatiskt efter 90 dagar (kan förlängas på Builder/Pro-tier). Du kan begära tidigare radering av en specifik domäns resultat — maila info@opensverige.se.",
+            "Scanresultat och hashad IP raderas automatiskt efter 90 dagar (kan förlängas på Builder/Pro-tier). Du kan begära tidigare radering av en specifik domäns resultat: maila info@opensverige.se.",
         },
         {
           heading: "Automatiserad behandling och profilering",
           body:
-            "Tjänsten gör automatiserade tekniska bedömningar (badge grön/gul/röd) av domäner — inte av personer direkt. För juridiska personer omfattas inte beslutet av GDPR Art. 22. För enskild firma eller frilansares portfolio (där domänen är kopplad till en fysisk person) kan badge-bedömningen kvalificeras som automatiserat beslut med rättsliga eller liknande väsentliga effekter (Art. 22). I sådana fall har du rätt att begära mänsklig granskning, framföra din ståndpunkt och bestrida resultatet — maila info@opensverige.se. Vi profilerar inte besökare och bygger inte beteendemönster över tid.",
+            "Tjänsten gör automatiserade tekniska bedömningar (badge grön/gul/röd) av domäner: inte av personer direkt. För juridiska personer omfattas inte beslutet av GDPR Art. 22. För enskild firma eller frilansares portfolio (där domänen är kopplad till en fysisk person) kan badge-bedömningen kvalificeras som automatiserat beslut med rättsliga eller liknande väsentliga effekter (Art. 22). I sådana fall har du rätt att begära mänsklig granskning, framföra din ståndpunkt och bestrida resultatet: maila info@opensverige.se. Vi profilerar inte besökare och bygger inte beteendemönster över tid.",
         },
         {
           heading: "Dina rättigheter",
@@ -246,7 +247,7 @@ export const I18N = {
         {
           heading: "Kontakt",
           body:
-            "Personuppgiftsansvarig: OpenSverige. Kontakt: info@opensverige.se. Vi svarar så snart vi kan — vi är en community, inte en kundtjänst.",
+            "Personuppgiftsansvarig: OpenSverige. Kontakt: info@opensverige.se. Vi svarar så snart vi kan: vi är en community, inte en kundtjänst.",
         },
       ] as ReadonlyArray<{ heading: string; body: string }>,
       backLink: "← Tillbaka till scannern",
@@ -261,7 +262,7 @@ export const I18N = {
         {
           heading: "Vem vi är",
           body:
-            "agent.opensverige.se drivs av Felipe och Gustaf Garnow (community-projekt, Sverige). Kontakt: info@opensverige.se. Tjänsten är open source under FSL-1.1-MIT — källkoden finns på github.com/opensverige/agent-scan.",
+            "agent.opensverige.se drivs av Felipe och Gustaf Garnow (community-projekt, Sverige). Kontakt: info@opensverige.se. Tjänsten är open source under FSL-1.1-MIT: källkoden finns på github.com/opensverige/agent-scan.",
         },
         {
           heading: "Vad tjänsten är",
@@ -281,12 +282,12 @@ export const I18N = {
         {
           heading: "API-nycklar",
           body:
-            "Du ansvarar för att hålla din nyckel hemlig. Misstänker du att den läckt — be oss revoka den och utfärda en ny. Vi loggar nyckel-prefix (16 tecken, ej hela nyckeln) för audit. Vi kan revoka nycklar som missbrukas.",
+            "Du ansvarar för att hålla din nyckel hemlig. Misstänker du att den läckt: be oss revoka den och utfärda en ny. Vi loggar nyckel-prefix (16 tecken, ej hela nyckeln) för audit. Vi kan revoka nycklar som missbrukas.",
         },
         {
           heading: "AI-genererat innehåll",
           body:
-            "Sammanfattningar genereras av Anthropic Claude. De märks maskinläsbart i API-svaret via ai_disclosure-fältet (EU AI Act Art. 50). Innehållet är ej granskat av människa — du ansvarar för att verifiera påståenden innan du använder dem för affärsbeslut.",
+            "Sammanfattningar genereras av Anthropic Claude. De märks maskinläsbart i API-svaret via ai_disclosure-fältet (EU AI Act Art. 50). Innehållet är ej granskat av människa: du ansvarar för att verifiera påståenden innan du använder dem för affärsbeslut.",
         },
         {
           heading: "Tillgänglighet och fel",
@@ -336,7 +337,7 @@ export const I18N = {
         {
           heading: "Rate limiting och fair use",
           body:
-            "Respektera per-tier-quota. Försök inte kringgå rate-limit via flera nycklar för samma användning — det räknas som missbruk. Hobby-tier är för individuell utforskning, inte produktion. Builder/Pro för team-användning.",
+            "Respektera per-tier-quota. Försök inte kringgå rate-limit via flera nycklar för samma användning: det räknas som missbruk. Hobby-tier är för individuell utforskning, inte produktion. Builder/Pro för team-användning.",
         },
         {
           heading: "Återförsäljning",
@@ -346,7 +347,7 @@ export const I18N = {
         {
           heading: "Crawler-etikett",
           body:
-            "Vår scanner respekterar målets robots.txt och rate-limit-headers. Om du upptäcker att vi inte gör det — rapportera direkt. Om du forkar koden, behåll detta beteende.",
+            "Vår scanner respekterar målets robots.txt och rate-limit-headers. Om du upptäcker att vi inte gör det: rapportera direkt. Om du forkar koden, behåll detta beteende.",
         },
         {
           heading: "Säkerhet",
@@ -366,7 +367,7 @@ export const I18N = {
       title: "AI-disclosure",
       lastUpdated: "Senast uppdaterad: 26 april 2026",
       intro:
-        "Tjänsten använder AI för att generera sammanfattningar och rekommendationer. Den här sidan beskriver hur, var och varför — i linje med EU AI Act Art. 50 (gäller från 2 augusti 2026).",
+        "Tjänsten använder AI för att generera sammanfattningar och rekommendationer. Den här sidan beskriver hur, var och varför: i linje med EU AI Act Art. 50 (gäller från 2 augusti 2026).",
       sections: [
         {
           heading: "Vilken AI vi använder",
@@ -376,7 +377,7 @@ export const I18N = {
         {
           heading: "Vad AI:n genererar",
           body:
-            "Tre fält i scan-svaret: summary (kortfattad text om sajtens AI-readiness), industry (branschklassificering), agent_suggestions (3 förslag på AI-agenter företaget kan bygga). Inga andra fält är AI-genererade — alla checks är deterministiska kodregler.",
+            "Tre fält i scan-svaret: summary (kortfattad text om sajtens AI-readiness), industry (branschklassificering), agent_suggestions (3 förslag på AI-agenter företaget kan bygga). Inga andra fält är AI-genererade: alla checks är deterministiska kodregler.",
         },
         {
           heading: "Maskinläsbar märkning",
@@ -386,12 +387,12 @@ export const I18N = {
         {
           heading: "Mänsklig granskning",
           body:
-            "AI-output granskas inte av människa innan den serveras. Du som använder summary i din UI eller affärsbeslut bör verifiera påståenden mot underliggande checks. Vill du ha mänsklig granskning av en specifik scan — maila info@opensverige.se.",
+            "AI-output granskas inte av människa innan den serveras. Du som använder summary i din UI eller affärsbeslut bör verifiera påståenden mot underliggande checks. Vill du ha mänsklig granskning av en specifik scan: maila info@opensverige.se.",
         },
         {
           heading: "Risk-klassificering enligt AI Act",
           body:
-            "Vår tjänst räknas som minimal/limited risk-AI under Art. 50. Inga högriskscenarier (rekrytering, kreditbedömning, brottsbekämpning). Vi är deployer (artikel 3(4)), Anthropic är provider (artikel 3(3)) — Anthropic ansvarar för teknisk märkning, vi ansvarar för informationsskyldighet mot dig.",
+            "Vår tjänst räknas som minimal/limited risk-AI under Art. 50. Inga högriskscenarier (rekrytering, kreditbedömning, brottsbekämpning). Vi är deployer (artikel 3(4)), Anthropic är provider (artikel 3(3)): Anthropic ansvarar för teknisk märkning, vi ansvarar för informationsskyldighet mot dig.",
         },
         {
           heading: "Dina rättigheter",
@@ -437,7 +438,7 @@ export const I18N = {
           name: "Anthropic PBC",
           purpose: "AI-sammanfattningar (Claude API)",
           location: "USA (Microsoft Azure)",
-          dpf: "SCC + TIA — migrerar till AWS Bedrock Frankfurt",
+          dpf: "SCC + TIA: migrerar till AWS Bedrock Frankfurt",
           link: "https://trust.anthropic.com",
         },
         {
@@ -484,29 +485,29 @@ export const I18N = {
 
     scanner: {
       headline: "How agent-ready is your site?",
-      subtext: "We show what AI agents see — and what's stopping them.",
+      subtext: "We show what AI agents see and what's stopping them.",
       placeholder: "yourcompany.com",
       ariaLabel: "Domain name to scan",
       scanBtn: "Scan →",
       whyHeading: "Agents are already buying. Are you visible?",
       whyText:
-        "ChatGPT and Claude already act on behalf of their users — booking tables, comparing prices, pulling data. They follow links and call APIs, but only where the basics exist. Without them, you quietly drop out of the answers.",
+        "ChatGPT and Claude already act on behalf of their users: booking tables, comparing prices, pulling data. They follow links and call APIs, but only where the basics exist. Without them, you quietly drop out of the answers.",
       whyProof: "13 checks · 30 seconds · open on GitHub",
       scanMessages: [
-        "Checking access — robots.txt, sitemap and llms.txt",
-        "Mapping API surfaces — 40+ paths and subdomains",
-        "Searching developer portal — npm, GitHub and semantic search",
+        "Checking access: robots.txt, sitemap and llms.txt",
+        "Mapping API surfaces: 40+ paths and subdomains",
+        "Searching developer portal: npm, GitHub and semantic search",
         "Fetching and rendering documentation",
-        "AI analysis — extracting signals and scoring",
+        "AI analysis: extracting signals and scoring",
       ] as string[],
       scanningPrefix: "Scanning",
       notSwedishHeading: "Not a Swedish company",
       notSwedishText:
-        "We only scan Swedish companies and international companies founded in Sweden — like Spotify, IKEA and Klarna.",
+        "We only scan Swedish companies and international companies founded in Sweden, like Spotify, IKEA and Klarna.",
       tryAnother: "Try another domain →",
       contactUs: "Is this wrong? Contact us →",
       notSwedishFootnote:
-        "If your company was founded in Sweden but isn't recognized — reach out on Discord and we'll add it.",
+        "If your company was founded in Sweden but isn't recognized, reach out on Discord and we'll add it.",
       privacyCopy: "Anonymous · no sign-up · hashed IP + results stored · deletion on request",
     },
 
@@ -565,7 +566,7 @@ export const I18N = {
 
       mcpNote:
         "Checked via public, unauthenticated requests. Things behind login may exist but aren't visible here.",
-      mcpGithubHint: "Possible MCP server found on GitHub —",
+      mcpGithubHint: "Possible MCP server found on GitHub:",
       mcpGithubVerify: "May be official or community-created. Verify with the vendor.",
 
       techDataBtn: "Technical data (for builders)",
@@ -585,13 +586,13 @@ export const I18N = {
       ctaHighApiHeadline: "Your API doesn't talk to agents.",
       ctaHighApiSubtext: (domain: string) =>
         `A builder from the community shows what ${domain} needs for AI agents to connect.`,
-      ctaMedApiHeadline: "Your API has potential — but gaps remain.",
+      ctaMedApiHeadline: "Your API has potential, but gaps remain.",
       ctaMedApiSubtext: (domain: string) =>
         `Talk to a builder about how ${domain} can become a platform agents build against.`,
       ctaHighSiteHeadline: "AI agents can barely see you.",
       ctaHighSiteSubtext: (domain: string) =>
         `A builder from the community helps ${domain} become agent-ready.`,
-      ctaMedSiteHeadline: "Foundation exists — more steps ahead.",
+      ctaMedSiteHeadline: "Foundation exists, more steps ahead.",
       ctaMedSiteSubtext: (domain: string) =>
         `A builder shows what ${domain} needs for agent integration.`,
       ctaLowHeadline: "You're ahead of most. What's the next step?",
@@ -609,7 +610,7 @@ export const I18N = {
       copied: "Copied!",
       scanAnother: "← Scan another site",
       shareSection: "Share the result",
-      shareNudge: "Show your network you take AI readiness seriously — and help spread AI awareness in Sweden.",
+      shareNudge: "Show your network you take AI readiness seriously. Help spread AI awareness in Sweden.",
       shareCopyDmText: "Copy DM text",
       shareLinkedin: "Share on LinkedIn",
       shareX: "Share on X",
@@ -620,9 +621,9 @@ export const I18N = {
       shareSiteText: (domain: string, score: number, total: number, critical: number, important: number, passed: number, url: string) =>
         `${score / total <= 0.3 ? "🔴" : score / total <= 0.6 ? "🟡" : "🟢"} ${domain} scored ${score}/${total} in AI-readiness.\n\n● ${critical} issues ● ${important} warnings ● ${passed} ok\n\nHow ready is your site? → ${url}`,
       teamShareText: (domain: string, score: number, total: number, url: string) =>
-        `I scanned ${domain} with agent.opensverige.se — we scored ${score}/${total}. Here's what we can fix: ${url}`,
+        `I scanned ${domain} with agent.opensverige.se. We scored ${score}/${total}. Here's what we can fix: ${url}`,
 
-      staleWarning: "Outdated result —",
+      staleWarning: "Outdated result:",
       scannedAt: "Scanned",
       daysAgo: (n: number) => `(${n} days ago)`,
       today: "(today)",
@@ -644,8 +645,9 @@ export const I18N = {
     },
 
     footer: {
-      tagline: "opensverige.se — open source",
+      tagline: "opensverige.se · open source",
       privacy: "Privacy",
+      builtBy: "Built by",
     },
 
     privacy: {
@@ -657,12 +659,12 @@ export const I18N = {
         {
           heading: "What we collect",
           body:
-            "When you scan a domain we store: the domain name, the results of the technical checks, a hashed version of your IP address (SHA-256), a timestamp, and the AI-generated summary. We don't store names, emails or accounts — the scanner requires no sign-up.",
+            "When you scan a domain we store: the domain name, the results of the technical checks, a hashed version of your IP address (SHA-256), a timestamp, and the AI-generated summary. We don't store names, emails or accounts: the scanner requires no sign-up.",
         },
         {
           heading: "Why",
           body:
-            "Domain and results are stored so you can return to your report and share it. Hashed IP is used for rate limiting (abuse protection) — we can't reverse it to a real IP, but because it can still be linked to you it legally counts as pseudonymised personal data (CJEU, Breyer ruling).",
+            "Domain and results are stored so you can return to your report and share it. Hashed IP is used for rate limiting (abuse protection): we can't reverse it to a real IP, but because it can still be linked to you it legally counts as pseudonymised personal data (CJEU, Breyer ruling).",
         },
         {
           heading: "AI summary",
@@ -682,17 +684,17 @@ export const I18N = {
         {
           heading: "Cookies",
           body:
-            "We set no cookies of our own. If you book a meeting via Cal.com, their embed sets cookies when you interact with the calendar — Cal.com is the controller for that.",
+            "We set no cookies of our own. If you book a meeting via Cal.com, their embed sets cookies when you interact with the calendar: Cal.com is the controller for that.",
         },
         {
           heading: "Retention",
           body:
-            "Scan results and hashed IPs are deleted automatically after 90 days (can be extended on Builder/Pro tiers). You can request earlier deletion of a specific domain's results — email info@opensverige.se.",
+            "Scan results and hashed IPs are deleted automatically after 90 days (can be extended on Builder/Pro tiers). You can request earlier deletion of a specific domain's results: email info@opensverige.se.",
         },
         {
           heading: "Automated decision-making and profiling",
           body:
-            "The service makes automated technical assessments (green/yellow/red badge) of domains — not of individuals directly. For legal persons (companies), the decision is outside GDPR Art. 22 scope. For sole traders or a freelancer's portfolio (where the domain is linked to a natural person), the badge assessment may qualify as an automated decision producing legal or similarly significant effects (Art. 22). In such cases you have the right to request human review, express your point of view and contest the result — email info@opensverige.se. We do not profile visitors or build behavioural patterns over time.",
+            "The service makes automated technical assessments (green/yellow/red badge) of domains: not of individuals directly. For legal persons (companies), the decision is outside GDPR Art. 22 scope. For sole traders or a freelancer's portfolio (where the domain is linked to a natural person), the badge assessment may qualify as an automated decision producing legal or similarly significant effects (Art. 22). In such cases you have the right to request human review, express your point of view and contest the result: email info@opensverige.se. We do not profile visitors or build behavioural patterns over time.",
         },
         {
           heading: "Your rights",
@@ -702,7 +704,7 @@ export const I18N = {
         {
           heading: "Contact",
           body:
-            "Controller: OpenSverige. Contact: info@opensverige.se. We reply as soon as we can — we're a community, not a support desk.",
+            "Controller: OpenSverige. Contact: info@opensverige.se. We reply as soon as we can: we're a community, not a support desk.",
         },
       ] as ReadonlyArray<{ heading: string; body: string }>,
       backLink: "← Back to the scanner",
@@ -717,7 +719,7 @@ export const I18N = {
         {
           heading: "Who we are",
           body:
-            "agent.opensverige.se is run by Felipe and Gustaf Garnow (community project, Sweden). Contact: info@opensverige.se. The service is open source under FSL-1.1-MIT — code at github.com/opensverige/agent-scan.",
+            "agent.opensverige.se is run by Felipe and Gustaf Garnow (community project, Sweden). Contact: info@opensverige.se. The service is open source under FSL-1.1-MIT: code at github.com/opensverige/agent-scan.",
         },
         {
           heading: "What the service does",
@@ -742,7 +744,7 @@ export const I18N = {
         {
           heading: "AI-generated content",
           body:
-            "Summaries are generated by Anthropic Claude. They are marked machine-readably in API responses via the ai_disclosure field (EU AI Act Art. 50). Content is not human-reviewed — you are responsible for verifying claims before using them in business decisions.",
+            "Summaries are generated by Anthropic Claude. They are marked machine-readably in API responses via the ai_disclosure field (EU AI Act Art. 50). Content is not human-reviewed: you are responsible for verifying claims before using them in business decisions.",
         },
         {
           heading: "Availability and errors",
@@ -792,7 +794,7 @@ export const I18N = {
         {
           heading: "Rate limiting and fair use",
           body:
-            "Respect per-tier quotas. Don't try to bypass rate limits via multiple keys for the same workload — counts as abuse. Hobby tier is for individual exploration, not production. Builder/Pro for team use.",
+            "Respect per-tier quotas. Don't try to bypass rate limits via multiple keys for the same workload: counts as abuse. Hobby tier is for individual exploration, not production. Builder/Pro for team use.",
         },
         {
           heading: "Resale",
@@ -822,7 +824,7 @@ export const I18N = {
       title: "AI Disclosure",
       lastUpdated: "Last updated: April 26, 2026",
       intro:
-        "The service uses AI to generate summaries and recommendations. This page describes how, where and why — in line with EU AI Act Art. 50 (effective 2 August 2026).",
+        "The service uses AI to generate summaries and recommendations. This page describes how, where and why: in line with EU AI Act Art. 50 (effective 2 August 2026).",
       sections: [
         {
           heading: "Which AI we use",
@@ -832,7 +834,7 @@ export const I18N = {
         {
           heading: "What the AI generates",
           body:
-            "Three fields in the scan response: summary (short text about the site's AI-readiness), industry (industry classification), agent_suggestions (3 AI-agent ideas for the company to build). No other fields are AI-generated — all checks are deterministic code rules.",
+            "Three fields in the scan response: summary (short text about the site's AI-readiness), industry (industry classification), agent_suggestions (3 AI-agent ideas for the company to build). No other fields are AI-generated: all checks are deterministic code rules.",
         },
         {
           heading: "Machine-readable disclosure",
@@ -847,7 +849,7 @@ export const I18N = {
         {
           heading: "AI Act risk classification",
           body:
-            "Our service is minimal/limited risk under Art. 50. No high-risk scenarios (recruitment, credit scoring, law enforcement). We are the deployer (article 3(4)); Anthropic is the provider (article 3(3)) — Anthropic handles technical marking, we handle informing you.",
+            "Our service is minimal/limited risk under Art. 50. No high-risk scenarios (recruitment, credit scoring, law enforcement). We are the deployer (article 3(4)); Anthropic is the provider (article 3(3)): Anthropic handles technical marking, we handle informing you.",
         },
         {
           heading: "Your rights",
@@ -893,7 +895,7 @@ export const I18N = {
           name: "Anthropic PBC",
           purpose: "AI summaries (Claude API)",
           location: "US (Microsoft Azure)",
-          dpf: "SCC + TIA — migrating to AWS Bedrock Frankfurt",
+          dpf: "SCC + TIA: migrating to AWS Bedrock Frankfurt",
           link: "https://trust.anthropic.com",
         },
         {

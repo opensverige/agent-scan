@@ -219,7 +219,7 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
               {t.scanner.contactUs}
             </a>
           </div>
-          <p className="text-xs text-muted-foreground/50 max-w-[400px]">
+          <p className="text-xs text-muted-foreground max-w-[400px]">
             {t.scanner.notSwedishFootnote}
           </p>
         </div>
@@ -322,7 +322,7 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
             {t.scanner.whyText}
           </p>
           <p
-            className="mx-auto mt-5 max-w-[460px] text-center font-mono text-[10px] uppercase tracking-widest text-muted-foreground/60"
+            className="mx-auto mt-5 max-w-[460px] text-center font-mono text-[10px] uppercase tracking-widest text-muted-foreground"
             style={{ animation: `ss-fadeup 0.4s ${EASE} 230ms both` }}
           >
             {t.scanner.whyProof}
@@ -371,7 +371,7 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
                 <span
                   className={cn(
                     "text-sm transition-colors duration-300",
-                    isCurrent ? "text-foreground font-semibold" : "text-muted-foreground/50"
+                    isCurrent ? "text-foreground font-semibold" : "text-muted-foreground"
                   )}
                 >
                   {msg}

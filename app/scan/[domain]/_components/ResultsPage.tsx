@@ -38,6 +38,16 @@ function getDefaultTab(_data: ScanResult | null): "sajt" | "api" {
   return "sajt";
 }
 
+/** Build a glow color from a ring color, matching its hue at ~50% alpha.
+ *  Accepts both `hsl(var(--token))` (theme tokens) and `#rrggbb` (hex). */
+function glowFromRing(ringColor: string): string {
+  if (ringColor.startsWith("hsl(var(")) {
+    return ringColor.replace(/\)\)$/, ") / 0.5)");
+  }
+  if (/^#[0-9a-f]{6}$/i.test(ringColor)) return `${ringColor}80`;
+  return ringColor;
+}
+
 // ── Main Component ──────────────────────────────────────────────────────────
 
 export default function ResultsPage({ domain, initialData }: { domain: string; initialData: ScanResult | null }) {
@@ -46,12 +56,14 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
   const [notFound, setNotFound] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"sajt" | "api">(() => getDefaultTab(initialData));
-  // One-shot mount-glow on the score zone — gives the result a "just landed"
-  // feel and pulls the eye toward the score on first paint. Fades out once.
-  const [scoreFresh, setScoreFresh] = useState(true);
+  // Persistent mount-glow on the score zone. Fades in once, then stays —
+  // gives the result a "just landed" feel and continues to anchor the
+  // eye to the score as the user scrolls through findings. Glow color
+  // tracks the ring color (green / dark amber / red) so the visual
+  // tone matches the verdict.
+  const [scoreLanded, setScoreLanded] = useState(false);
   useEffect(() => {
-    const t = setTimeout(() => setScoreFresh(false), 2200);
-    return () => clearTimeout(t);
+    setScoreLanded(true);
   }, []);
 
   useEffect(() => {
@@ -174,7 +186,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                   href={`/api/results/${domain}?format=text`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-mono text-[10px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                  className="font-mono text-[10px] text-muted-foreground hover:text-muted-foreground transition-colors"
                 >
                   Raw →
                 </a>
@@ -200,7 +212,12 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
             <CardTitle className="font-serif text-[clamp(28px,5vw,40px)] font-normal leading-[1.12] tracking-[-0.6px] mt-1">
               {t.results.headline}
             </CardTitle>
-            <CardDescription className="font-mono">{domain}</CardDescription>
+            <CardDescription className="mt-2">
+              <span className="inline-flex max-w-full items-center gap-2 rounded-md border border-primary/30 bg-primary/[0.06] px-2.5 py-1 font-mono text-sm text-foreground">
+                <Globe className="h-3.5 w-3.5 shrink-0 text-primary" />
+                <span className="truncate">{domain}</span>
+              </span>
+            </CardDescription>
           </CardHeader>
 
           <Tabs value={activeTab} onValueChange={v => setActiveTab(v as "sajt" | "api")} className="w-full">
@@ -223,10 +240,13 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
               {/* Score + badge + breakdown + summary */}
               <div className="px-6 flex flex-col items-center gap-5 pt-2 pb-6">
                 <div
-                  className={`flex flex-col items-center gap-5 transition-all duration-1000 ${
-                    scoreFresh ? "drop-shadow-[0_0_32px_hsl(var(--primary)/0.45)]" : ""
-                  }`}
-                  style={{ transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)" }}
+                  className="flex flex-col items-center gap-5 transition-[filter] duration-1000"
+                  style={{
+                    transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+                    filter: scoreLanded
+                      ? `drop-shadow(0 0 28px ${glowFromRing(cfg.ringColor)})`
+                      : "drop-shadow(0 0 0 transparent)",
+                  }}
                 >
                   <ScoreRing score={r.score} total={r.checks_total ?? 11} ringColor={cfg.ringColor} />
 
@@ -237,16 +257,24 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
 
                 <div className="flex gap-5 text-xs font-mono flex-wrap justify-center">
                   {sc.critical > 0 && (
-                    <span className="flex items-center gap-1.5">
+                    <a
+                      href="#topphittar"
+                      className="flex items-center gap-1.5 underline-offset-4 hover:underline hover:text-foreground transition-colors"
+                      title={t.results.topFindings}
+                    >
                       <XCircle className="h-3.5 w-3.5 text-destructive" />
                       {sc.critical} {sc.critical === 1 ? t.results.criticalSingle : t.results.criticalPlural}
-                    </span>
+                    </a>
                   )}
                   {sc.important > 0 && (
-                    <span className="flex items-center gap-1.5">
+                    <a
+                      href="#topphittar"
+                      className="flex items-center gap-1.5 underline-offset-4 hover:underline hover:text-foreground transition-colors"
+                      title={t.results.topFindings}
+                    >
                       <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
                       {sc.important} {sc.important === 1 ? t.results.warningSingle : t.results.warningPlural}
-                    </span>
+                    </a>
                   )}
                   <span className="flex items-center gap-1.5">
                     <CheckCircle2 className="h-3.5 w-3.5 text-success" />
@@ -285,7 +313,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
               {topSiteFindings.length > 0 && (
                 <>
                   <Separator />
-                  <div className="px-6 py-5">
+                  <div id="topphittar" className="px-6 py-5 scroll-mt-20">
                     <p className="font-mono text-[10px] font-bold tracking-widest text-muted-foreground mb-3">
                       {t.results.topFindings}
                     </p>
@@ -367,10 +395,13 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                   {/* Score + badge + spec info */}
                   <div className="px-6 flex flex-col items-center gap-5 pt-2 pb-6">
                     <div
-                      className={`flex flex-col items-center gap-5 transition-all duration-1000 ${
-                        scoreFresh ? "drop-shadow-[0_0_32px_hsl(var(--primary)/0.45)]" : ""
-                      }`}
-                      style={{ transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)" }}
+                      className="flex flex-col items-center gap-5 transition-[filter] duration-1000"
+                      style={{
+                        transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+                        filter: scoreLanded
+                          ? `drop-shadow(0 0 28px ${glowFromRing(apiRingColor)})`
+                          : "drop-shadow(0 0 0 transparent)",
+                      }}
                     >
                       <ScoreRing
                         score={apiScore.totalScore}
@@ -469,20 +500,20 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                             : <>Utan OpenAPI-spec analyserades bara {apiScore.maxPossibleScore} av 100 möjliga poäng.</>}
                         </p>
                         <div className="space-y-1.5">
-                          <p className="text-[11px] font-mono text-muted-foreground/60 uppercase tracking-wider">
+                          <p className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider">
                             {specDetected ? "Vanligaste orsakerna" : "Kortaste vägen dit"}
                           </p>
                           {specDetected ? (
                             <ul className="space-y-1 text-xs text-muted-foreground">
-                              <li className="flex gap-2"><span className="shrink-0 opacity-40">—</span>Spec-endpointen kräver auth-token — se till att <code className="font-mono text-[10px]">/openapi.json</code> är publik</li>
-                              <li className="flex gap-2"><span className="shrink-0 opacity-40">—</span>CORS-headers saknas — lägg till <code className="font-mono text-[10px]">Access-Control-Allow-Origin: *</code></li>
-                              <li className="flex gap-2"><span className="shrink-0 opacity-40">—</span>Spec-filen returnerar HTML vid bot-request — kontrollera Content-Type</li>
+                              <li className="flex gap-2"><span className="shrink-0 opacity-40">·</span>Spec-endpointen kräver auth-token. Se till att <code className="font-mono text-[10px]">/openapi.json</code> är publik</li>
+                              <li className="flex gap-2"><span className="shrink-0 opacity-40">·</span>CORS-headers saknas. Lägg till <code className="font-mono text-[10px]">Access-Control-Allow-Origin: *</code></li>
+                              <li className="flex gap-2"><span className="shrink-0 opacity-40">·</span>Spec-filen returnerar HTML vid bot-request. Kontrollera Content-Type</li>
                             </ul>
                           ) : (
                             <ul className="space-y-1 text-xs text-muted-foreground">
-                              <li className="flex gap-2"><span className="shrink-0 opacity-40">—</span>FastAPI, NestJS och Spring Boot genererar specs automatiskt</li>
-                              <li className="flex gap-2"><span className="shrink-0 opacity-40">—</span>Befintligt API utan docs? Verktyg som Speakeasy genererar specs retroaktivt</li>
-                              <li className="flex gap-2"><span className="shrink-0 opacity-40">—</span>Publicera på <code className="font-mono text-[10px]">/openapi.json</code> — standard, 0 config i de flesta ramverk</li>
+                              <li className="flex gap-2"><span className="shrink-0 opacity-40">·</span>FastAPI, NestJS och Spring Boot genererar specs automatiskt</li>
+                              <li className="flex gap-2"><span className="shrink-0 opacity-40">·</span>Befintligt API utan docs? Verktyg som Speakeasy genererar specs retroaktivt</li>
+                              <li className="flex gap-2"><span className="shrink-0 opacity-40">·</span>Publicera på <code className="font-mono text-[10px]">/openapi.json</code>, standard, 0 config i de flesta ramverk</li>
                             </ul>
                           )}
                         </div>
@@ -656,7 +687,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                         </div>
                       ))}
                     </div>
-                    <p className="text-[10px] text-muted-foreground/60 mt-3 italic">
+                    <p className="text-[10px] text-muted-foreground mt-3 italic">
                       {t.results.lastUpdated} {REGULATORY_UPDATES[0].date}
                     </p>
                   </AccordionContent>
@@ -720,7 +751,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="px-4 pb-4">
-                  <p className="text-[10px] text-muted-foreground/50 font-mono mb-3">
+                  <p className="text-[10px] text-muted-foreground font-mono mb-3">
                     {t.results.mcpNote}
                   </p>
                   <div className="space-y-2">
@@ -754,7 +785,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                               <span className="ml-1 opacity-60">({r.mcp_github_hint.stars} stars)</span>
                             )}
                           </p>
-                          <p className="text-xs text-muted-foreground/50 mt-0.5">
+                          <p className="text-xs text-muted-foreground mt-0.5">
                             {t.results.mcpGithubVerify}
                           </p>
                         </div>
