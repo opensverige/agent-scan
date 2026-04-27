@@ -127,48 +127,91 @@ export function ShareBlock({
 }
 
 /**
- * Sticky scroll-anchored share pill. Appears bottom-right after the user
- * has scrolled past the hero. Catches users who read the full report
- * before deciding to share — they'd otherwise miss the hero share block.
+ * Sticky scroll-anchored share toolbar. Always-visible bottom-right pill
+ * with three independent actions: copy DM-text, open LinkedIn share,
+ * open X share. Catches users who read the full report before deciding
+ * to share — they'd otherwise miss the hero ShareBlock.
+ *
+ * Mini-toolbar layout: primary "Copy" button with text on the left,
+ * two icon-only fan-outs to LinkedIn and X on the right. Each direct
+ * action lands in the same place as the corresponding hero button.
  */
 export function StickyShareButton({
   scanId,
   domain,
   score,
   total,
-  shareLabel,
+  copyLabel,
   copiedLabel,
+  linkedinLabel,
+  xLabel,
 }: {
   scanId: string;
   domain: string;
   score: number;
   total: number;
-  shareLabel: string;
+  copyLabel: string;
   copiedLabel: string;
+  linkedinLabel: string;
+  xLabel: string;
 }) {
   const [copied, setCopied] = useState(false);
 
+  const shareText = buildShareText({ domain, score, total, scanId });
+  const url = `https://agent.opensverige.se/r/${scanId}`;
+  const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+  const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
+
   function handleCopy() {
-    const text = buildShareText({ domain, score, total, scanId });
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(
+      navigator.clipboard.writeText(shareText).then(
         () => { setCopied(true); setTimeout(() => setCopied(false), 2200); },
         () => {},
       );
     }
   }
 
+  const easing = { transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)" } as const;
+
   return (
-    <button
-      type="button"
-      onClick={handleCopy}
-      className="fixed bottom-4 right-4 z-40 flex items-center gap-2 rounded-full border border-border bg-background/95 backdrop-blur-md px-4 py-2.5 font-mono text-xs text-foreground shadow-lg transition-all hover:bg-foreground hover:text-background sm:bottom-6 sm:right-6"
-      style={{ transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)" }}
-      aria-label={shareLabel}
+    <div
+      className="fixed bottom-4 right-4 z-40 flex items-center gap-1 rounded-full border border-border bg-background/95 backdrop-blur-md p-1 font-mono text-xs shadow-lg sm:bottom-6 sm:right-6"
+      style={easing}
     >
-      {copied
-        ? <><Check className="h-4 w-4" /> {copiedLabel}</>
-        : <><Copy className="h-4 w-4" /> {shareLabel} →</>}
-    </button>
+      <button
+        type="button"
+        onClick={handleCopy}
+        className="flex items-center gap-2 rounded-full px-3 py-2 text-foreground transition-colors hover:bg-foreground hover:text-background"
+        style={easing}
+        aria-label={copyLabel}
+      >
+        {copied
+          ? <><Check className="h-4 w-4" /> {copiedLabel}</>
+          : <><Copy className="h-4 w-4" /> {copied ? copiedLabel : copyLabel}</>}
+      </button>
+      <span className="h-5 w-px bg-border/70" aria-hidden />
+      <a
+        href={linkedinUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex h-9 w-9 items-center justify-center rounded-full text-foreground transition-colors hover:bg-foreground hover:text-background"
+        style={easing}
+        aria-label={linkedinLabel}
+        title={linkedinLabel}
+      >
+        <Linkedin className="h-4 w-4" />
+      </a>
+      <a
+        href={xUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex h-9 w-9 items-center justify-center rounded-full text-foreground transition-colors hover:bg-foreground hover:text-background"
+        style={easing}
+        aria-label={xLabel}
+        title={xLabel}
+      >
+        <span className="font-bold text-base leading-none" aria-hidden>𝕏</span>
+      </a>
+    </div>
   );
 }

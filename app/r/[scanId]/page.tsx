@@ -103,7 +103,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description,
     openGraph: {
       title: `${result.row.domain} fick ${data.score}/${total} i AI-readiness`,
-      description: data.summary || description,
+      // Short score-leading description fits LinkedIn's ~200-char window;
+      // the AI summary blew it up to ~450 and rendered as truncated mush.
+      description,
       url: `https://agent.opensverige.se/r/${scanId}`,
       siteName: "agent.opensverige",
       type: "article",
@@ -112,7 +114,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     twitter: {
       card: "summary_large_image",
       title: `${result.row.domain} — ${data.score}/${total} AI Readiness`,
-      description: data.summary || description,
+      description,
       images: [ogImageUrl],
     },
   };

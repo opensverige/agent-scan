@@ -156,7 +156,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description,
     openGraph: {
       title: `${domain} fick ${data.score}/${total} i AI-readiness`,
-      description: data.summary || description,
+      // Use the short score-leading description (~110 chars) instead of
+      // the AI summary (~450 chars). LinkedIn truncates at ~200 chars so
+      // the summary turned into mush in the link card. The score-led
+      // version stays punchy and within every platform's window.
+      description,
       url: `https://agent.opensverige.se/scan/${domain}`,
       siteName: "agent.opensverige",
       type: "article",
@@ -165,7 +169,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     twitter: {
       card: "summary_large_image",
       title: `${domain} — ${data.score}/${total} AI Readiness`,
-      description: data.summary || description,
+      description,
       images: [ogImageUrl],
     },
   };

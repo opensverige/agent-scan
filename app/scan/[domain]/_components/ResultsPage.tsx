@@ -46,6 +46,13 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
   const [notFound, setNotFound] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"sajt" | "api">(() => getDefaultTab(initialData));
+  // One-shot mount-glow on the score zone — gives the result a "just landed"
+  // feel and pulls the eye toward the score on first paint. Fades out once.
+  const [scoreFresh, setScoreFresh] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setScoreFresh(false), 2200);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     if (result) return;
@@ -215,11 +222,18 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
             <TabsContent value="sajt">
               {/* Score + badge + breakdown + summary */}
               <div className="px-6 flex flex-col items-center gap-5 pt-2 pb-6">
-                <ScoreRing score={r.score} total={r.checks_total ?? 11} ringColor={cfg.ringColor} />
+                <div
+                  className={`flex flex-col items-center gap-5 transition-all duration-1000 ${
+                    scoreFresh ? "drop-shadow-[0_0_32px_hsl(var(--primary)/0.45)]" : ""
+                  }`}
+                  style={{ transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)" }}
+                >
+                  <ScoreRing score={r.score} total={r.checks_total ?? 11} ringColor={cfg.ringColor} />
 
-                <Badge variant={cfg.badgeVariant} className="text-base px-5 py-1.5 font-mono font-bold tracking-wide">
-                  {cfg.label}
-                </Badge>
+                  <Badge variant={cfg.badgeVariant} className="text-base px-5 py-1.5 font-mono font-bold tracking-wide">
+                    {cfg.label}
+                  </Badge>
+                </div>
 
                 <div className="flex gap-5 text-xs font-mono flex-wrap justify-center">
                   {sc.critical > 0 && (
@@ -352,15 +366,22 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                 <>
                   {/* Score + badge + spec info */}
                   <div className="px-6 flex flex-col items-center gap-5 pt-2 pb-6">
-                    <ScoreRing
-                      score={apiScore.totalScore}
-                      total={100}
-                      ringColor={apiRingColor}
-                    />
+                    <div
+                      className={`flex flex-col items-center gap-5 transition-all duration-1000 ${
+                        scoreFresh ? "drop-shadow-[0_0_32px_hsl(var(--primary)/0.45)]" : ""
+                      }`}
+                      style={{ transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)" }}
+                    >
+                      <ScoreRing
+                        score={apiScore.totalScore}
+                        total={100}
+                        ringColor={apiRingColor}
+                      />
 
-                    <Badge className={cn("text-base px-5 py-1.5 font-mono font-bold tracking-wide border", apiBadgeClass)}>
-                      {apiScore.bandLabel}
-                    </Badge>
+                      <Badge className={cn("text-base px-5 py-1.5 font-mono font-bold tracking-wide border", apiBadgeClass)}>
+                        {apiScore.bandLabel}
+                      </Badge>
+                    </div>
 
                     {!apiScore.hasSpec &&
                       (specDetected ? (
@@ -888,15 +909,17 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
 
       </div>
 
-      {/* Sticky share pill — catches users who scroll past the hero share */}
+      {/* Sticky share toolbar — catches users who scroll past the hero share */}
       {r.scan_id && !r.scan_id.startsWith("local-") && (
         <StickyShareButton
           scanId={r.scan_id}
           domain={domain}
           score={r.score}
           total={r.checks_total ?? 11}
-          shareLabel={t.results.stickyShare}
+          copyLabel={t.results.stickyCopy}
           copiedLabel={t.results.copied}
+          linkedinLabel={t.results.shareLinkedin}
+          xLabel={t.results.shareX}
         />
       )}
     </div>

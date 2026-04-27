@@ -152,6 +152,7 @@ export const I18N = {
       shareLinkedin: "Dela på LinkedIn",
       shareX: "Dela på X",
       stickyShare: "Dela",
+      stickyCopy: "Kopiera",
       shareApiText: (domain: string, score: number, blockers: number, url: string) =>
         `${score < 30 ? "🔴" : score < 70 ? "🟡" : "🟢"} ${domain} fick ${score}/100 i API agent-readiness.\n\n${blockers} blockerare hittade.\n\nHur redo är ditt API? → ${url}`,
       shareSiteText: (domain: string, score: number, total: number, critical: number, important: number, passed: number, url: string) =>
@@ -611,6 +612,7 @@ export const I18N = {
       shareLinkedin: "Share on LinkedIn",
       shareX: "Share on X",
       stickyShare: "Share",
+      stickyCopy: "Copy",
       shareApiText: (domain: string, score: number, blockers: number, url: string) =>
         `${score < 30 ? "🔴" : score < 70 ? "🟡" : "🟢"} ${domain} scored ${score}/100 in API agent-readiness.\n\n${blockers} blockers found.\n\nHow ready is your API? → ${url}`,
       shareSiteText: (domain: string, score: number, total: number, critical: number, important: number, passed: number, url: string) =>
