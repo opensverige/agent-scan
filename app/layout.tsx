@@ -38,6 +38,11 @@ export const metadata: Metadata = {
     locale: "sv_SE",
     url: "https://agent.opensverige.se",
     siteName: "agent.opensverige",
+    images: [{ url: "/assets/og-default.png", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/assets/og-default.png"],
   },
   robots: { index: true, follow: true },
   icons: {

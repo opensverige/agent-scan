@@ -258,6 +258,7 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                     failedChecks={allFailed.map(c => ({ id: c.id, label: c.label }))}
                     scanId={r.scan_id}
                     shareLabel={t.results.shareSection}
+                    nudgeLabel={t.results.shareNudge}
                     copyLabel={t.results.shareCopyDmText}
                     copiedLabel={t.results.copied}
                     linkedinLabel={t.results.shareLinkedin}

@@ -92,7 +92,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const sc = data.severity_counts;
   const total = data.checks_total ?? 11;
   const description = `${result.row.domain} fick ${data.score}/${total} i AI-readiness. ${sc.critical} brister, ${sc.important} varningar, ${data.score} ok.`;
-  const ogImageUrl = `https://agent.opensverige.se/api/og?domain=${encodeURIComponent(result.row.domain)}&score=${data.score}&max=${total}&status=${encodeURIComponent(badgeLabel)}`;
+  // Static site OG until per-scan card is designed. The viral payload
+  // already lives in the DM-text (Wordle-style visual bar + score),
+  // which carries through DMs and posts where the link preview is
+  // suppressed anyway.
+  const ogImageUrl = "https://agent.opensverige.se/assets/og-default.png";
 
   return {
     title: `${result.row.domain} — ${badgeLabel} (${data.score}/${total}) | agent.opensverige`,

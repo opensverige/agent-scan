@@ -1,7 +1,7 @@
 // app/scan/[domain]/_components/ShareBlock.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, Copy, Linkedin } from "lucide-react";
 
@@ -13,6 +13,7 @@ interface ShareBlockProps {
   failedChecks: Array<{ id: string; label: string }>;
   scanId: string;
   shareLabel: string;
+  nudgeLabel: string;
   copyLabel: string;
   copiedLabel: string;
   linkedinLabel: string;
@@ -36,12 +37,26 @@ function buildShareText(args: { domain: string; score: number; total: number; sc
 }
 
 /** Hero-zone share block. Shown directly under the score badge — the
- *  emotional peak when users want to share. */
+ *  emotional peak when users want to share.
+ *
+ *  Visual prominence + mount-pulse + identity microcopy together lift
+ *  share-rate; pattern from Wordle (auto share-prompt) and Spotify
+ *  Wrapped (always-prominent share CTA). The pulse is one-shot — it
+ *  draws the eye on first render, then settles into a calm card. */
 export function ShareBlock({
   domain, score, total, scanId,
-  shareLabel, copyLabel, copiedLabel, linkedinLabel, xLabel,
+  shareLabel, nudgeLabel, copyLabel, copiedLabel, linkedinLabel, xLabel,
 }: ShareBlockProps) {
   const [copied, setCopied] = useState(false);
+  const [pulsing, setPulsing] = useState(true);
+
+  // One-shot attention grab. Server + first-paint render with pulse on,
+  // client fades it off after ~2s. transition-all duration-700 animates
+  // the fade-out so it never feels like an abrupt state change.
+  useEffect(() => {
+    const t = setTimeout(() => setPulsing(false), 2000);
+    return () => clearTimeout(t);
+  }, []);
 
   const shareText = buildShareText({ domain, score, total, scanId });
   const url = `https://agent.opensverige.se/r/${scanId}`;
@@ -65,10 +80,19 @@ export function ShareBlock({
     }
   }
 
+  const containerClass = `w-full rounded-lg border p-5 mt-6 transition-all duration-700 ${
+    pulsing
+      ? "border-primary/40 ring-4 ring-primary/15 bg-primary/[0.04]"
+      : "border-border bg-foreground/[0.025]"
+  }`;
+
   return (
-    <div className="w-full border-t border-border/50 pt-5 mt-2">
-      <p className="font-mono text-[10px] tracking-widest text-muted-foreground/70 mb-3 uppercase">
+    <div className={containerClass} style={{ transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)" }}>
+      <p className="font-mono text-[10px] tracking-widest text-muted-foreground/70 mb-2 uppercase">
         {shareLabel}
+      </p>
+      <p className="text-sm text-foreground/85 mb-4 leading-snug">
+        {nudgeLabel}
       </p>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <Button
