@@ -130,7 +130,7 @@ export function buildDemoAnalysis(domain: string): ClaudeAnalysis {
   return {
     company,
     industry: 'Okänd bransch',
-    summary: `${company} har scannats men ingen AI-analys är tillgänglig i demo-läge. Tekniska checks ovan är riktiga och baserade på live-data. Lägg till ANTHROPIC_API_KEY i Vercel för AI-analys.`,
+    summary: `AI-sammanfattningen är pausad just nu. De tekniska checkarna ovan är live och fullt giltiga, och alla siffror på sidan kommer från färska mätningar mot ${domain}.`,
     agent_suggestions: DEFAULT_AGENT_SUGGESTIONS,
   };
 }

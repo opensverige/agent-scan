@@ -209,14 +209,15 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
             <Badge variant="outline" className="font-mono text-[10px] tracking-widest w-fit">
               {t.results.scanResultsBadge}
             </Badge>
-            <CardTitle className="font-serif text-[clamp(28px,5vw,40px)] font-normal leading-[1.12] tracking-[-0.6px] mt-1">
-              {t.results.headline}
+            {/* Domain becomes the hero — subtitle below carries the
+                generic framing question. Title pulls the eye, subtitle
+                grounds the page. */}
+            <CardTitle className="mt-1 flex items-center gap-2.5 font-serif text-[clamp(28px,5vw,40px)] font-normal leading-[1.12] tracking-[-0.6px]">
+              <Globe className="h-6 w-6 shrink-0 text-primary" aria-hidden />
+              <span className="truncate">{domain}</span>
             </CardTitle>
-            <CardDescription className="mt-2">
-              <span className="inline-flex max-w-full items-center gap-2 rounded-md border border-primary/30 bg-primary/[0.06] px-2.5 py-1 font-mono text-sm text-foreground">
-                <Globe className="h-3.5 w-3.5 shrink-0 text-primary" />
-                <span className="truncate">{domain}</span>
-              </span>
+            <CardDescription className="mt-2 font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+              {t.results.headline}
             </CardDescription>
           </CardHeader>
 
@@ -314,9 +315,16 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                 <>
                   <Separator />
                   <div id="topphittar" className="px-6 py-5 scroll-mt-20">
-                    <p className="font-mono text-[10px] font-bold tracking-widest text-muted-foreground mb-3">
-                      {t.results.topFindings}
-                    </p>
+                    <div className="mb-3 flex items-baseline justify-between gap-3">
+                      <p className="font-mono text-[10px] font-bold tracking-widest text-muted-foreground">
+                        {t.results.topFindings}
+                      </p>
+                      {allFailed.length > topSiteFindings.length && (
+                        <p className="font-mono text-[10px] text-muted-foreground">
+                          {t.results.topFindingsCount(topSiteFindings.length, allFailed.length)}
+                        </p>
+                      )}
+                    </div>
                     <Accordion type="multiple" className="space-y-2">
                       {topSiteFindings.map((check, i) => (
                         <FindingRow key={check.id} check={check} index={i} />

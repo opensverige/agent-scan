@@ -72,6 +72,7 @@ export const I18N = {
 
       // Top findings
       topFindings: "TOPPHITTAR",
+      topFindingsCount: (shown: number, total: number) => `${shown} av ${total}`,
       moreFindings: (n: number) => `+${n} fler fynd i rapporten nedan`,
 
       // Recommendations
@@ -542,6 +543,7 @@ export const I18N = {
       warningPlural: "warnings",
 
       topFindings: "TOP FINDINGS",
+      topFindingsCount: (shown: number, total: number) => `${shown} of ${total}`,
       moreFindings: (n: number) => `+${n} more findings in the report below`,
 
       recommendations: "RECOMMENDATIONS",
