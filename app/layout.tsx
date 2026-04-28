@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { DM_Sans, JetBrains_Mono, Instrument_Serif } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { LanguageProvider } from "@/lib/language-context";
+import { detectLang } from "@/lib/detect-lang";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -70,10 +73,22 @@ const organizationSchema = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Server-side language detection. Cookie wins (manual choice persists),
+  // then Accept-Language (browser preference), then Vercel's geo header.
+  // Setting <html lang> here matches initial React state so there's no
+  // hydration flash from sv → en for English-preferring visitors.
+  const h = await headers();
+  const initialLang = detectLang({
+    cookie: h.get("cookie") ?? undefined,
+    acceptLanguage: h.get("accept-language") ?? undefined,
+    country: h.get("x-vercel-ip-country") ?? undefined,
+    userAgent: h.get("user-agent") ?? undefined,
+  });
+
   return (
     <html
-      lang="sv"
+      lang={initialLang}
       className={`${dmSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} scroll-smooth`}
       suppressHydrationWarning
     >
@@ -82,14 +97,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
-        {/* Cal.com element-click embed — runs synchronously before any interaction */}
+        {/* Cal.com element-click embed, runs synchronously before any interaction */}
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(C,A,L){let p=function(a,ar){a.q.push(ar);};let d=C.document;C.Cal=C.Cal||function(){let cal=C.Cal;let ar=arguments;if(!cal.loaded){cal.ns={};cal.q=cal.q||[];d.head.appendChild(d.createElement("script")).src=A;cal.loaded=true;}if(ar[0]===L){const api=function(){p(api,arguments);};const namespace=ar[1];api.q=api.q||[];if(typeof namespace==="string"){cal.ns[namespace]=cal.ns[namespace]||api;p(cal.ns[namespace],ar);p(cal,["initNamespace",namespace]);}else p(cal,ar);return;}p(cal,ar);};})(window,"https://app.cal.com/embed/embed.js","init");Cal("init","opensverige",{origin:"https://app.cal.com"});Cal.ns.opensverige("ui",{"hideEventTypeDetails":false,"layout":"month_view"});`,
           }}
         />
-        {children}
+        <LanguageProvider initialLang={initialLang}>
+          {children}
+        </LanguageProvider>
         <Analytics />
       </body>
     </html>
