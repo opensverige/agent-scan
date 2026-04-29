@@ -66,39 +66,45 @@ async function fetchLatestScan(domain: string): Promise<ScanRow | null> {
   const modernSelect = "badge,checks_passed,checks_json,claude_summary,recommendations,scanned_at";
   const legacySelect = "badge,checks_passed,checks_json,scanned_at";
 
-  for (const candidate of candidates) {
-    const modernRes = await fetch(
+  const modernResults = await Promise.all(candidates.map(async candidate => {
+    const res = await fetch(
       `${url}/rest/v1/scan_submissions?domain=eq.${encodeURIComponent(candidate)}&order=scanned_at.desc&limit=1&select=${modernSelect}`,
       { headers, next: { revalidate: 60 } }
     );
+    if (!res.ok) return null;
+    const rows = await res.json() as Array<ScanRow & { recommendations?: unknown }>;
+    return rows[0] ?? null;
+  }));
 
-    if (modernRes.ok) {
-      const rows = await modernRes.json() as Array<ScanRow & { recommendations?: unknown }>;
-      const row = rows[0];
-      if (row) {
-        return {
-          badge: row.badge,
-          checks_passed: row.checks_passed,
-          checks_json: row.checks_json,
-          claude_summary: row.claude_summary ?? null,
-          recommendations: normalizeRecommendations(row.recommendations),
-          scanned_at: row.scanned_at ?? null,
-        };
-      }
-      continue;
-    }
+  const modernRows = modernResults.filter((row): row is ScanRow & { recommendations?: unknown } => !!row);
+  modernRows.sort((a, b) => Date.parse(b.scanned_at ?? "") - Date.parse(a.scanned_at ?? ""));
+  const modernRow = modernRows[0];
+  if (modernRow) {
+    return {
+      badge: modernRow.badge,
+      checks_passed: modernRow.checks_passed,
+      checks_json: modernRow.checks_json,
+      claude_summary: modernRow.claude_summary ?? null,
+      recommendations: normalizeRecommendations(modernRow.recommendations),
+      scanned_at: modernRow.scanned_at ?? null,
+    };
+  }
 
-    // Older schemas don't have claude_summary/recommendations columns.
-    const legacyRes = await fetch(
+  // Older schemas don't have claude_summary/recommendations columns.
+  const legacyResults = await Promise.all(candidates.map(async candidate => {
+    const res = await fetch(
       `${url}/rest/v1/scan_submissions?domain=eq.${encodeURIComponent(candidate)}&order=scanned_at.desc&limit=1&select=${legacySelect}`,
       { headers, next: { revalidate: 60 } }
     );
-    if (!legacyRes.ok) continue;
+    if (!res.ok) return null;
+    const rows = await res.json() as LegacyScanRow[];
+    return rows[0] ?? null;
+  }));
 
-    const legacyRows = await legacyRes.json() as LegacyScanRow[];
-    const legacyRow = legacyRows[0];
-    if (!legacyRow) continue;
-
+  const legacyRows = legacyResults.filter((row): row is LegacyScanRow => !!row);
+  legacyRows.sort((a, b) => Date.parse(b.scanned_at ?? "") - Date.parse(a.scanned_at ?? ""));
+  const legacyRow = legacyRows[0];
+  if (legacyRow) {
     return {
       badge: legacyRow.badge,
       checks_passed: legacyRow.checks_passed,

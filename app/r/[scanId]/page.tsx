@@ -34,6 +34,34 @@ interface ScanRow {
   scanned_at: string | null;
 }
 
+function domainAliases(domain: string): string[] {
+  const normalized = domain.toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+  const stripped = normalized.replace(/^www\./, "");
+  return Array.from(new Set([normalized, stripped, `www.${stripped}`]));
+}
+
+async function getLatestScanForDomain(domain: string): Promise<ScanRow | null> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+
+  const select = "id,domain,badge,checks_passed,checks_total,checks_json,claude_summary,recommendations,scanned_at";
+  const headers = { apikey: key, Authorization: `Bearer ${key}` };
+  const rows = await Promise.all(domainAliases(domain).map(async candidate => {
+    const res = await fetch(
+      `${url}/rest/v1/scan_submissions?domain=eq.${encodeURIComponent(candidate)}&limit=1&order=scanned_at.desc&select=${select}`,
+      { headers, next: { revalidate: 60 } },
+    );
+    if (!res.ok) return null;
+    const matches = await res.json() as ScanRow[];
+    return matches[0] ?? null;
+  }));
+
+  return rows
+    .filter((row): row is ScanRow => !!row)
+    .sort((a, b) => Date.parse(b.scanned_at ?? "") - Date.parse(a.scanned_at ?? ""))[0] ?? null;
+}
+
 async function getScanById(scanId: string): Promise<{ row: ScanRow; data: ScanResult } | null> {
   if (!UUID_REGEX.test(scanId)) return null;
 
@@ -51,8 +79,13 @@ async function getScanById(scanId: string): Promise<{ row: ScanRow; data: ScanRe
     );
     if (!res.ok) return null;
     const rows = await res.json() as ScanRow[];
-    const row = rows[0];
-    if (!row) return null;
+    const pinnedRow = rows[0];
+    if (!pinnedRow) return null;
+
+    const latestRow = await getLatestScanForDomain(pinnedRow.domain).catch(() => null);
+    const row = latestRow && Date.parse(latestRow.scanned_at ?? "") > Date.parse(pinnedRow.scanned_at ?? "")
+      ? latestRow
+      : pinnedRow;
 
     const data: ScanResult = {
       company: row.domain.split(".")[0] ?? row.domain,
