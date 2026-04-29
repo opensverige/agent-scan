@@ -94,6 +94,9 @@ export async function runScanPipeline(
     aiText: joinedComplianceText,
   });
 
+  const mcpWellKnown = checkMcpWellKnown(probeOutput.mcpDiscovery);
+  const mcpServerCard = checkMcpServerCard(probeOutput.mcpServerCard);
+
   const initialChecks: AllChecks = {
     robots_ok: checkRobots(probeOutput.robots.allowed),
     sitemap_exists: checkSitemap(probeOutput.sitemapExists),
@@ -104,7 +107,7 @@ export async function runScanPipeline(
     api_exists: checkApiExists(probeOutput.builderProbes),
     openapi_spec: checkOpenApiSpec(probeOutput.builderProbes),
     api_docs: checkApiDocs(probeOutput.builderProbes),
-    mcp_server: checkMcpServer(probeOutput.builderProbes),
+    mcp_server: checkMcpServer(probeOutput.builderProbes, { mcpWellKnown, mcpServerCard }),
     sandbox_available: checkSandboxAvailable(probeOutput.builderProbes),
     // Stage 1 — P0 checks (G-01..G-06)
     llms_full_txt: checkLlmsFullTxt(probeOutput.llmsFullTxt),
@@ -115,8 +118,8 @@ export async function runScanPipeline(
       gptbot: probeOutput.crawlerGptBot,
       perplexitybot: probeOutput.crawlerPerplexityBot,
     }),
-    mcp_well_known: checkMcpWellKnown(probeOutput.mcpDiscovery),
-    mcp_server_card: checkMcpServerCard(probeOutput.mcpServerCard),
+    mcp_well_known: mcpWellKnown,
+    mcp_server_card: mcpServerCard,
   };
 
   // ── Compute builder data from probe output ───────────────────────────────

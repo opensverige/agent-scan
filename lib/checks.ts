@@ -332,26 +332,43 @@ export function checkApiDocs(probes: ProbeResult[]): CheckResult {
 
 // â”€â”€ Builder (hardcoded fails) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-// MCP check: probe .well-known/mcp.json - if found, real MCP server exists.
-// Falls back to hardcoded fail if not found (most companies don't have MCP yet).
-export function checkMcpServer(probes: ProbeResult[]): CheckResult {
-  const hit = probes.find(p =>
-    p.status === 200 &&
-    (p.url.includes('/.well-known/mcp') || p.url.includes('/mcp.json')) &&
-    (p.contentType?.includes('application/json') || p.body.includes('"mcpVersion"') || p.body.includes('"tools"'))
-  );
+// MCP check: accept both legacy /.well-known/mcp.json and current
+// discovery/card surfaces. Dedicated validators below still check shape.
+export function checkMcpServer(
+  probes: ProbeResult[],
+  discovered?: { mcpWellKnown?: CheckResult; mcpServerCard?: CheckResult },
+): CheckResult {
+  const discoveredHit = !!(discovered?.mcpWellKnown?.pass || discovered?.mcpServerCard?.pass);
+  const hit = probes.find(p => {
+    if (p.status !== 200) return false;
+    let pathname = "";
+    try {
+      pathname = new URL(p.url).pathname;
+    } catch {
+      pathname = p.url;
+    }
+    if (!["/mcp", "/mcp.json", "/.well-known/mcp", "/.well-known/mcp.json", "/.well-known/mcp/server-card.json"].includes(pathname)) {
+      return false;
+    }
+    const body = p.body.toLowerCase();
+    return p.contentType?.includes('application/json') ||
+      body.includes('"mcpversion"') ||
+      body.includes('"mcp_version"') ||
+      body.includes('"serverinfo"') ||
+      body.includes('"tools"');
+  });
   return {
     id: 'mcp_server',
-    pass: !!hit,
-    label: hit
+    pass: discoveredHit || !!hit,
+    label: discoveredHit || hit
       ? 'MCP-server hittad - agenter kan koppla in sig direkt'
       : 'Ingen MCP-koppling hittad',
-    detail: hit
+    detail: discoveredHit || hit
       ? undefined
       : 'AI-verktyg som Claude, Cursor och Windsurf använder MCP för att koppla in sig direkt i system. Vi hittade ingen kopplad till den här domänen - det kan innebära att agenter inte kan nå er utan manuell integration.',
     category: 'builder',
     severity: 'important',
-    hardcoded: !hit,
+    hardcoded: !(discoveredHit || hit),
   };
 }
 

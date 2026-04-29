@@ -97,6 +97,7 @@ const COMPLIANCE_PATH_SUFFIXES = [
 ] as const;
 
 const ADDITIONAL_BUILDER_PATHS = [
+  "/mcp",
   "/.well-known/mcp.json",
   "/.well-known/llms.txt",
 ] as const;
