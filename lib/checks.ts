@@ -156,7 +156,14 @@ export function complianceChecks(evidence?: ComplianceEvidence): [CheckResult, C
   // We use this to differentiate the FAIL message: "no AI mention at all" vs
   // "AI tools mentioned but no formal Art. 22 vocabulary".
   const mentionsAiTools = !noPrivacyEvidence && /\b(claude|chatgpt|gpt-?[345]|perplexity|ai-agent|ai agent|ai-verktyg|ai-tj[aä]nst|llm|model context protocol|mcp|anthropic|openai)\b/.test(privacyHay);
-  const hasCookieBotHandling = !noCookieEvidence && /bot|crawler|user-agent|icke-m[aä]nsklig|non-human|machine client|agent/.test(cookieHay);
+  // Word-boundary anchored alternatives so AI-product copy ("AI agent",
+  // "agentic", "useragent", "agent-based pricing") doesn't false-positive
+  // on the bare-word `agent` that the previous regex matched. Each alt
+  // is a meta-discussion term — bots, crawlers, spiders, machine clients,
+  // automated traffic — that strongly implies the policy author is
+  // thinking about non-human visitors. Case-insensitive because cookie
+  // text is sometimes title-case ("Bot Detection").
+  const hasCookieBotHandling = !noCookieEvidence && /\b(robots?|crawlers?|spiders?|bots?|user[\s-]?agents?|icke-m[aä]nsklig\w*|non-human|non[\s-]human|machine[\s-]clients?|automated[\s-]traffic)\b/i.test(cookieHay);
   const hasAiLabelingInfo = !noAiEvidence && /ai-generated|ai generated|syntetisk|watermark|maskinl[aä]sbar m[aä]rkning|article\s*50|art\.\s*50|eu ai act/.test(aiHay);
 
   return [

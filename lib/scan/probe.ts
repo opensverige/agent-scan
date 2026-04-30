@@ -86,14 +86,46 @@ const CRAWLER_USER_AGENTS = {
   perplexitybot: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; PerplexityBot/1.0; +https://perplexity.ai/perplexitybot)",
 } as const;
 
+// Compliance pages live in surprisingly varied places. The bare-root
+// patterns (privacy, cookies) cover most Swedish SMBs and WordPress sites.
+// The /legal/* prefix is the convention for SaaS / scale-ups (Stripe, Linear,
+// Anthropic, Cloudflare, GitHub all use it). /policies/ is Stripe's pattern.
+// /about/privacy shows up on legacy enterprise sites. Keep this an explicit
+// allowlist rather than walking sitemaps — same regex + path-based scoring,
+// just more candidates. Each path is probed individually, the union of hits
+// becomes the joinedComplianceText for downstream regex matching.
 const COMPLIANCE_PATH_SUFFIXES = [
+  // Bare root (most common for SMB / WordPress)
   "/integritetspolicy",
   "/privacy",
   "/privacy-policy",
+  "/privacypolicy",
   "/gdpr",
   "/cookies",
   "/cookiepolicy",
   "/cookie-policy",
+  "/data-policy",
+  // /legal/* prefix (modern SaaS convention)
+  "/legal",
+  "/legal/privacy",
+  "/legal/privacy-policy",
+  "/legal/cookies",
+  "/legal/cookie-policy",
+  "/legal/security",
+  "/legal/terms",
+  "/legal/gdpr",
+  "/legal/data-policy",
+  // /policies/* (Stripe, GitHub)
+  "/policies",
+  "/policies/privacy",
+  "/policies/cookies",
+  // /about/* (legacy enterprise)
+  "/about/privacy",
+  "/about/legal",
+  // Trust portals (Anthropic, Notion, Vercel)
+  "/trust",
+  "/trust/privacy",
+  "/security",
 ] as const;
 
 const ADDITIONAL_BUILDER_PATHS = [
