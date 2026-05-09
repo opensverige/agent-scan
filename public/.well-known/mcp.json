@@ -1,0 +1,49 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schema/well-known/v1.json",
+  "name": "agent-opensverige-mcp",
+  "title": "agent.opensverige Scanner MCP",
+  "description": "MCP server for agent.opensverige.se — scan any public domain for 17 AI-readiness checks (discovery, EU AI Act compliance, developer/builder surface) directly from Claude, Cursor, Windsurf or any MCP-capable agent.",
+  "version": "0.0.0-planned",
+  "status": "planned",
+  "publisher": {
+    "name": "opensverige",
+    "url": "https://opensverige.se",
+    "contact": "info@opensverige.se"
+  },
+  "documentation": "https://agent.opensverige.se/mcp",
+  "server_card": "https://agent.opensverige.se/mcp/server-card.json",
+  "underlying_api": {
+    "openapi": "https://agent.opensverige.se/openapi.yaml",
+    "base_url": "https://agent.opensverige.se/api/v1",
+    "auth": "Bearer osv_(test|live)_<24chars>"
+  },
+  "planned_tools": [
+    {
+      "name": "scan_domain",
+      "description": "Scan a public domain for 17 AI-readiness checks. Returns score, badge (green/yellow/red), per-check pass/fail with severity, AI-generated summary, and EU AI Act Art. 50 disclosure.",
+      "input": {
+        "domain": "string (TLD without protocol)"
+      }
+    },
+    {
+      "name": "get_scan",
+      "description": "Look up a previous scan by UUID. Pinned to the moment in time when the scan was created.",
+      "input": {
+        "scan_id": "string (uuid)"
+      }
+    },
+    {
+      "name": "compare_scans",
+      "description": "Compare two scans (same domain, different dates) to track AI-readiness regressions or improvements.",
+      "input": {
+        "scan_id_a": "string",
+        "scan_id_b": "string"
+      }
+    }
+  ],
+  "jurisdiction": "EU",
+  "data_retention_days": 90,
+  "license": "FSL-1.1-MIT",
+  "feedback": "https://discord.gg/CSphbTk8En",
+  "last_updated": "2026-05-09"
+}

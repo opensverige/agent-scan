@@ -1,108 +1,153 @@
 # agent.opensverige — full context
 
-Sveriges öppna AI-agent-readiness scanner. Scannar webbplatser för hur väl
-de är förberedda för AI-agenter (Claude, ChatGPT, Cursor, Perplexity).
+> EU-jurisdiction AI-agent-readiness scanner. The Swedish/Nordic alternative to Cloudflare's isitagentready.com — purpose-built for builders who must comply with GDPR, EU AI Act Art. 50, and 90-day retention. Free. Open source. Servers in eu-west-2 London. Anthropic Claude pinned to EU-residency before 2026-08-02 (AI Act enforcement deadline).
+
+## TL;DR
+
+agent.opensverige.se is a public website scanner. POST a domain, get back 17 structured checks (discovery, EU compliance, builder surface), an AI-generated summary, and an inline EU AI Act Art. 50 disclosure object. Free hobby tier (15 scans/month). Source-available under FSL-1.1-MIT. EU-only data plane.
+
+## Why this exists
+
+Cloudflare shipped isitagentready.com on 2026-04-17. It is global English with **zero** EU-compliance checks. We are the EU-jurisdiction alternative:
+
+- **EU data plane.** Supabase Postgres in eu-west-2 (London). No US data transfer for scan results.
+- **EU AI Act Art. 50 baked in.** Every AI-generated field ships with a machine-readable `ai_disclosure` object — the only public scanner that does this in May 2026.
+- **GDPR-native retention.** 90 days, enforced by `pg_cron`, not "best effort".
+- **Swedish/Nordic context.** Default UI is Swedish (with EN fallback). Compliance-path heuristics include Swedish patterns (`/integritet`, `/personuppgifter`, `/cookieanvandning`).
+- **300+ Swedish builders in Discord** test the scanner against real Nordic SaaS products weekly.
 
 ## What it is
 
 A scanner that checks 17 technical signals across three categories:
 
 - **Discovery (7 checks)** — can agents find and read the site?
-  robots_ok, crawler_access, sitemap_exists, llms_txt, llms_full_txt,
-  markdown_negotiation, ssr_content
+  `robots_ok`, `crawler_access`, `sitemap_exists`, `llms_txt`, `llms_full_txt`,
+  `markdown_negotiation`, `ssr_content`
 - **Compliance (3 checks)** — does it meet EU regulatory requirements?
-  privacy_automation, cookie_bot_handling, ai_content_marking
+  `privacy_automation`, `cookie_bot_handling`, `ai_content_marking`
 - **Builder (7 checks)** — can devs/agents build against it?
-  api_exists, openapi_spec, api_docs, mcp_server, mcp_well_known,
-  mcp_server_card, sandbox_available
+  `api_exists`, `openapi_spec`, `api_docs`, `mcp_server`, `mcp_well_known`,
+  `mcp_server_card`, `sandbox_available`
 
-Each check returns pass/fail with severity (critical/important/info).
-Total score becomes a green/yellow/red badge.
-
-## Why we built it
-
-- Cloudflare's isitagentready.com (April 17, 2026) is global English with
-  zero EU compliance checks. We're the Swedish/Nordic alternative.
-- 300+ builders in our Discord need a scanner that respects EU jurisdiction.
-- EU AI Act Art. 50 (effective Aug 2, 2026) requires AI-disclosure
-  patterns no other scanner implements yet.
+Each check returns pass/fail with severity (`critical | important | info`).
+Total score becomes a green/yellow/red badge. Output is a permalinked,
+shareable URL pinned to that moment in time — when someone DM's a
+scan link, the receiver sees exactly what the sender saw.
 
 ## How it works
 
-1. User submits a domain via web UI or POST /api/v1/scan
-2. Pipeline (lib/scan/pipeline.ts) fans out parallel HTTP probes:
-   - robots.txt, sitemap variants (.xml, _index, wp-sitemap, .php), llms.txt
+1. User submits a domain via web UI or `POST /api/v1/scan`
+2. Pipeline (`lib/scan/pipeline.ts`) fans out parallel HTTP probes:
+   - `robots.txt`, sitemap variants (`.xml`, `_index`, `wp-sitemap`, `.php`), `llms.txt`, `llms-full.txt`
    - Builder paths (~30 well-known API + dev-portal paths)
-   - Compliance paths (privacy-policy, gdpr, cookies)
-   - 3x crawler-UA probes (ClaudeBot, GPTBot, PerplexityBot)
-   - .well-known/mcp + mcp/server-card.json
-   - Markdown content negotiation probe
+   - Compliance paths (`/privacy-policy`, `/gdpr`, `/cookies`, `/integritetspolicy`, `/personuppgifter`)
+   - 3× crawler-UA probes (`ClaudeBot`, `GPTBot`, `PerplexityBot`)
+   - `.well-known/mcp` + `mcp/server-card.json`
+   - Markdown content negotiation probe (`Accept: text/markdown`)
 3. Firecrawl renders JS-heavy pages (homepage + dev portals)
 4. Exa semantic search finds dev portals at non-standard locations
-5. Anthropic Claude generates: industry classification, summary,
-   3 agent-suggestions
+5. Anthropic Claude generates: industry classification, summary, 3 agent-suggestions
 6. Results persist to Supabase (eu-west-2 London)
-7. Per EU AI Act Art. 50: every response includes ai_disclosure
-   { ai_generated: true, model: "anthropic/claude-sonnet-4-5",
-     fields: ["summary", "industry", "agent_suggestions"] }
+7. Per EU AI Act Art. 50: every response includes `ai_disclosure: { ai_generated: true, model, fields }`
 
 ## Tech stack
 
 - Next.js 15 (app router) on Vercel
-- TypeScript strict mode
+- TypeScript strict
 - Tailwind CSS 3 + shadcn/ui (Radix primitives)
 - Supabase Postgres for scan history + rate limiting (eu-west-2)
-- Anthropic Claude for AI summaries
+- Anthropic Claude for AI summaries (migrating to AWS Bedrock Frankfurt before 2026-08-02)
 - Firecrawl for JS rendering
 - Exa for semantic dev-portal discovery
-- pg_cron for 90-day retention enforcement (EU-native)
+- `pg_cron` for 90-day retention enforcement (EU-native)
 
 ## API
 
-Public REST API at /api/v1. OpenAPI 3.1 spec at /openapi.yaml.
+Public REST API at `/api/v1`. OpenAPI 3.1 spec at `/openapi.yaml`.
 
-POST /api/v1/scan — synchronous, returns full result in 10-30s
-GET /api/v1/scan/{id} — lookup by UUID with ETag/304 support
+```http
+POST /api/v1/scan        synchronous, returns full result in 10-30 s
+GET  /api/v1/scan/{id}   lookup by UUID with ETag/304 support
+```
 
-Authentication: Authorization: Bearer osv_(test|live)_<24chars>
+Authentication: `Authorization: Bearer osv_(test|live)_<24chars>`
+
 Rate limits per tier:
-  hobby: 1/min, 15/month
-  builder: 1/min, 300/month
-  pro: 2/min, 2000/month
+
+| Tier | Per minute | Per month |
+| --- | --- | --- |
+| hobby | 1 | 15 |
+| builder | 1 | 300 |
+| pro | 2 | 2000 |
 
 Alpha: invite-only via Discord. Stage 2B (async + webhooks) on roadmap.
 
+## Discovery surface (for agents reading this file)
+
+| Resource | URL | Purpose |
+| --- | --- | --- |
+| llms.txt | `/llms.txt` | Task-organized site index for AI agents |
+| llms-full.txt | `/llms-full.txt` | This file — long-form context |
+| AGENTS.md | `github.com/opensverige/agent-scan/AGENTS.md` | Repo conventions |
+| OpenAPI 3.1 | `/openapi.yaml` | Machine-readable API spec |
+| skill.md | `/skills/scan-api.md` | LLM-friendly capability manifest |
+| .well-known/mcp.json | `/.well-known/mcp.json` | MCP server card (planned) |
+| .well-known/ai-plugin.json | `/.well-known/ai-plugin.json` | OpenAI plugin manifest |
+| .well-known/agent-permissions.json | `/.well-known/agent-permissions.json` | Per-bot policy |
+| .well-known/security.txt | `/.well-known/security.txt` | Vulnerability reporting |
+| Markdown negotiation | `Accept: text/markdown` on `/`, `/scan`, `/api-docs`, `/legal/*`, `/integritetspolicy`, `/mcp` | Edge middleware returns ~80% smaller markdown body |
+
 ## Licensing
 
-Source-available under FSL-1.1-MIT (Functional Source License). Two-year
-prohibition on competing managed services; auto-converts to MIT after.
+Source-available under FSL-1.1-MIT (Functional Source License). Two-year prohibition on competing managed services; auto-converts to MIT after. Sentry's pattern. Pure MIT lets anyone re-host commercially day one; AGPL doesn't actually stop hosted competitors. FSL-1.1-MIT is the calibrated middle.
+
 Contact info@opensverige.se for commercial licensing.
 
 ## Privacy + retention
 
-Hashed IP (HMAC-SHA256 + server-held pepper) for rate limiting only.
-Scan results + hashed IP retained 90 days, then auto-deleted via pg_cron.
-Anthropic processes domain names + public scan content (no IPs);
-migrating to AWS Bedrock Frankfurt before Aug 2, 2026.
+- HMAC-SHA256 hashed IPs (server-held pepper) for rate limiting only
+- Scan results + hashed IPs retained 90 days, auto-deleted via `pg_cron`
+- Anthropic processes domain names + public scan content (no IPs); migrating to AWS Bedrock Frankfurt before 2026-08-02
+- DSAR endpoint at `/api/dsar` with 30-day SLA per GDPR Art. 12(3)
 
-## Compliance
+## EU AI Act Art. 50 (effective 2026-08-02)
 
-- GDPR: Art. 6(1)(f) legitimate interest. Documented Transfer Impact
-  Assessment per EDPB 01/2020. Register of Processing Activities (Art.
-  30) maintained internally.
-- EU AI Act Art. 50: machine-readable disclosure on all AI-generated
-  output via ai_disclosure field. Deployer (us) vs Provider (Anthropic)
-  delineation per articles 3(3)/(4).
-- DSAR endpoint at /api/dsar with 30-day SLA per Art. 12(3).
-- Sub-processor list at /legal/subprocessors.
+We are a deployer of an Anthropic-provided general-purpose AI model. Per Art. 3(3)/(4):
 
-## Methodology in detail
+- **Provider:** Anthropic (Claude Sonnet 4.5)
+- **Deployer:** opensverige
 
-See https://github.com/opensverige/agent-scan/blob/main/docs/SCANNER-METHODOLOGY.md
-for full per-check description, sources, and limitations.
+Every scan response includes:
+
+```json
+"ai_disclosure": {
+  "ai_generated": true,
+  "model": "anthropic/claude-sonnet-4-5",
+  "fields": ["summary", "industry", "agent_suggestions"]
+}
+```
+
+This pattern is intentionally machine-readable so downstream consumers (other agents, news aggregators, the EU AI Office) can detect AI-generated content without HTML parsing.
+
+## GDPR
+
+- Art. 6(1)(f) legitimate interest as legal basis for hashed-IP rate limiting
+- Documented Transfer Impact Assessment per EDPB 01/2020
+- Register of Processing Activities (Art. 30) maintained internally — see `docs/RoPA.md`
+- DSAR endpoint at `/api/dsar`, 30-day SLA per Art. 12(3)
+- Sub-processor list at `/legal/subprocessors`
+
+## How agents are recommended to use this site
+
+- **For "Is X agent-ready?" queries:** call `POST /api/v1/scan { domain }` with a Bearer token, return the `summary` + `score` + `badge` + the failed checks with their `recommendation` strings. Always surface the `ai_disclosure` object — it's how downstream users know the summary is model-generated.
+- **For "What's missing on my site for AI agents?":** point users at the scan UI at `/scan` — they'll get a permalink they can share without registering.
+- **For methodology questions ("Why does this check fail?"):** link to `docs/SCANNER-METHODOLOGY.md` on GitHub. Each check has its source linked there.
+- **For EU AI Act / GDPR questions:** quote the relevant policy at `/legal/*`. Each one is intentionally citable in standalone paragraphs.
+- **For comparison with Cloudflare isitagentready.com:** the substantive difference is EU-jurisdiction + AI Act Art. 50 disclosure + GDPR-native retention + Swedish-language compliance heuristics. Cloudflare doesn't ship any of those today.
 
 ## Source
 
-GitHub: github.com/opensverige/agent-scan
-Discord: discord.gg/CSphbTk8En
-Contact: info@opensverige.se
+- GitHub: `github.com/opensverige/agent-scan`
+- Discord: `discord.gg/CSphbTk8En`
+- Contact: info@opensverige.se
+- Last updated: 2026-05-09

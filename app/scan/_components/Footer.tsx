@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { useLang } from "@/lib/language-context";
+import { CopyForAI } from "@/components/copy-for-ai";
 
 export default function Footer() {
   const { t } = useLang();
@@ -28,6 +29,8 @@ export default function Footer() {
         >
           Felipe Otarola ↗
         </a>
+        <span aria-hidden className="opacity-60">·</span>
+        <CopyForAI />
       </div>
 
       <div className="flex justify-between items-center flex-wrap gap-2">

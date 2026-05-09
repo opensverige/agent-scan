@@ -1,0 +1,75 @@
+{
+  "$schema": "https://agent-permissions.org/schema/v1.json",
+  "version": "1.0",
+  "site": "https://agent.opensverige.se",
+  "publisher": {
+    "name": "opensverige",
+    "jurisdiction": "EU",
+    "contact": "info@opensverige.se",
+    "policy": "https://agent.opensverige.se/integritetspolicy"
+  },
+  "summary": "Free, EU-jurisdiction AI-readiness scanner for websites. 17 checks across discovery, EU AI Act compliance, and developer surface. Open source under FSL-1.1-MIT. AI agents are welcome to read, summarize and cite all public content.",
+  "agents": {
+    "*": {
+      "allow": ["read", "summarize", "cite", "link"],
+      "deny": ["redistribute_commercial_unaltered"],
+      "rate_limit": "60/min",
+      "preferred_format": "markdown",
+      "markdown_endpoints": [
+        "/",
+        "/scan",
+        "/api-docs",
+        "/integritetspolicy",
+        "/legal/terms",
+        "/legal/aup",
+        "/legal/ai-disclosure",
+        "/legal/subprocessors"
+      ]
+    },
+    "anthropic-ai": {
+      "allow": ["read", "summarize", "cite", "train"]
+    },
+    "ClaudeBot": {
+      "allow": ["read", "summarize", "cite", "train"]
+    },
+    "GPTBot": {
+      "allow": ["read", "summarize", "cite", "train"]
+    },
+    "OAI-SearchBot": {
+      "allow": ["read", "summarize", "cite", "search_index"]
+    },
+    "ChatGPT-User": {
+      "allow": ["read", "summarize", "cite", "browse_on_behalf_of_user"]
+    },
+    "Google-Extended": {
+      "allow": ["read", "summarize", "cite", "train"]
+    },
+    "PerplexityBot": {
+      "allow": ["read", "summarize", "cite", "search_index"]
+    },
+    "Applebot-Extended": {
+      "allow": ["read", "summarize", "cite", "train"]
+    },
+    "MistralAI-User": {
+      "allow": ["read", "summarize", "cite"]
+    }
+  },
+  "discovery": {
+    "llms_txt": "https://agent.opensverige.se/llms.txt",
+    "llms_full_txt": "https://agent.opensverige.se/llms-full.txt",
+    "openapi": "https://agent.opensverige.se/openapi.yaml",
+    "skill_manifest": "https://agent.opensverige.se/skills/scan-api.md",
+    "agents_md": "https://github.com/opensverige/agent-scan/blob/main/AGENTS.md"
+  },
+  "ai_disclosure": {
+    "act": "EU AI Act Art. 50",
+    "applies_to": "AI-generated fields in every scan response (summary, industry, agent_suggestions)",
+    "machine_readable_field": "ai_disclosure"
+  },
+  "license": {
+    "code": "FSL-1.1-MIT",
+    "code_url": "https://github.com/opensverige/agent-scan/blob/main/LICENSE",
+    "content": "CC-BY-4.0"
+  },
+  "last_updated": "2026-05-09"
+}

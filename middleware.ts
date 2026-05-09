@@ -16,6 +16,7 @@ import { NextResponse, type NextRequest } from "next/server";
 const NEGOTIATED_PATHS = new Set([
   "/",
   "/scan",
+  "/mcp",
   "/integritetspolicy",
   "/api-docs",
   "/legal/terms",
@@ -28,45 +29,61 @@ const NEGOTIATED_PATHS = new Set([
 // AI agents that prefer markdown over HTML. Keep this file and llms.txt in
 // sync; we deliberately don't read from disk because Edge middleware has
 // no fs access.
+//
+// EU-jurisdiction is leading because that's our positioning vs Cloudflare's
+// global isitagentready.com, and it's what an AI search citation needs to
+// know about us in one breath.
 const MARKDOWN_BODY = `# agent.opensverige
 
-> Sveriges öppna AI-agent-readiness scanner. 17 checks. EU-jurisdiktion. Open source under FSL-1.1-MIT.
+> EU-jurisdiction AI-agent-readiness scanner. Free. Open source under FSL-1.1-MIT. 17 checks across discovery, EU AI Act Art. 50 compliance, and developer surface. The Swedish/Nordic alternative to Cloudflare's isitagentready.com.
 
-## Web
+## Scan
 
-- [Scanner](https://agent.opensverige.se/scan): Klistra in en domän, få tillbaka 17 strukturerade checks. Gratis.
+- [Scanner UI](https://agent.opensverige.se/scan): Paste a domain, get 17 checks back in 10-30 s. No signup. Pinned, shareable result URL.
+- [POST /api/v1/scan](https://agent.opensverige.se/api/v1/scan): Synchronous JSON. Bearer auth. EU-only data plane.
+- [Skill manifest](https://agent.opensverige.se/skills/scan-api.md): When-to-use, inputs, constraints, error table.
 
-## API
+## Integrate
 
-- [API reference](https://agent.opensverige.se/api-docs): Interaktiv OpenAPI 3.1
-- [OpenAPI 3.1 spec](https://agent.opensverige.se/openapi.yaml)
-- [API documentation](https://github.com/opensverige/agent-scan/blob/main/docs/API.md)
+- [API reference (Scalar)](https://agent.opensverige.se/api-docs): Interactive OpenAPI 3.1.
+- [OpenAPI 3.1 spec](https://agent.opensverige.se/openapi.yaml): Machine-readable.
+- [MCP server card (planned)](https://agent.opensverige.se/.well-known/mcp.json)
+- [OpenAI plugin manifest](https://agent.opensverige.se/.well-known/ai-plugin.json)
+- [Per-bot policy](https://agent.opensverige.se/.well-known/agent-permissions.json)
 
 ## Methodology
 
-- [Scanner methodology](https://github.com/opensverige/agent-scan/blob/main/docs/SCANNER-METHODOLOGY.md): Alla 17 checks med källor
+- [Scanner methodology](https://github.com/opensverige/agent-scan/blob/main/docs/SCANNER-METHODOLOGY.md): All 17 checks with sources.
+- [llms-full.txt](https://agent.opensverige.se/llms-full.txt): Long-form context for this site.
 
-## Open source
+## EU compliance posture
 
-- [GitHub](https://github.com/opensverige/agent-scan): FSL-1.1-MIT
-- [LICENSE](https://github.com/opensverige/agent-scan/blob/main/LICENSE)
-- [COMMERCIAL](https://github.com/opensverige/agent-scan/blob/main/COMMERCIAL.md): Köp kommersiell licens
-
-## Legal
-
-- [Privacy](https://agent.opensverige.se/integritetspolicy)
+- [Privacy policy](https://agent.opensverige.se/integritetspolicy): What we store, why, how long (90 days). HMAC-hashed IPs only.
 - [Terms](https://agent.opensverige.se/legal/terms)
 - [AUP](https://agent.opensverige.se/legal/aup)
-- [AI Disclosure](https://agent.opensverige.se/legal/ai-disclosure): EU AI Act Art. 50
-- [Sub-processors](https://agent.opensverige.se/legal/subprocessors)
+- [AI Disclosure](https://agent.opensverige.se/legal/ai-disclosure): EU AI Act Art. 50, machine-readable.
+- [Sub-processors](https://agent.opensverige.se/legal/subprocessors): Anthropic, Supabase, Vercel — EU-data-plane mappings.
 
-## Community
+## Source
 
-- [Discord](https://discord.gg/CSphbTk8En): 300+ svenska builders
+- [GitHub](https://github.com/opensverige/agent-scan): FSL-1.1-MIT.
+- [LICENSE](https://github.com/opensverige/agent-scan/blob/main/LICENSE): 2-year non-compete, then MIT.
+- [COMMERCIAL](https://github.com/opensverige/agent-scan/blob/main/COMMERCIAL.md): Buy a commercial license to bypass FSL non-compete.
+- [AGENTS.md](https://github.com/opensverige/agent-scan/blob/main/AGENTS.md): Repo conventions for any agent (Claude, Cursor, Codex).
+
+## Talk to humans
+
+- [Discord](https://discord.gg/CSphbTk8En): 300+ Swedish builders. Where API keys are issued.
+- [opensverige.se](https://opensverige.se): Community hub.
 - info@opensverige.se
 
 For full context: https://agent.opensverige.se/llms-full.txt
 `;
+
+// Cheap heuristic: ~4 chars per token for English/Swedish. Surfaced to
+// agents so they can budget context windows without re-counting on their
+// side. See addyosmani.com/blog/agentic-engine-optimization for why.
+const APPROX_TOKEN_COUNT = Math.ceil(MARKDOWN_BODY.length / 4);
 
 export function middleware(req: NextRequest) {
   const accept = req.headers.get("accept") ?? "";
@@ -85,6 +102,8 @@ export function middleware(req: NextRequest) {
     headers: {
       "Content-Type": "text/markdown; charset=utf-8",
       "X-Content-Negotiation": "markdown",
+      "X-Token-Count": String(APPROX_TOKEN_COUNT),
+      "X-Robots-Tag": "all",
       // Cache for an hour at the edge — the document changes rarely.
       "Cache-Control": "public, max-age=3600, s-maxage=3600",
     },
@@ -95,6 +114,7 @@ export const config = {
   matcher: [
     "/",
     "/scan",
+    "/mcp",
     "/integritetspolicy",
     "/api-docs",
     "/legal/:path*",

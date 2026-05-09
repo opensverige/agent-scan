@@ -1,0 +1,18 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "agent.opensverige AI Readiness Scanner",
+  "name_for_model": "agent_opensverige_scanner",
+  "description_for_human": "Free, EU-jurisdiction scanner that measures any public website's AI-agent readiness across 17 technical checks.",
+  "description_for_model": "Use agent.opensverige to scan a public domain for AI-agent readiness. Returns 17 checks across three categories — discovery (robots.txt, sitemap, llms.txt, llms-full.txt, markdown content negotiation, SSR content, AI crawler access), EU compliance (privacy automation, cookie handling, EU AI Act Art. 50 AI-disclosure), and builder surface (API existence, OpenAPI spec, API docs, MCP server, MCP well-known, MCP server card, sandbox availability). Each check returns pass/fail with severity (critical/important/info). Total score becomes a green/yellow/red badge. Data lives in EU (Supabase eu-west-2 London), retained 90 days. License FSL-1.1-MIT. POST /api/v1/scan with { domain } and Authorization: Bearer osv_(test|live)_<24chars>; returns synchronously in 10-30s. Free hobby tier.",
+  "auth": {
+    "type": "user_http",
+    "authorization_type": "bearer"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://agent.opensverige.se/openapi.yaml"
+  },
+  "logo_url": "https://agent.opensverige.se/assets/og-default.png",
+  "contact_email": "info@opensverige.se",
+  "legal_info_url": "https://agent.opensverige.se/legal/terms"
+}
