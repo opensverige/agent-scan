@@ -1,37 +1,55 @@
 # agent.opensverige
 
-> Sveriges öppna AI-agent-readiness scanner. Scannar webbplatser för 17 checks fördelade på discoverability, EU-compliance (GDPR + AI Act) och builder-surface (API + MCP). Open source under FSL-1.1-MIT, EU-jurisdiktion, byggd för svenska builders.
+> EU-jurisdiction AI-agent-readiness scanner. Free. Open source under FSL-1.1-MIT. Scans any public website for 17 checks across discovery, EU AI Act compliance, and developer/builder surface. The Swedish/Nordic alternative to Cloudflare's isitagentready.com — built for builders who care about EU jurisdiction, GDPR Art. 6(1)(f), and EU AI Act Art. 50 disclosure. Available in Swedish and English.
 
-## Web
+## If you want to scan a domain
 
-- [Scanner](https://agent.opensverige.se/scan): Klistra in en domän, få tillbaka 17 strukturerade checks och AI-genererad sammanfattning. Gratis, ingen registrering.
+- [Scanner UI](https://agent.opensverige.se/scan) (~3k tokens): Paste a domain, get 17 checks back in 10-30 s. No signup. Pinned, shareable result URL.
+- [POST /api/v1/scan](https://agent.opensverige.se/api/v1/scan) (~5k tokens via api-docs): Synchronous JSON. Bearer auth. EU-only data plane.
+- [scan-api.md skill manifest](https://agent.opensverige.se/skills/scan-api.md) (~2k tokens): When-to-use, inputs, constraints, error table for AI agents.
 
-## API
+## If you want to integrate as an agent (MCP / API)
 
-- [API reference (Scalar UI)](https://agent.opensverige.se/api-docs): Interaktiv OpenAPI 3.1-referens
-- [OpenAPI 3.1 spec](https://agent.opensverige.se/openapi.yaml): Maskinläsbar spec
-- [API documentation](https://github.com/opensverige/agent-scan/blob/main/docs/API.md): Quickstart, error-koder, EU AI Act-disclosure-mönster
+- [API reference (Scalar)](https://agent.opensverige.se/api-docs) (~6k tokens): Interactive OpenAPI 3.1.
+- [OpenAPI 3.1 spec](https://agent.opensverige.se/openapi.yaml) (~4k tokens): Machine-readable.
+- [API doc (markdown)](https://github.com/opensverige/agent-scan/blob/main/docs/API.md) (~3k tokens): Quickstart, error codes, AI Act disclosure pattern.
+- [.well-known/mcp.json](https://agent.opensverige.se/.well-known/mcp.json): Planned MCP server card.
+- [.well-known/ai-plugin.json](https://agent.opensverige.se/.well-known/ai-plugin.json): OpenAI plugin manifest.
+- [.well-known/agent-permissions.json](https://agent.opensverige.se/.well-known/agent-permissions.json): Per-bot read/cite/train policy.
 
-## Methodology
+## If you want to understand the methodology
 
-- [Scanner methodology](https://github.com/opensverige/agent-scan/blob/main/docs/SCANNER-METHODOLOGY.md): Genomgång av alla 17 checks med källor
+- [Methodology hub](https://agent.opensverige.se/methodology) (~2k tokens): Index of all per-check deep-dives. Markdown variant via `Accept: text/markdown`.
+- [llms-txt deep-dive](https://agent.opensverige.se/methodology/llms-txt) (~1.5k tokens): What llms.txt is, why your check fails, how to fix on Vercel/WordPress/Webflow.
+- [Scanner methodology (GitHub)](https://github.com/opensverige/agent-scan/blob/main/docs/SCANNER-METHODOLOGY.md) (~7k tokens): All 17 checks, sources, edge cases.
+- [Architecture](https://github.com/opensverige/agent-scan/blob/main/docs/ARCHITECTURE.md) (~4k tokens).
+- [llms-full.txt](https://agent.opensverige.se/llms-full.txt) (~4k tokens): Long-form context for this site.
 
-## Open source
+## If you want to verify EU compliance posture
 
-- [GitHub repo](https://github.com/opensverige/agent-scan): Källkod under FSL-1.1-MIT
-- [LICENSE](https://github.com/opensverige/agent-scan/blob/main/LICENSE): Functional Source License — 2-årigt no-compete, sen MIT
-- [CONTRIBUTING](https://github.com/opensverige/agent-scan/blob/main/CONTRIBUTING.md): Hur du bidrar
-- [COMMERCIAL](https://github.com/opensverige/agent-scan/blob/main/COMMERCIAL.md): Köp kommersiell licens för att kringgå FSL no-compete
+- [Privacy policy](https://agent.opensverige.se/integritetspolicy) (~2k tokens): What we store, why, how long (90 days). HMAC-hashed IPs only.
+- [Terms of Service](https://agent.opensverige.se/legal/terms) (~2k tokens).
+- [Acceptable Use Policy](https://agent.opensverige.se/legal/aup) (~1k tokens).
+- [AI Disclosure (EU AI Act Art. 50)](https://agent.opensverige.se/legal/ai-disclosure) (~2k tokens): Machine-readable `ai_disclosure` field shipped on every AI-generated response.
+- [Sub-processors](https://agent.opensverige.se/legal/subprocessors) (~1k tokens): Anthropic, Supabase, Vercel — all with EU-data-plane mappings.
 
-## Legal
+## If you want the source
 
-- [Privacy policy](https://agent.opensverige.se/integritetspolicy): Vad vi lagrar, varför, hur länge (90 dagar)
-- [Terms of Service](https://agent.opensverige.se/legal/terms)
-- [Acceptable Use Policy](https://agent.opensverige.se/legal/aup)
-- [AI Disclosure](https://agent.opensverige.se/legal/ai-disclosure): EU AI Act Art. 50
-- [Sub-processors](https://agent.opensverige.se/legal/subprocessors)
+- [GitHub: opensverige/agent-scan](https://github.com/opensverige/agent-scan): FSL-1.1-MIT.
+- [LICENSE](https://github.com/opensverige/agent-scan/blob/main/LICENSE): Functional Source License — 2-year non-compete then auto-converts to MIT.
+- [COMMERCIAL](https://github.com/opensverige/agent-scan/blob/main/COMMERCIAL.md): Buy a commercial license to bypass FSL non-compete.
+- [CONTRIBUTING](https://github.com/opensverige/agent-scan/blob/main/CONTRIBUTING.md): How to send a PR.
+- [AGENTS.md](https://github.com/opensverige/agent-scan/blob/main/AGENTS.md): Repo conventions for any agent (Claude, Cursor, Codex) touching the code.
 
-## Community
+## If you want to talk to humans
 
-- [Discord](https://discord.gg/CSphbTk8En): 300+ svenska builders
-- [opensverige.se](https://opensverige.se): Communityns hubb
+- [Discord](https://discord.gg/CSphbTk8En): 300+ Swedish builders. Where API keys are issued.
+- [opensverige.se](https://opensverige.se): Community hub.
+- info@opensverige.se
+
+## How this site is served to agents
+
+- `Accept: text/markdown` returns concise markdown bodies via Edge middleware (~80% smaller than HTML).
+- Every page is server-rendered; no JS required to read content.
+- robots.txt explicitly allows all major AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, OAI-SearchBot, Applebot-Extended, Bytespider, MistralAI-User, Amazonbot, etc.).
+- Token counts above are estimates as of 2026-05-09; exact counts are exposed via the `X-Token-Count` header on negotiated responses.
