@@ -6,6 +6,7 @@
 // Caps at 4 cards. Zero JS.
 
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { listArticles } from "@/lib/methodology/load";
 import type { CheckId } from "@/lib/checks";
 import type {
@@ -13,16 +14,16 @@ import type {
   MethodologyIndexEntry,
 } from "@/lib/methodology/types";
 
-const SEVERITY_TONE: Record<string, string> = {
-  critical: "text-destructive",
-  important: "text-amber-500",
-  info: "text-muted-foreground",
+const SEVERITY_EDGE: Record<string, string> = {
+  critical: "bg-[hsl(var(--destructive))]",
+  important: "bg-[hsl(var(--warning))]",
+  info: "bg-[hsl(var(--muted-foreground))]/40",
 };
 
-const SEVERITY_DOT: Record<string, string> = {
-  critical: "bg-destructive",
-  important: "bg-amber-400",
-  info: "bg-muted-foreground",
+const SEVERITY_TONE: Record<string, string> = {
+  critical: "text-[hsl(var(--destructive))]",
+  important: "text-[hsl(var(--warning))]",
+  info: "text-[hsl(var(--muted-foreground))]",
 };
 
 function checkIdsToSlugs(ids: readonly CheckId[]): Set<string> {
@@ -86,41 +87,52 @@ export async function RelatedArticles({
   return (
     <aside
       aria-labelledby="related-articles-heading"
-      className="mx-auto max-w-[720px] border-t border-border/40 px-6 pt-12 pb-16"
+      className="mx-auto max-w-[720px] border-t border-[hsl(var(--border))] px-6 pt-12 pb-16"
     >
       <p
         id="related-articles-heading"
-        className="mb-6 font-mono text-[10px] uppercase tracking-widest text-muted-foreground"
+        className="mb-1 font-serif text-[20px] font-normal leading-snug text-[hsl(var(--foreground))]"
       >
-        Continue reading · {related.length}{" "}
-        {related.length === 1 ? "related check" : "related checks"}
+        Continue reading
       </p>
-      <ul className="grid gap-4 sm:grid-cols-2">
-        {related.map((entry) => (
+      <p className="mb-7 font-mono text-[10px] uppercase tracking-widest text-[hsl(var(--muted-foreground))]">
+        {related.length} related {related.length === 1 ? "check" : "checks"}
+      </p>
+      <ul className="grid gap-3 sm:grid-cols-2">
+        {related.map((entry, idx) => (
           <li key={entry.slug}>
             <Link
               href={`/methodology/${entry.slug}`}
-              className="group block h-full rounded-xl border border-border/50 bg-muted/15 p-5 transition-colors hover:border-border hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+              className="group relative flex h-full flex-col rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-5 py-4 transition-all hover:border-[hsl(var(--ring))] hover:shadow-[0_2px_0_hsl(var(--border)),0_8px_24px_-12px_hsl(var(--ring)/0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] focus-visible:ring-offset-2"
             >
-              <p className="mb-2 flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              <span
+                aria-hidden
+                className={`absolute left-0 top-4 bottom-4 w-[2px] rounded-r ${
+                  SEVERITY_EDGE[entry.severity] ?? "bg-[hsl(var(--muted-foreground))]/40"
+                }`}
+              />
+              <p className="mb-2 flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-[hsl(var(--muted-foreground))]">
+                <span className="font-medium tabular-nums text-[hsl(var(--foreground))]/70">
+                  {String(idx + 1).padStart(2, "0")}
+                </span>
+                <span className="opacity-40">·</span>
+                <span>{entry.category}</span>
+                <span className="opacity-40">·</span>
                 <span
-                  aria-hidden
-                  className={`h-1.5 w-1.5 rounded-full ${SEVERITY_DOT[entry.severity] ?? "bg-muted-foreground"}`}
-                />
-                <span className={SEVERITY_TONE[entry.severity] ?? "text-muted-foreground"}>
+                  className={SEVERITY_TONE[entry.severity] ?? "text-[hsl(var(--muted-foreground))]"}
+                >
                   {entry.severity}
                 </span>
-                <span className="opacity-50">·</span>
-                <span>{entry.category}</span>
               </p>
-              <h3 className="mb-2 font-serif text-lg font-normal leading-snug tracking-tight text-foreground">
+              <h3 className="mb-1.5 font-serif text-[18px] font-normal leading-snug tracking-[-0.2px] text-[hsl(var(--foreground))] transition-colors group-hover:text-[hsl(var(--primary))]">
                 {entry.title}
               </h3>
-              <p className="mb-4 line-clamp-3 text-sm leading-relaxed text-foreground/70">
+              <p className="mb-4 line-clamp-2 text-[14px] leading-[1.55] text-[hsl(var(--muted-foreground))]">
                 {entry.citableLead.split(/\n+/)[0]}
               </p>
-              <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground transition-colors group-hover:text-foreground">
-                Read →
+              <span className="mt-auto inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-widest text-[hsl(var(--foreground))]/70 transition-all group-hover:gap-2 group-hover:text-[hsl(var(--primary))]">
+                Open check
+                <ArrowRight className="h-3 w-3" aria-hidden />
               </span>
             </Link>
           </li>
