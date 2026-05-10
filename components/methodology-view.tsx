@@ -1,30 +1,30 @@
 // components/methodology-view.tsx
 //
-// Server-component renderer for a single methodology article. The
-// outer <main data-methodology> wrapper in [slug]/page.tsx flips
-// shadcn HSL tokens to the light helpdesk palette (see globals.css);
-// every Tailwind class here therefore reads from theme tokens
-// rather than hard-coded zinc/amber values.
+// Server-component renderer for a single methodology article. Outer
+// <div data-methodology> wrapper in [slug]/page.tsx flips shadcn HSL
+// tokens to the light helpdesk palette (see globals.css).
 //
 // Section icons + step badges are detected via heading-text inspection
 // — purely visual, no content changes required to the markdown source.
 
 import {
-  AlertTriangle,
-  ArrowRight,
-  Bot,
-  HelpCircle,
-  Network,
-  ShieldCheck,
-  Wrench,
-  type LucideIcon,
-} from "lucide-react";
+  MdArrowForward,
+  MdBuild,
+  MdHelpOutline,
+  MdHub,
+  MdSmartToy,
+  MdVerified,
+  MdWarningAmber,
+} from "react-icons/md";
+import type { IconType } from "react-icons";
 import type { ComponentProps, ReactNode } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Link from "next/link";
 import { MethodologyCodeBlock } from "@/components/methodology-code-block";
 import type { MethodologyArticle } from "@/lib/methodology/types";
+
+type MdIcon = IconType;
 
 const SEVERITY_PILL: Record<string, string> = {
   critical:
@@ -40,16 +40,17 @@ const SEVERITY_LABEL: Record<string, string> = {
   info: "Info",
 };
 
-// Section name (lowercased, trimmed) -> Lucide icon. Monochrome
-// (text-muted-foreground) so the page doesn't feel like emoji-spam.
-const SECTION_ICONS: Record<string, LucideIcon> = {
-  "why this fails on real sites": AlertTriangle,
-  "why scans flag this": AlertTriangle,
-  "how to fix": Wrench,
-  "verify the fix": ShieldCheck,
-  "common false positives": HelpCircle,
-  "how agents are recommended to use this article": Bot,
-  "related agent.opensverige checks": Network,
+// Section name (lowercased, trimmed) -> Material Design icon. Monochrome
+// (text-muted-foreground) so the page reads as a clean reference doc,
+// not an emoji-spam interface.
+const SECTION_ICONS: Record<string, MdIcon> = {
+  "why this fails on real sites": MdWarningAmber,
+  "why scans flag this": MdWarningAmber,
+  "how to fix": MdBuild,
+  "verify the fix": MdVerified,
+  "common false positives": MdHelpOutline,
+  "how agents are recommended to use this article": MdSmartToy,
+  "related agent.opensverige checks": MdHub,
 };
 
 function flattenChildren(children: ReactNode): string {
@@ -72,17 +73,14 @@ const MARKDOWN_COMPONENTS: Components = {
     const text = flattenChildren(children).trim();
     const Icon = SECTION_ICONS[text.toLowerCase()];
     const id = slugify(text);
-    const isVerify = id === "verify-the-fix";
     return (
       <h2
         id={id}
-        className={`mt-16 mb-5 flex items-center gap-3 font-serif text-[28px] font-normal tracking-tight text-[hsl(var(--foreground))] ${
-          isVerify ? "scroll-mt-24" : "scroll-mt-24"
-        }`}
+        className="mt-16 mb-5 flex items-center gap-3 scroll-mt-24 font-serif text-[28px] font-normal tracking-tight text-[hsl(var(--foreground))]"
       >
         {Icon && (
           <Icon
-            className="h-5 w-5 shrink-0 text-[hsl(var(--muted-foreground))]"
+            className="h-6 w-6 shrink-0 text-[hsl(var(--muted-foreground))]"
             aria-hidden
           />
         )}
@@ -286,7 +284,7 @@ export function MethodologyView({ article }: { article: MethodologyArticle }) {
             className="group inline-flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-4 py-2.5 font-sans text-[14px] font-medium text-[hsl(var(--primary-foreground))] shadow-sm transition-all hover:translate-y-[-1px] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--background))]"
           >
             Jump to the fix
-            <ArrowRight
+            <MdArrowForward
               className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
               aria-hidden
             />
@@ -309,7 +307,7 @@ export function MethodologyView({ article }: { article: MethodologyArticle }) {
         className="mb-12 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-5 md:p-6"
       >
         <p className="mb-2 flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-[hsl(var(--muted-foreground))]">
-          <Bot className="h-3.5 w-3.5" aria-hidden />
+          <MdSmartToy className="h-4 w-4" aria-hidden />
           Why agents care
         </p>
         <p
@@ -360,7 +358,7 @@ export function MethodologyView({ article }: { article: MethodologyArticle }) {
             className="inline-flex items-center gap-1.5 uppercase tracking-widest underline-offset-4 hover:text-[hsl(var(--foreground))] hover:underline"
           >
             Edit on GitHub
-            <ArrowRight className="h-3 w-3" aria-hidden />
+            <MdArrowForward className="h-3.5 w-3.5" aria-hidden />
             <span className="sr-only"> (opens in new tab)</span>
           </a>
         </div>

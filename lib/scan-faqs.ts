@@ -4,38 +4,76 @@
 // schema injected into /scan and the visible accordion in
 // app/scan/_components/HomepageFaq.tsx read from this list — schema and
 // rendered DOM never drift.
+//
+// Tone: pedagogical, max ~12 words per sentence, "du" not "ni", lead
+// with everyday language and put legal references at the end if at all.
 
 export interface ScanFaq {
   q: string;
   a: string;
 }
 
-export const SCAN_FAQS: readonly ScanFaq[] = [
+export type ScanFaqGroupId = "quick-start" | "security" | "build";
+
+export interface ScanFaqGroup {
+  id: ScanFaqGroupId;
+  label: string;
+  glyph: string;
+  questions: readonly ScanFaq[];
+}
+
+const QUICK_START: readonly ScanFaq[] = [
   {
-    q: "Vad är AI-agent-readiness?",
-    a: "AI-agent-readiness mäter hur väl en webbplats är konfigurerad för att hittas, förstås och användas av AI-agenter (Claude, ChatGPT, Cursor, Perplexity). Det inkluderar discovery-signaler (robots.txt, sitemap, llms.txt, llms-full.txt, markdown-content-negotiation, SSR-content, AI-crawler-access), regulatorisk compliance (GDPR Art. 6, EU AI Act Art. 50) och builder-API-yta (OpenAPI, MCP, sandbox).",
+    q: "Vad är AI-readiness, egentligen?",
+    a: "AI-agenter som ChatGPT och Claude surfar webben åt sina användare. Om din sajt inte är läsbar för dem, finns du inte i deras svar. Vi mäter hur lätt agenter kan hitta, läsa och använda din sajt.",
   },
   {
-    q: "Vad kollar scannern?",
-    a: "Scannern kontrollerar 17 checks i tre kategorier. Discovery (7): robots_ok, crawler_access, sitemap_exists, llms_txt, llms_full_txt, markdown_negotiation, ssr_content. Compliance (3): privacy_automation, cookie_bot_handling, ai_content_marking. Builder (7): api_exists, openapi_spec, api_docs, mcp_server, mcp_well_known, mcp_server_card, sandbox_available. Varje check har en metodologi-sida med primärkällor.",
+    q: "Vad testar scannern?",
+    a: "17 saker, fördelat på tre delar. Hittas du av agenter (sitemap, llms.txt, AI-crawlers)? Är du laglig (cookie-banner, integritetspolicy, AI-märkning)? Kan utvecklare bygga mot dig (API, dokumentation, MCP, sandbox)? Varje check har en egen sida med källor.",
   },
   {
-    q: "Är scannern gratis?",
-    a: "Ja, ingen registrering krävs. För programmatisk åtkomst via /api/v1/scan utfärdar vi API-nycklar via Discord. Hobby-tiern är 15 scans per månad utan kostnad. Source-available under FSL-1.1-MIT.",
+    q: "Kostar det något?",
+    a: "Nej. Scanna fritt utan konto. Vill du köra via vårt API får du 15 scans i månaden gratis, en nyckel hämtas i Discord. Koden är öppen på GitHub.",
+  },
+];
+
+const SECURITY: readonly ScanFaq[] = [
+  {
+    q: "Var hamnar min data?",
+    a: "Allt lagras i London hos Supabase, inom EU. Din IP sparas hashad, aldrig i klartext. Resultaten raderas automatiskt efter 90 dagar. Sammanfattningarna skrivs av Claude som ser domännamn och publikt scan-innehåll, inget annat.",
   },
   {
-    q: "Vad händer med min data?",
-    a: "Scan-resultat och en HMAC-SHA256-hashad version av din IP lagras i Supabase eu-west-2 London. Allt raderas automatiskt efter 90 dagar via pg_cron. Anthropic Claude bearbetar domännamn och publikt scan-innehåll för att generera summary-fältet (men inte din IP); migrering till AWS Bedrock Frankfurt sker före EU AI Act-deadlinen 2026-08-02.",
+    q: "Varför inte bara använda Cloudflares scanner?",
+    a: "Tre skäl. Vår data ligger i EU, inte USA. Vi följer EU AI Act med en maskinläsbar AI-stämpel på varje sammanfattning. Och vi letar efter svenska sidor som /integritetspolicy och /cookieanvandning, som globala scanners missar.",
+  },
+];
+
+const BUILD: readonly ScanFaq[] = [
+  {
+    q: "Vad gör jag med resultatet?",
+    a: "Skicka rapporten till din utvecklare eller byrå. Varje punkt har en åtgärd och länk till hur man fixar den. Mindre sajter brukar hinna fixa det viktigaste på en eftermiddag.",
   },
   {
-    q: "Hur skiljer sig agent.opensverige från Cloudflares isitagentready.com?",
-    a: "Tre konkreta skillnader. EU-jurisdiktion: data-planet ligger i Supabase eu-west-2 London, inte USA. EU AI Act Art. 50: varje AI-genererad sammanfattning levereras med en maskinläsbar ai_disclosure-block, vilket Cloudflare inte gör. Svenska compliance-paths: scannern hittar /integritetspolicy, /personuppgifter, /cookieanvandning som ingen global scanner letar efter.",
+    q: "Är det här bara för utvecklare?",
+    a: "Nej. Du som äger sajten ser direkt vad som funkar och inte. Tekniska detaljer finns för den som behöver dem, men resultaten läses som ett vanligt betyg.",
   },
   {
-    q: "Hur ofta uppdateras checks-listan?",
-    a: "Listan revideras kvartalsvis när nya specs eller regulatoriska krav landar (EU AI Act-tidlinje, MCP-spec-uppdateringar, llmstxt.org-revisioner). Varje check har en metodologi-sida med lastUpdated och primärkällor — du kan följa förändringarna där eller via vår GitHub.",
+    q: "Hur ofta uppdateras checklistan?",
+    a: "Vi ser över listan varje kvartal. När EU släpper nya regler eller MCP-specen ändras, uppdaterar vi. Varje check har ett datum och länkar till källan, så du kan se exakt vad som ändrats och när.",
   },
+];
+
+export const SCAN_FAQ_GROUPS: readonly ScanFaqGroup[] = [
+  { id: "quick-start", label: "Snabbstart", glyph: "◐", questions: QUICK_START },
+  { id: "security", label: "Säkerhet & data", glyph: "◑", questions: SECURITY },
+  { id: "build", label: "Använd resultatet", glyph: "◒", questions: BUILD },
 ] as const;
+
+/** Flat list — used by the FAQPage JSON-LD schema where grouping isn't
+ * meaningful. The visible accordion renders by SCAN_FAQ_GROUPS. */
+export const SCAN_FAQS: readonly ScanFaq[] = SCAN_FAQ_GROUPS.flatMap(
+  (g) => g.questions,
+);
 
 export function buildScanFaqSchema(canonicalUrl: string) {
   return {

@@ -6,7 +6,7 @@
 // Caps at 4 cards. Zero JS.
 
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { MdArrowForward } from "react-icons/md";
 import { listArticles } from "@/lib/methodology/load";
 import type { CheckId } from "@/lib/checks";
 import type {
@@ -132,7 +132,7 @@ export async function RelatedArticles({
               </p>
               <span className="mt-auto inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-widest text-[hsl(var(--foreground))]/70 transition-all group-hover:gap-2 group-hover:text-[hsl(var(--primary))]">
                 Open check
-                <ArrowRight className="h-3 w-3" aria-hidden />
+                <MdArrowForward className="h-3.5 w-3.5" aria-hidden />
               </span>
             </Link>
           </li>

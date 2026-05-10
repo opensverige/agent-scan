@@ -21,7 +21,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Check, Copy } from "lucide-react";
+import { MdCheck, MdContentCopy } from "react-icons/md";
 
 const LANGUAGE_LABEL: Record<string, string> = {
   bash: "shell",
@@ -140,12 +140,12 @@ export function MethodologyCodeBlock({ children }: { children: ReactNode }) {
         >
           {copied ? (
             <>
-              <Check className="h-3.5 w-3.5 text-[hsl(var(--success))]" aria-hidden />
+              <MdCheck className="h-4 w-4 text-[hsl(var(--success))]" aria-hidden />
               <span>Copied</span>
             </>
           ) : (
             <>
-              <Copy className="h-3.5 w-3.5" aria-hidden />
+              <MdContentCopy className="h-4 w-4" aria-hidden />
               <span>Copy</span>
             </>
           )}

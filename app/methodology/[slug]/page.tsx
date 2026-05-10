@@ -2,7 +2,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { MdArrowBack, MdArrowForward } from "react-icons/md";
 import Nav from "../../scan/_components/Nav";
 import Footer from "../../scan/_components/Footer";
 import { MethodologyView } from "@/components/methodology-view";
@@ -104,35 +104,41 @@ export default async function MethodologyArticlePage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
-      <Nav />
-      <main data-methodology className="min-h-screen">
-        <div className="mx-auto max-w-[1180px] px-6 py-12 md:py-16">
-          {/* Mobile TOC drawer (above article on small screens) */}
-          <details className="mb-8 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-4 py-3 xl:hidden">
-            <summary className="cursor-pointer list-none font-mono text-[10px] uppercase tracking-widest text-[hsl(var(--muted-foreground))] [&::-webkit-details-marker]:hidden">
-              On this page
-            </summary>
-            <div className="mt-4">
-              <MethodologyToc body={article.body} withHeading={false} />
-            </div>
-          </details>
+      {/* The whole methodology page (Nav + content + Footer) is wrapped in
+          [data-methodology] so the light helpdesk theme tokens cascade to
+          all descendants. Nav/Footer therefore inherit the same warm-paper
+          palette as the article body — no dark-on-light clash. */}
+      <div data-methodology className="flex min-h-screen flex-col">
+        <Nav />
+        <main className="flex-1">
+          <div className="mx-auto max-w-[1180px] px-6 py-12 md:py-16">
+            {/* Mobile TOC drawer (above article on small screens) */}
+            <details className="mb-8 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-4 py-3 xl:hidden">
+              <summary className="cursor-pointer list-none font-mono text-[10px] uppercase tracking-widest text-[hsl(var(--muted-foreground))] [&::-webkit-details-marker]:hidden">
+                On this page
+              </summary>
+              <div className="mt-4">
+                <MethodologyToc body={article.body} withHeading={false} />
+              </div>
+            </details>
 
-          {/* Desktop grid: article on left, sticky TOC on right */}
-          <div className="xl:grid xl:grid-cols-[minmax(0,720px)_220px] xl:items-start xl:gap-16">
-            <div className="min-w-0">
-              <MethodologyView article={article} />
-              <PrevNextNav prev={prev} next={next} />
+            {/* Desktop grid: article on left, sticky TOC on right */}
+            <div className="xl:grid xl:grid-cols-[minmax(0,720px)_220px] xl:items-start xl:gap-16">
+              <div className="min-w-0">
+                <MethodologyView article={article} />
+                <PrevNextNav prev={prev} next={next} />
+              </div>
+              <MethodologyToc
+                body={article.body}
+                className="hidden xl:sticky xl:top-24 xl:block xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto"
+              />
             </div>
-            <MethodologyToc
-              body={article.body}
-              className="hidden xl:sticky xl:top-24 xl:block xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto"
-            />
           </div>
-        </div>
 
-        <RelatedArticles article={article} />
-      </main>
-      <Footer />
+          <RelatedArticles article={article} />
+        </main>
+        <Footer />
+      </div>
     </>
   );
 }
@@ -156,8 +162,8 @@ function PrevNextNav({
           className="group flex flex-col gap-1 rounded-lg p-3 transition-colors hover:bg-[hsl(var(--muted))]/40"
         >
           <span className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-[hsl(var(--muted-foreground))]">
-            <ArrowLeft
-              className="h-3 w-3 transition-transform group-hover:-translate-x-0.5"
+            <MdArrowBack
+              className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5"
               aria-hidden
             />
             Previous · {prev.category}
@@ -176,8 +182,8 @@ function PrevNextNav({
         >
           <span className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-[hsl(var(--muted-foreground))]">
             Next · {next.category}
-            <ArrowRight
-              className="h-3 w-3 transition-transform group-hover:translate-x-0.5"
+            <MdArrowForward
+              className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
               aria-hidden
             />
           </span>
