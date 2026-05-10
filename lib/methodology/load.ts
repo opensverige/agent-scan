@@ -70,6 +70,7 @@ export async function listArticles(): Promise<MethodologyIndexEntry[]> {
   return articles
     .filter((a): a is MethodologyArticle => a !== null)
     .map((a) => ({
+      checkId: a.frontmatter.checkId,
       slug: a.frontmatter.slug,
       title: a.frontmatter.title,
       titleSv: a.frontmatter.titleSv,

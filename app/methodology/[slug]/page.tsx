@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Nav from "../../scan/_components/Nav";
 import Footer from "../../scan/_components/Footer";
 import { MethodologyView } from "@/components/methodology-view";
+import { RelatedArticles } from "@/components/related-articles";
 import {
   loadArticle,
   listArticles,
@@ -95,6 +96,7 @@ export default async function MethodologyArticlePage({ params }: PageProps) {
       />
       <Nav />
       <MethodologyView article={article} />
+      <RelatedArticles article={article} />
       <Footer />
     </>
   );

@@ -6,6 +6,8 @@ import ScannerSection from "./_components/ScannerSection";
 import LiveCounter from "./_components/LiveCounter";
 import CTA from "./_components/CTA";
 import Footer from "./_components/Footer";
+import { HomepageFaq } from "./_components/HomepageFaq";
+import { buildScanFaqSchema } from "@/lib/scan-faqs";
 
 export const metadata: Metadata = {
   title: "AI Readiness Scanner — 17 checks · EU-jurisdiction",
@@ -34,62 +36,9 @@ export const metadata: Metadata = {
   },
 };
 
-const faqSchema = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "@id": "https://agent.opensverige.se/scan#faq",
-  inLanguage: "sv-SE",
-  mainEntity: [
-    {
-      "@type": "Question",
-      name: "Vad är AI-agent-readiness?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "AI-agent-readiness mäter hur väl en webbplats är konfigurerad för att hittas, förstås och användas av AI-agenter (Claude, ChatGPT, Cursor, Perplexity). Det inkluderar discovery-signaler (robots.txt, sitemap, llms.txt, llms-full.txt, markdown-content-negotiation, SSR-content, AI-crawler-access), regulatorisk compliance (GDPR Art. 6, EU AI Act Art. 50) och builder-API-yta (OpenAPI, MCP, sandbox).",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Vad kollar scannern?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Scannern kontrollerar 17 checks i tre kategorier. Discovery (7): robots_ok, crawler_access, sitemap_exists, llms_txt, llms_full_txt, markdown_negotiation, ssr_content. Compliance (3): privacy_automation, cookie_bot_handling, ai_content_marking. Builder (7): api_exists, openapi_spec, api_docs, mcp_server, mcp_well_known, mcp_server_card, sandbox_available.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Kostar det något?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Nej, scannern är gratis och kräver ingen registrering. För programmatisk åtkomst via /api/v1/scan utfärdar vi API-nycklar via Discord. Hobby-tiern är 15 scans/månad utan kostnad. Source-available under FSL-1.1-MIT.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Vad är llms.txt?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "llms.txt är en markdown-fil på /llms.txt som beskriver din sajt för AI-agenter. Den fungerar som en task-organiserad innehållskarta: vilka sidor är viktigast, vad gör API:t, var finns juridiska policys. Standarden bygger på llmstxt.org-spec:en. Vår egen ligger på https://agent.opensverige.se/llms.txt som referens.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Hur skiljer sig agent.opensverige.se från Cloudflares isitagentready.com?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Tre konkreta skillnader. (1) EU-jurisdiktion: data-planet ligger i Supabase eu-west-2 London, inte USA. (2) EU AI Act Art. 50: varje AI-genererad sammanfattning levereras med en maskinläsbar ai_disclosure-block, vilket Cloudflare inte gör. (3) Svenska compliance-paths: scannern hittar /integritetspolicy, /personuppgifter, /cookieanvandning som ingen global scanner letar efter.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Vad händer med min data när jag scannar?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Scan-resultat och en HMAC-SHA256-hashad version av din IP lagras i Supabase eu-west-2 London. Allt raderas automatiskt efter 90 dagar via pg_cron. Anthropic Claude bearbetar domännamn och publikt scan-innehåll för att generera summary-fältet (men inte din IP); migrering till AWS Bedrock Frankfurt sker före EU AI Act-deadlinen 2026-08-02.",
-      },
-    },
-  ],
-};
+// FAQ data is centralised in lib/scan-faqs.ts so the JSON-LD schema and
+// the visible <HomepageFaq /> accordion render from a single source.
+const faqSchema = buildScanFaqSchema("https://agent.opensverige.se/scan");
 
 const softwareApplicationSchema = {
   "@context": "https://schema.org",
@@ -158,6 +107,8 @@ export default async function ScanPage({ searchParams }: PageProps) {
       <div className="px-6 pb-10">
         <LiveCounter />
       </div>
+      <Separator className="max-w-[580px] mx-auto" />
+      <HomepageFaq />
       <Separator className="max-w-[580px] mx-auto" />
       <CTA />
       <Footer />
