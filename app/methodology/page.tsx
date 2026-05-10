@@ -149,8 +149,8 @@ function EmptyState() {
         Methodology articles coming soon
       </p>
       <p className="mx-auto max-w-md text-sm text-muted-foreground leading-relaxed">
-        We're publishing 17 deep-dives, one per scanner check. While we write
-        them, the full methodology lives at{" "}
+        We&apos;re publishing 17 deep-dives, one per scanner check. While we
+        write them, the full methodology lives at{" "}
         <a
           href="https://github.com/opensverige/agent-scan/blob/main/docs/SCANNER-METHODOLOGY.md"
           target="_blank"
