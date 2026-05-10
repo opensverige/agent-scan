@@ -18,13 +18,14 @@ export function methodologyUrl(checkId: CheckId): string {
 }
 
 /**
- * Whether the /methodology hub is live in this build. Defaults to off
- * so the link is invisible until the article hub ships.
+ * Whether the /methodology hub is live in this build. Defaults ON now
+ * that the hub route exists — set NEXT_PUBLIC_METHODOLOGY_LIVE=false
+ * to hide the helpdesk link from scan results (e.g. for a preview
+ * deploy that hasn't shipped any articles yet).
  *
  * `process.env.NEXT_PUBLIC_*` is inlined at build time, so flipping
- * this in Vercel env vars + redeploying is the activation switch —
- * no code change required when the hub goes live.
+ * this in Vercel env vars + redeploying is the only switch needed.
  */
 export function isMethodologyLive(): boolean {
-  return process.env.NEXT_PUBLIC_METHODOLOGY_LIVE === "true";
+  return process.env.NEXT_PUBLIC_METHODOLOGY_LIVE !== "false";
 }

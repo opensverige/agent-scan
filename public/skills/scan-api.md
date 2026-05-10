@@ -119,7 +119,8 @@ Response (abridged):
 - Interactive reference: https://agent.opensverige.se/api-docs
 - OpenAPI 3.1 spec: https://agent.opensverige.se/openapi.yaml
 - API doc: https://github.com/opensverige/agent-scan/blob/main/docs/API.md
-- Scanner methodology (per-check sources): https://github.com/opensverige/agent-scan/blob/main/docs/SCANNER-METHODOLOGY.md
+- Methodology hub: https://agent.opensverige.se/methodology — per-check deep-dives. Append the check slug for the article: `/methodology/<slug>` (e.g. `/methodology/llms-txt`). Each article available as markdown via `Accept: text/markdown`.
+- Scanner methodology (GitHub): https://github.com/opensverige/agent-scan/blob/main/docs/SCANNER-METHODOLOGY.md
 - AGENTS.md (repo conventions): https://github.com/opensverige/agent-scan/blob/main/AGENTS.md
 - AI disclosure policy (EU AI Act Art. 50): https://agent.opensverige.se/legal/ai-disclosure
 - Sub-processor list (GDPR): https://agent.opensverige.se/legal/subprocessors

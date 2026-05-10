@@ -12,11 +12,13 @@
 // to a static asset (Vercel's static handler wins).
 
 import { NextResponse, type NextRequest } from "next/server";
+import { METHODOLOGY_BODIES } from "./lib/methodology/bodies.generated";
 
 const NEGOTIATED_PATHS = new Set([
   "/",
   "/scan",
   "/mcp",
+  "/methodology",
   "/integritetspolicy",
   "/api-docs",
   "/legal/terms",
@@ -85,6 +87,42 @@ For full context: https://agent.opensverige.se/llms-full.txt
 // side. See addyosmani.com/blog/agentic-engine-optimization for why.
 const APPROX_TOKEN_COUNT = Math.ceil(MARKDOWN_BODY.length / 4);
 
+// Hub-summary served when an agent requests /methodology with markdown.
+// Lists every published per-check article so the agent can budget which
+// ones to fetch next without scraping HTML.
+function buildMethodologyIndex(): string {
+  const slugs = Object.keys(METHODOLOGY_BODIES).sort();
+  if (slugs.length === 0) {
+    return `# agent.opensverige · methodology
+
+> Per-check methodology articles for agent.opensverige.se. Currently being
+> written — see https://github.com/opensverige/agent-scan/blob/main/docs/SCANNER-METHODOLOGY.md
+> for the full methodology in the meantime.
+`;
+  }
+  const lines = [
+    `# agent.opensverige · methodology`,
+    ``,
+    `> Per-check deep-dives behind every signal the agent.opensverige.se EU-jurisdiction AI-readiness scanner measures. ${slugs.length} of 17 articles published. Open source under FSL-1.1-MIT.`,
+    ``,
+    `## Articles`,
+    ``,
+    ...slugs.map(
+      (s) =>
+        `- [${s}](https://agent.opensverige.se/methodology/${s}) (~${Math.ceil(
+          (METHODOLOGY_BODIES[s]?.length ?? 0) / 4,
+        )} tokens)`,
+    ),
+    ``,
+    `## Source`,
+    ``,
+    `- GitHub: https://github.com/opensverige/agent-scan`,
+    `- Markdown body of each article: append the slug to /methodology/, e.g. /methodology/llms-txt`,
+    `- Discord: https://discord.gg/CSphbTk8En`,
+  ];
+  return lines.join("\n");
+}
+
 export function middleware(req: NextRequest) {
   const accept = req.headers.get("accept") ?? "";
   const lower = accept.toLowerCase();
@@ -95,7 +133,41 @@ export function middleware(req: NextRequest) {
     lower.includes("text/markdown") && !lower.includes("text/html");
   if (!wantsMarkdown) return NextResponse.next();
 
-  if (!NEGOTIATED_PATHS.has(req.nextUrl.pathname)) return NextResponse.next();
+  const pathname = req.nextUrl.pathname;
+
+  // Per-check methodology articles: serve the raw markdown body verbatim.
+  if (pathname.startsWith("/methodology/")) {
+    const slug = pathname.slice("/methodology/".length).replace(/\/$/, "");
+    const body = METHODOLOGY_BODIES[slug];
+    if (!body) return NextResponse.next();
+    return new NextResponse(body, {
+      status: 200,
+      headers: {
+        "Content-Type": "text/markdown; charset=utf-8",
+        "X-Content-Negotiation": "markdown",
+        "X-Token-Count": String(Math.ceil(body.length / 4)),
+        "X-Robots-Tag": "all",
+        "Cache-Control": "public, max-age=3600, s-maxage=3600",
+      },
+    });
+  }
+
+  // Methodology hub: synthesize an index across all published articles.
+  if (pathname === "/methodology") {
+    const index = buildMethodologyIndex();
+    return new NextResponse(index, {
+      status: 200,
+      headers: {
+        "Content-Type": "text/markdown; charset=utf-8",
+        "X-Content-Negotiation": "markdown",
+        "X-Token-Count": String(Math.ceil(index.length / 4)),
+        "X-Robots-Tag": "all",
+        "Cache-Control": "public, max-age=600, s-maxage=600",
+      },
+    });
+  }
+
+  if (!NEGOTIATED_PATHS.has(pathname)) return NextResponse.next();
 
   return new NextResponse(MARKDOWN_BODY, {
     status: 200,
@@ -104,7 +176,6 @@ export function middleware(req: NextRequest) {
       "X-Content-Negotiation": "markdown",
       "X-Token-Count": String(APPROX_TOKEN_COUNT),
       "X-Robots-Tag": "all",
-      // Cache for an hour at the edge — the document changes rarely.
       "Cache-Control": "public, max-age=3600, s-maxage=3600",
     },
   });
@@ -115,6 +186,8 @@ export const config = {
     "/",
     "/scan",
     "/mcp",
+    "/methodology",
+    "/methodology/:slug",
     "/integritetspolicy",
     "/api-docs",
     "/legal/:path*",

@@ -91,11 +91,13 @@ Alpha: invite-only via Discord. Stage 2B (async + webhooks) on roadmap.
 | AGENTS.md | `github.com/opensverige/agent-scan/AGENTS.md` | Repo conventions |
 | OpenAPI 3.1 | `/openapi.yaml` | Machine-readable API spec |
 | skill.md | `/skills/scan-api.md` | LLM-friendly capability manifest |
+| Methodology hub | `/methodology` | Index of per-check deep-dives. Each article available as markdown via `Accept: text/markdown` |
+| Per-check article | `/methodology/<slug>` | TechArticle + HowTo schema, citable lead, primary sources |
 | .well-known/mcp.json | `/.well-known/mcp.json` | MCP server card (planned) |
 | .well-known/ai-plugin.json | `/.well-known/ai-plugin.json` | OpenAI plugin manifest |
 | .well-known/agent-permissions.json | `/.well-known/agent-permissions.json` | Per-bot policy |
 | .well-known/security.txt | `/.well-known/security.txt` | Vulnerability reporting |
-| Markdown negotiation | `Accept: text/markdown` on `/`, `/scan`, `/api-docs`, `/legal/*`, `/integritetspolicy`, `/mcp` | Edge middleware returns ~80% smaller markdown body |
+| Markdown negotiation | `Accept: text/markdown` on `/`, `/scan`, `/api-docs`, `/legal/*`, `/integritetspolicy`, `/mcp`, `/methodology`, `/methodology/<slug>` | Edge middleware returns ~80% smaller markdown body |
 
 ## Licensing
 

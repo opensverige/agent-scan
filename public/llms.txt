@@ -19,7 +19,9 @@
 
 ## If you want to understand the methodology
 
-- [Scanner methodology](https://github.com/opensverige/agent-scan/blob/main/docs/SCANNER-METHODOLOGY.md) (~7k tokens): All 17 checks, sources, edge cases.
+- [Methodology hub](https://agent.opensverige.se/methodology) (~2k tokens): Index of all per-check deep-dives. Markdown variant via `Accept: text/markdown`.
+- [llms-txt deep-dive](https://agent.opensverige.se/methodology/llms-txt) (~1.5k tokens): What llms.txt is, why your check fails, how to fix on Vercel/WordPress/Webflow.
+- [Scanner methodology (GitHub)](https://github.com/opensverige/agent-scan/blob/main/docs/SCANNER-METHODOLOGY.md) (~7k tokens): All 17 checks, sources, edge cases.
 - [Architecture](https://github.com/opensverige/agent-scan/blob/main/docs/ARCHITECTURE.md) (~4k tokens).
 - [llms-full.txt](https://agent.opensverige.se/llms-full.txt) (~4k tokens): Long-form context for this site.
 
