@@ -1,9 +1,12 @@
 // app/scan/_components/HomepageFaq.tsx
 //
-// Visible FAQ accordion grouped into "Snabbstart / Säkerhet & data /
-// Använd resultatet" so users scan three short sections instead of one
-// long list. Reads from lib/scan-faqs.ts so the JSON-LD schema in
-// scan/page.tsx and the rendered DOM never drift.
+// Compact, serif-only homepage FAQ. Reads from lib/scan-faqs.ts so the
+// JSON-LD FAQPage schema in scan/page.tsx and the rendered DOM share a
+// single source. Bilingual via useLang.
+//
+// Earlier iterations grouped questions, used sans body type, and ate too
+// much vertical space. This version is one flat accordion in Instrument
+// Serif (matches the rest of the site), no glyphs, tighter rhythm.
 
 "use client";
 
@@ -13,52 +16,42 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { SCAN_FAQ_GROUPS } from "@/lib/scan-faqs";
+import { SCAN_FAQS } from "@/lib/scan-faqs";
+import { useLang } from "@/lib/language-context";
 
 export function HomepageFaq() {
+  const { lang } = useLang();
+  const isEn = lang === "en";
+
   return (
     <section
       aria-labelledby="scan-faq-heading"
-      className="mx-auto w-full max-w-[680px] px-6 py-20"
+      className="mx-auto w-full max-w-[620px] px-6 py-14"
     >
-      <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-        FAQ
-      </p>
       <h2
         id="scan-faq-heading"
-        className="mb-12 font-serif text-[clamp(32px,5.5vw,44px)] font-normal italic leading-[1.05] tracking-tight"
+        className="mb-6 font-serif text-[clamp(24px,3.6vw,30px)] font-normal italic leading-tight tracking-[-0.5px]"
       >
-        Frågor du nog har
+        {isEn ? "Common questions" : "Vanliga frågor"}
       </h2>
-
-      {SCAN_FAQ_GROUPS.map((group, gi) => (
-        <div key={group.id} className="mb-10 last:mb-0">
-          <div className="mb-4 flex items-baseline gap-2">
-            <span aria-hidden className="font-serif text-base text-foreground/40">
-              {group.glyph}
-            </span>
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              {group.label}
-            </p>
-          </div>
-          <Accordion type="single" collapsible className="w-full">
-            {group.questions.map((faq, idx) => (
-              <AccordionItem
-                key={faq.q}
-                value={`scan-faq-${gi}-${idx}`}
-                className="border-b border-border/40 last:border-b-0"
-              >
-                <AccordionTrigger className="group py-5 text-left font-serif text-[19px] font-normal leading-snug tracking-tight hover:no-underline data-[state=open]:text-foreground [&_svg]:text-foreground/50">
-                  {faq.q}
-                </AccordionTrigger>
-                <AccordionContent className="pb-6 pr-8 text-[15px] leading-[1.65] text-foreground/75">
-                  {faq.a}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </div>
-      ))}
+      <Accordion type="single" collapsible className="w-full">
+        {SCAN_FAQS.map((faq, idx) => (
+          <AccordionItem
+            key={idx}
+            value={`scan-faq-${idx}`}
+            className="border-b border-border/50 last:border-b-0"
+          >
+            <AccordionTrigger
+              className="py-3.5 text-left font-serif text-[17px] font-normal leading-snug tracking-[-0.2px] hover:no-underline data-[state=open]:text-foreground [&>svg]:h-4 [&>svg]:w-4 [&>svg]:text-muted-foreground"
+            >
+              {isEn ? faq.qEn : faq.q}
+            </AccordionTrigger>
+            <AccordionContent className="pb-4 pr-6 font-serif text-[15.5px] leading-[1.6] text-foreground/85">
+              {isEn ? faq.aEn : faq.a}
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
     </section>
   );
 }

@@ -38,7 +38,17 @@ export const metadata: Metadata = {
 
 // FAQ data is centralised in lib/scan-faqs.ts so the JSON-LD schema and
 // the visible <HomepageFaq /> accordion render from a single source.
-const faqSchema = buildScanFaqSchema("https://agent.opensverige.se/scan");
+// Both Swedish and English FAQPage schemas are emitted so AI Overviews
+// can serve the locale-appropriate answer regardless of the visitor's
+// browser language.
+const faqSchemaSv = buildScanFaqSchema(
+  "https://agent.opensverige.se/scan",
+  "sv",
+);
+const faqSchemaEn = buildScanFaqSchema(
+  "https://agent.opensverige.se/scan",
+  "en",
+);
 
 const softwareApplicationSchema = {
   "@context": "https://schema.org",
@@ -96,7 +106,11 @@ export default async function ScanPage({ searchParams }: PageProps) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchemaSv) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchemaEn) }}
       />
       <script
         type="application/ld+json"
