@@ -1257,3 +1257,109 @@ a.brand-link:hover {
   z-index: 0;
   pointer-events: none;
 }
+
+/* ============================================
+   METHODOLOGY ARTICLE — light helpdesk theme
+   Scoped to <div data-methodology> wrapping Nav + main + Footer.
+   The whole page flips light so Nav and Footer stay consistent
+   instead of clashing dark-on-light with the article body.
+   ============================================ */
+[data-methodology] {
+  /* Override shadcn/ui HSL tokens that descendant components read via
+     bg-background / text-foreground / border-border etc. */
+  --background: 40 14% 98%;          /* #FBFAF7 — warm paper, not pure white */
+  --foreground: 30 10% 12%;          /* #211e1a — deep ink, never #000 */
+  --card: 0 0% 100%;                 /* #FFF — code blocks float on paper */
+  --card-foreground: 30 10% 12%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 30 10% 12%;
+  --primary: 14 68% 38%;             /* #a3331a — readable on light */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 40 12% 95%;
+  --secondary-foreground: 30 10% 12%;
+  --muted: 40 14% 95%;                /* #F1EFEA */
+  --muted-foreground: 30 8% 38%;     /* #6a615a — 7.2:1 on bg */
+  --accent: 40 12% 93%;
+  --accent-foreground: 30 10% 12%;
+  --destructive: 0 78% 42%;          /* #BF1F1F — 5.5:1 */
+  --destructive-foreground: 0 0% 100%;
+  --warning: 32 86% 36%;              /* #A8651A — amber that reads on white */
+  --warning-foreground: 0 0% 100%;
+  --success: 142 68% 28%;             /* #157A3D — wcag AA */
+  --success-foreground: 0 0% 100%;
+  --info: 210 36% 28%;
+  --info-foreground: 0 0% 100%;
+  --border: 35 14% 88%;                /* #E5DFD4 — warm hairline */
+  --input: 35 14% 88%;
+  --ring: 14 68% 38%;
+
+  /* Article-only tokens (not in shadcn). */
+  --code-bg: 35 18% 97%;
+  --code-border: 35 14% 90%;
+  --rule: 35 14% 92%;
+
+  /* Defeat the global html/body !important and apply to the whole island. */
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+/* The global `main { background: #0a0a0a !important }` rule on line 182
+   targets every <main>. Override it inside the methodology island so the
+   inner <main> inherits the light surface instead of going pure black. */
+[data-methodology] main {
+  background: transparent !important;
+  color: inherit !important;
+}
+
+/* Selection should match the brand, not OS default blue. */
+[data-methodology] ::selection {
+  background: hsl(14 68% 38% / 0.18);
+  color: hsl(var(--foreground));
+}
+
+/* No horizontal scroll inside code blocks — long URLs and shell
+   pipelines wrap on natural break-points, then anywhere as a fallback. */
+[data-methodology] pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  tab-size: 2;
+}
+
+/* Keyboard focus on a code block: subtle ring around the entire figure
+   so accessibility-tabbing copy buttons gives clear visual anchor. */
+[data-methodology] figure:focus-within {
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 3px hsl(var(--ring) / 0.12);
+}
+
+/* "Verify the fix" section — runnable-style header band.
+   The H2 gets its own emerald background; the immediately-following
+   element (a paragraph or callout) hugs underneath. The figure (code)
+   then renders normally. CSS-only, no remark plugin. */
+[data-methodology] h2#verify-the-fix {
+  margin-top: 5rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid hsl(142 60% 70% / 0.55);
+  border-bottom: none;
+  border-radius: 0.875rem 0.875rem 0 0;
+  background: hsl(142 76% 96%);
+  color: hsl(var(--success));
+}
+[data-methodology] h2#verify-the-fix .material-symbols-rounded,
+[data-methodology] h2#verify-the-fix svg {
+  color: hsl(var(--success)) !important;
+}
+[data-methodology] h2#verify-the-fix + p {
+  margin-top: 0;
+  padding: 0.5rem 1rem 0.875rem;
+  border: 1px solid hsl(142 60% 70% / 0.55);
+  border-top: none;
+  border-radius: 0 0 0.875rem 0.875rem;
+  background: hsl(142 76% 96%);
+  color: hsl(var(--foreground));
+}
+
+/* Smooth scroll-to-anchor offset so sticky nav doesn't cover the H2. */
+[data-methodology] h2 {
+  scroll-margin-top: 6rem;
+}

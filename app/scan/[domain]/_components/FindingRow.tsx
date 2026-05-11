@@ -1,7 +1,7 @@
 // app/scan/[domain]/_components/FindingRow.tsx
 "use client";
 
-import Link from "next/link";
+import { BookOpen, ExternalLink } from "lucide-react";
 import { AccordionItem, AccordionContent, AccordionTrigger } from "@/components/ui/accordion";
 import type { CheckResult } from "@/lib/checks";
 import { CHECK_CONTEXT } from "@/lib/check-context";
@@ -41,12 +41,19 @@ export function FindingRow({ check, index }: { check: CheckResult; index: number
             <span className="text-xs text-foreground/70 leading-snug">{ctx.action}</span>
           </div>
           {isMethodologyLive() && (
-            <Link
+            <a
               href={methodologyUrl(check.id)}
-              className="inline-flex items-center gap-1 font-mono uppercase tracking-widest text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group/methodology inline-flex items-center gap-1.5 rounded-sm text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
             >
-              Read full methodology →
-            </Link>
+              <BookOpen className="h-3 w-3" aria-hidden />
+              <span className="underline-offset-4 group-hover/methodology:underline">
+                Helpdesk article
+              </span>
+              <ExternalLink className="h-3 w-3 opacity-60" aria-hidden />
+              <span className="sr-only">(opens in new tab)</span>
+            </a>
           )}
           <p className="text-[10px] font-mono text-muted-foreground/55 leading-tight">
             <span className="capitalize">{check.category}</span>

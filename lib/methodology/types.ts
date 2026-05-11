@@ -40,6 +40,7 @@ export interface MethodologyArticle {
 }
 
 export interface MethodologyIndexEntry {
+  checkId: CheckId;
   slug: string;
   title: string;
   titleSv?: string;

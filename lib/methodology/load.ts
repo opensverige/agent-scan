@@ -18,6 +18,30 @@ import type {
 } from "./types";
 import type { CheckId } from "../checks";
 
+export interface MethodologyNeighbours {
+  prev: MethodologyIndexEntry | null;
+  next: MethodologyIndexEntry | null;
+}
+
+/**
+ * Find the previous and next article in the same category as `current`,
+ * sorted by severity then title (the same order listArticles uses). Used
+ * by the per-article footer nav so a user fixing one check can step
+ * sequentially through related ones in the same category.
+ */
+export function findNeighbours(
+  current: { slug: string; category: string },
+  all: readonly MethodologyIndexEntry[],
+): MethodologyNeighbours {
+  const sameCategory = all.filter((a) => a.category === current.category);
+  const idx = sameCategory.findIndex((a) => a.slug === current.slug);
+  if (idx === -1) return { prev: null, next: null };
+  return {
+    prev: idx > 0 ? sameCategory[idx - 1] : null,
+    next: idx < sameCategory.length - 1 ? sameCategory[idx + 1] : null,
+  };
+}
+
 const ARTICLES_DIR = path.join(process.cwd(), "content", "methodology");
 
 /**
@@ -70,6 +94,7 @@ export async function listArticles(): Promise<MethodologyIndexEntry[]> {
   return articles
     .filter((a): a is MethodologyArticle => a !== null)
     .map((a) => ({
+      checkId: a.frontmatter.checkId,
       slug: a.frontmatter.slug,
       title: a.frontmatter.title,
       titleSv: a.frontmatter.titleSv,
