@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { DM_Sans, JetBrains_Mono, Instrument_Serif } from "next/font/google";
+import { DM_Sans, JetBrains_Mono, Instrument_Serif, Fraunces } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { LanguageProvider } from "@/lib/language-context";
 import { detectLang } from "@/lib/detect-lang";
@@ -26,6 +26,20 @@ const instrumentSerif = Instrument_Serif({
   style: ["normal", "italic"],
   variable: "--font-serif",
   display: "swap",
+});
+
+// Fraunces — variable display serif designed for large editorial sizes.
+// opsz (9-144) gives optical scaling, wght (100-900) for display weight,
+// SOFT axis (0-100) controls letterform warmth.
+// Loaded as fully variable (no `weight` property) so all axes are reachable
+// via font-variation-settings — see globals.css [data-report] .font-editorial.
+// Used ONLY inside [data-report] — no impact on brandguide or scanner pages.
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  variable: "--font-editorial",
+  display: "swap",
+  axes: ["SOFT", "opsz"],
 });
 
 export const metadata: Metadata = {
@@ -219,7 +233,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html
       lang={initialLang}
-      className={`${dmSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} scroll-smooth`}
+      className={`${dmSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} ${fraunces.variable} scroll-smooth`}
       suppressHydrationWarning
     >
       <body className="font-sans antialiased">

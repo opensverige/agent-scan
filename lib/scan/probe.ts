@@ -54,7 +54,7 @@ async function fetchWithUserAgent(url: string, userAgent: string): Promise<{ sta
     const res = await fetch(url, {
       headers: { "User-Agent": userAgent },
       redirect: "follow",
-      signal: AbortSignal.timeout(5_000),
+      signal: AbortSignal.timeout(10_000),
     });
     return { status: res.status };
   } catch {
@@ -71,7 +71,7 @@ async function fetchWithAccept(url: string, accept: string): Promise<FetchedResp
         "Accept": accept,
       },
       redirect: "follow",
-      signal: AbortSignal.timeout(5_000),
+      signal: AbortSignal.timeout(10_000),
     });
     const body = (await res.text()).slice(0, 100_000);
     return { status: res.status, body, contentType: res.headers.get("content-type") };

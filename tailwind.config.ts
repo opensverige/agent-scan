@@ -29,6 +29,10 @@ const config: Config = {
         sans: ["var(--font-body)", "-apple-system", "sans-serif"],
         mono: ["var(--font-mono)", "Fira Code", "monospace"],
         serif: ["var(--font-serif)", "Georgia", "serif"],
+        // Editorial display serif — Fraunces variable. Used for big report
+        // headings where Instrument Serif lacks the weight to "fastna i ögat".
+        // Optical sizing + SOFT axis tuned via inline font-variation-settings.
+        editorial: ["var(--font-editorial)", "Georgia", "serif"],
       },
       colors: {
         // ── Landing page dark-mode tokens (keep) ──────────────

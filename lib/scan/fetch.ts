@@ -5,7 +5,10 @@
 // developer portals append late in the document.
 
 const SCANNER_UA = "OpenSverige-Scanner/1.0 (https://opensverige.se/scan)";
-const FETCH_TIMEOUT_MS = 5_000;
+// 10s aligns with real-world AI-agent web-fetch tools (ChatGPT, Claude
+// browse). 5s was too aggressive — it produced false negatives on legitimate
+// slow-to-respond sites like bahnhof.se under varying network conditions.
+const FETCH_TIMEOUT_MS = 10_000;
 const BODY_WINDOW = 1_000_000;
 
 export interface FetchedResponse {
