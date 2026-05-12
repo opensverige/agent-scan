@@ -41,3 +41,6 @@ next-env.d.ts
 .claude/
 .playwright-mcp/
 prod-counter-*.png
+
+# Local report dev screenshots — excluded from commit
+q1-*.png

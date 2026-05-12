@@ -1363,3 +1363,170 @@ a.brand-link:hover {
 [data-methodology] h2 {
   scroll-margin-top: 6rem;
 }
+
+/* ============================================
+   REPORT — long-form publication theme
+   Scoped to <div data-report>. Separate from data-methodology so we can
+   evolve the report design language without breaking methodology.
+   Inspired by Anthropic research, Linear Method, Stripe Press.
+   ============================================ */
+[data-report] {
+  /* Surfaces — warm paper, deeper ink than methodology */
+  --background: 36 22% 97%;          /* #FBFAF7 paper */
+  --surface-sunken: 36 18% 94%;      /* #F2EFE9 band backgrounds */
+  --surface-card: 0 0% 100%;         /* pure white inside cards */
+  --foreground: 30 14% 10%;          /* #1C1815 editorial deep ink */
+  --foreground-soft: 30 12% 16%;     /* #2A2520 sub-heading ink */
+  --muted-foreground: 30 8% 36%;     /* #645A52 — 7.4:1 contrast */
+  --hairline: 35 14% 86%;            /* #E0D9CC */
+  --rule: 35 14% 90%;                /* #EAE3D6 */
+
+  /* Brand — deeper than scanner red for long-form */
+  --primary: 12 70% 36%;             /* #9C2F18 */
+  --primary-ink: 12 60% 22%;         /* hover dense */
+  --primary-soft: 12 70% 36% / 0.08; /* tint for accent bg */
+  --accent: 38 70% 30%;              /* #836217 — gold deepened */
+
+  /* shadcn-compat tokens for descendant components */
+  --card: 0 0% 100%;
+  --card-foreground: 30 14% 10%;
+  --muted: 36 18% 94%;
+  --border: 35 14% 86%;
+  --input: 35 14% 86%;
+  --ring: 12 70% 36%;
+  --primary-foreground: 0 0% 100%;
+  --destructive: 0 70% 38%;
+  --destructive-foreground: 0 0% 100%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 30 14% 10%;
+  --secondary: 36 18% 94%;
+  --secondary-foreground: 30 14% 10%;
+  --accent-foreground: 30 14% 10%;
+
+  /* Severity */
+  --critical: 0 70% 38%;
+  --critical-bg: 0 70% 96%;
+  --important: 32 82% 34%;
+  --important-bg: 38 80% 95%;
+  --info: 210 50% 30%;
+  --info-bg: 210 50% 96%;
+  --success: 142 70% 28%;
+
+  /* Chart palette — single ramp, no rainbow */
+  --chart-bar-mute: 35 18% 80%;
+  --chart-bar-accent: 12 70% 36%;
+
+  /* Motion vocabulary — 3 curves, never add more */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);     /* signature */
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);   /* UI feedback */
+  --ease-in-out-quad: cubic-bezier(0.45, 0, 0.55, 1); /* color swaps */
+
+  /* Force background + color — defeat global !important on html/body/main */
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+  color-scheme: light;
+}
+
+[data-report] main,
+[data-report] article {
+  background: transparent !important;
+  color: inherit !important;
+}
+
+[data-report] ::selection {
+  background: hsl(var(--primary) / 0.18);
+  color: hsl(var(--foreground));
+}
+
+/* Tabular numerals everywhere on data so digits don't shimmy */
+[data-report] [data-numeric],
+[data-report] .tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Scroll-progress bar — pure CSS via scroll-driven animation */
+[data-report] .report-scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  background: hsl(var(--primary));
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  z-index: 100;
+  animation: report-scroll-progress linear forwards;
+  animation-timeline: scroll(root block);
+}
+@keyframes report-scroll-progress {
+  to { transform: scaleX(1); }
+}
+
+@media (max-width: 640px) {
+  [data-report] .report-scroll-progress { height: 3px; }
+}
+
+/* Heading anchor offset for deep-links */
+[data-report] h2,
+[data-report] h3 {
+  scroll-margin-top: 7rem;
+}
+@media (max-width: 640px) {
+  [data-report] h2,
+  [data-report] h3 { scroll-margin-top: 5.5rem; }
+}
+
+/* DataBar — fills via CSS when --visible is set */
+[data-report] .databar-fill {
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  transition: transform 880ms var(--ease-out-expo) 80ms;
+}
+[data-report] .databar-fill[data-visible="true"] {
+  transform: scaleX(var(--databar-value, 0));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-report] .databar-fill {
+    transform: scaleX(var(--databar-value, 0));
+    transition: none;
+  }
+  [data-report] .report-scroll-progress { animation: none; }
+}
+
+/* Fraunces tuning — only inside the report. Optical sizing on (so the
+   browser picks the right glyph variant for the rendered size), SOFT at
+   50 for editorial warmth without going twee, and slight wght bump for
+   display use. Italic body — like inside pull quotes — uses the
+   conventional Instrument Serif italic, so this only touches normal style. */
+[data-report] .font-editorial {
+  font-optical-sizing: auto;
+  font-variation-settings:
+    "opsz" 96,
+    "SOFT" 50,
+    "wght" 500;
+  letter-spacing: -0.025em;
+}
+[data-report] .font-editorial-display {
+  font-optical-sizing: auto;
+  font-variation-settings:
+    "opsz" 144,
+    "SOFT" 50,
+    "wght" 500;
+  letter-spacing: -0.03em;
+}
+
+/* Accessibility: ensure every interactive element shows a visible focus ring.
+   Brand-red 2px outline matches the active-state primary, with offset so the
+   ring breathes against tight typography. WCAG 2.4.7 focus visible. */
+[data-report] a:focus-visible,
+[data-report] button:focus-visible,
+[data-report] summary:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+[data-report] a:focus:not(:focus-visible),
+[data-report] button:focus:not(:focus-visible) {
+  outline: none;
+}
