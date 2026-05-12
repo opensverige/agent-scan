@@ -14,7 +14,9 @@ import type { ReactNode } from "react";
 import { Eyebrow } from "./Eyebrow";
 
 interface HeroStat {
-  value: string;
+  /** Numeric/display value — accepts ReactNode so callers can pass a live
+   *  countdown component, a tabular number, or a plain string. */
+  value: ReactNode;
   unit?: string;
   label: string;
 }
@@ -77,26 +79,25 @@ export function Hero({ kicker, title, lead, stat, meta }: HeroProps) {
 }
 
 function HeroStatBlock({ stat }: { stat: HeroStat }) {
-  // Accessible-friendly composition: announce the full unit name via aria-label
-  // so screen readers read "<value> <unit>" cleanly instead of pronouncing an
-  // abbreviation letter-by-letter. Visual size is unchanged.
+  // The value is rendered as visible text — no aria-label needed because
+  // screen readers will read the literal content. If the caller passes a
+  // LiveCountdown component as value, that component supplies its own
+  // accessible label.
+  // Sized down per UX review: 196 → 128px peak so the H1 wins the eye.
   const visualUnit = stat.unit;
   return (
     <div className="border-l-2 border-[hsl(var(--primary))] pl-6 lg:pl-8">
-      <p
-        className="font-editorial font-editorial-display tabular-nums leading-[0.9] text-[hsl(var(--primary))]"
-        aria-label={`${stat.value}${visualUnit ? " " + visualUnit : ""}`}
-      >
-        <span className="block text-[clamp(96px,13.5vw,196px)]" aria-hidden>
+      <p className="font-editorial font-editorial-display tabular-nums leading-[0.9] text-[hsl(var(--primary))]">
+        <span className="block text-[clamp(72px,10vw,128px)]">
           {stat.value}
           {visualUnit && (
-            <span className="ml-1 text-[clamp(40px,5vw,76px)] tracking-[-0.02em] opacity-90">
+            <span className="ml-1 text-[clamp(28px,3.6vw,44px)] tracking-[-0.02em] opacity-90">
               {visualUnit}
             </span>
           )}
         </span>
       </p>
-      <p className="mt-5 max-w-[24ch] font-sans text-[15px] leading-[1.5] text-[hsl(var(--muted-foreground))]">
+      <p className="mt-4 max-w-[24ch] font-sans text-[14px] leading-[1.5] text-[hsl(var(--muted-foreground))]">
         {stat.label}
       </p>
     </div>
