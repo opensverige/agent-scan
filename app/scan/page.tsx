@@ -4,6 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import Nav from "./_components/Nav";
 import ScannerSection from "./_components/ScannerSection";
 import LiveCounter from "./_components/LiveCounter";
+import { RapportBadge } from "./_components/RapportBadge";
 import CTA from "./_components/CTA";
 import Footer from "./_components/Footer";
 import { HomepageFaq } from "./_components/HomepageFaq";
@@ -120,6 +121,7 @@ export default async function ScanPage({ searchParams }: PageProps) {
       <ScannerSection initialDomain={domain} />
       <div className="px-6 pb-10">
         <LiveCounter />
+        <RapportBadge />
       </div>
       <Separator className="max-w-[580px] mx-auto" />
       <HomepageFaq />
