@@ -12,7 +12,10 @@ import { Eyebrow } from "./Eyebrow";
 interface SectionAnchorProps {
   id: string;
   num: string;
-  eyebrow: string;
+  /** Optional kicker above the title. Omit when the title is self-sufficient
+   *  (e.g. "SaaS-sektorn öppnar dörrarna..."); a "01 — RAPPORT" mono prefix
+   *  replaces the full eyebrow so the section number still anchors. */
+  eyebrow?: string;
   title: string;
   subtitle?: string;
 }
@@ -25,10 +28,19 @@ export function SectionAnchor({
   subtitle,
 }: SectionAnchorProps) {
   return (
-    <header className="mb-12 mt-28 md:mt-36">
-      <Eyebrow num={num} tone="primary">
-        {eyebrow}
-      </Eyebrow>
+    <header className="mb-10 mt-24 md:mt-28">
+      {eyebrow ? (
+        <Eyebrow num={num} tone="primary">
+          {eyebrow}
+        </Eyebrow>
+      ) : (
+        <p className="flex items-baseline gap-x-3 font-mono text-[11px] font-medium uppercase tracking-[0.18em]">
+          <span className="tabular-nums text-[hsl(var(--primary))]">{num}</span>
+          <span className="text-[hsl(var(--muted-foreground))] opacity-60">
+            §
+          </span>
+        </p>
+      )}
       <h2
         id={id}
         className="font-editorial mt-7 text-[clamp(34px,5.4vw,56px)] leading-[1.04] text-[hsl(var(--foreground))]"

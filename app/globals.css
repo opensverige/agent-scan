@@ -1516,6 +1516,23 @@ a.brand-link:hover {
   letter-spacing: -0.03em;
 }
 
+/* Container queries — let the article column drive type scale instead of
+   the viewport. The hero sits outside [data-report] article and keeps
+   viewport-based sizing; long-form sections inside scale to their column
+   so a 1440px monitor with a 220px TOC gets the same proportions as a
+   narrow mobile-portrait window. */
+[data-report] article {
+  container-type: inline-size;
+  container-name: article;
+}
+
+/* Balance headline line-breaks where supported — prevents lonely last-word
+   widows on H2/H3 in the article column. */
+[data-report] h2,
+[data-report] h3 {
+  text-wrap: balance;
+}
+
 /* Accessibility: ensure every interactive element shows a visible focus ring.
    Brand-red 2px outline matches the active-state primary, with offset so the
    ring breathes against tight typography. WCAG 2.4.7 focus visible. */

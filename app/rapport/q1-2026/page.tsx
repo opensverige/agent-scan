@@ -12,14 +12,17 @@ import Nav from "../../scan/_components/Nav";
 import Footer from "../../scan/_components/Footer";
 import { Eyebrow } from "@/components/report/Eyebrow";
 import { Hero } from "@/components/report/Hero";
-import { KeyFindings } from "@/components/report/KeyFindings";
+import { CompactStatRow } from "@/components/report/CompactStatRow";
+import { DenseSectionHeader } from "@/components/report/DenseSectionHeader";
 import { SectionAnchor } from "@/components/report/SectionAnchor";
+import { Sidenote } from "@/components/report/Sidenote";
 import { DataBar } from "@/components/report/DataBar";
 import { PullQuote } from "@/components/report/PullQuote";
 import { Prose } from "@/components/report/Prose";
 import { ReadingProgress } from "@/components/report/ReadingProgress";
 import { StickyToc, type TocEntry } from "@/components/report/StickyToc";
 import { MetaBar } from "@/components/report/MetaBar";
+import { LiveCountdown } from "@/components/report/LiveCountdown";
 
 const REPORT_URL = "https://agent.opensverige.se/rapport/q1-2026";
 
@@ -144,12 +147,13 @@ export default function Q1Report2026Page() {
               </span>
             </>
           }
-          lead="En öppen lägesrapport över hur Sveriges 500 mest besökta sajter är konfigurerade för AI-agenter. Mätt 10 maj 2026, 84 dagar innan EU AI Act Article 50 börjar tillämpas."
+          lead="Hur Sveriges 500 mest besökta sajter står sig mot AI-agenter. Mätt 10 maj 2026."
           stat={{
-            value: "84",
+            value: (
+              <LiveCountdown to="2026-08-02T00:00:00+02:00" compact />
+            ),
             unit: "dagar",
-            label:
-              "fram till EU AI Act Article 50 börjar tillämpas, 2 augusti 2026. Räknat från probedag 10 maj 2026. Article 50 reglerar AI-systemens output — inte hur webbsajter konfigurerar sig för AI-agenter. Vi använder datumet som referenspunkt.",
+            label: "till EU AI Act Article 50 tillämpas, 2 augusti 2026.",
           }}
           meta={{
             publishedAt: "2026-05-15",
@@ -158,41 +162,33 @@ export default function Q1Report2026Page() {
           }}
         />
 
-        {/* ── Key findings ── */}
-        <section id="sammanfattning" className="scroll-mt-24">
-          <KeyFindings
-            eyebrow="Fem nyckeltal · 500 sajter mätt"
-            findings={[
-              {
-                value: "0",
-                unit: "/6",
-                label: "publicerar AI-vägledning för agenter",
-                context:
-                  "Skatteverket, 1177, Riksdagen, Regeringen, Migrationsverket, Försäkringskassan. (Mätt på maskinläsbara signaler — interna policys kan finnas.)",
-                emphasis: true,
-              },
-              {
-                value: "3,2",
-                unit: "%",
-                label: "har llms.txt",
-                context:
-                  "16 av 500 — Fortune 500 ligger på 7,4 %. (3 sajter avförda efter live-verifiering 12 maj: 2 false positives + 1 Cloudflare-gated.)",
-              },
-              {
-                value: "23",
-                label: "medier blockerar AI",
-                context:
-                  "Stickprov 12 maj genom vår scanner: alla 19 namngivna + SvD + atl/vk/folkbladet konfirmerade BLOCKS. Snitt 10 bottar per sajt. Bonnier, Schibsted, NTM, MittMedia.",
-              },
-              {
-                value: "5",
-                label: "webhotell leder",
-                context:
-                  "Bahnhof, Loopia, Soluno, Quicknet, Tripnet. SaaS följer.",
-              },
-            ]}
-          />
-        </section>
+        {/* ── Nyckeltal: kompakt one-row band ── */}
+        <CompactStatRow
+          id="sammanfattning"
+          eyebrow="Fyra nyckeltal · 500 sajter mätt 10 maj 2026"
+          stats={[
+            {
+              value: "0",
+              unit: "/6",
+              label: "myndigheter publicerar AI-vägledning",
+              emphasis: true,
+            },
+            {
+              value: "3,2",
+              unit: "%",
+              label: "har llms.txt",
+            },
+            {
+              value: "23",
+              label: "medier blockerar AI",
+            },
+            {
+              value: "16",
+              label: "sajter leder adoption",
+            },
+          ]}
+          source="Verifierat live via agent.opensverige.se/scan · 12 maj 2026"
+        />
 
         {/* ── Two-column body ── */}
         <div className="mx-auto w-full max-w-[1280px] px-5 sm:px-8">
@@ -295,7 +291,7 @@ export default function Q1Report2026Page() {
                 num="01"
                 eyebrow="Policy-vakuumet"
                 title="Sex av sex stora myndigheter publicerar ingen AI-vägledning"
-                subtitle="Mätt på maskinläsbara signaler i topp-domänen: llms.txt, agent-permissions.json, AI-bot-omnämnanden i robots.txt. Interna policys kan finnas — externt syns inget."
+                subtitle="Maskinläsbara signaler: llms.txt, agent-permissions.json, AI-bottar i robots.txt. Interna policys kan finnas — externt syns inget."
               />
 
               <Prose>
@@ -367,14 +363,12 @@ export default function Q1Report2026Page() {
                   — men AI-modeller som besöker sajten ser ingen
                   signal.
                 </p>
-                <p className="text-[14.5px] text-[hsl(var(--muted-foreground))]">
-                  <em>
-                    Om <code>agent-permissions.json</code>: föreslagen
-                    standard, akademisk publikation jan 2026 — global
-                    adoption fortfarande nära noll.
-                  </em>
-                </p>
               </Prose>
+              <Sidenote label="Anm.">
+                Om <code>agent-permissions.json</code>: föreslagen
+                standard, akademisk publikation jan 2026 — global
+                adoption fortfarande nära noll.
+              </Sidenote>
 
               <PullQuote
                 attribution="Q1 2026 · § 01"
@@ -497,21 +491,13 @@ export default function Q1Report2026Page() {
                   </li>
                 ))}
               </ol>
-              <Prose>
-                <p className="mt-8">
-                  Vi söker inte att tala om för myndigheter vad de ska
-                  göra. Vi konstaterar att de inte gör något, och frågar
-                  om det är ett medvetet val.
-                </p>
-              </Prose>
 
               {/* ── Section 2 · SaaS vs media ── */}
               <SectionAnchor
                 id="saas-vs-media"
                 num="02"
-                eyebrow="Skiljelinjen"
                 title="SaaS-sektorn öppnar dörrarna. Mainstream-medier stänger dem."
-                subtitle="Två branscher med samma teknik, motsatta beslut. Ett tidigt tecken på vilket Sverige som tar form bakom kulisserna."
+                subtitle="Två branscher, samma teknik, motsatta beslut."
               />
 
               <Prose>
@@ -627,9 +613,8 @@ export default function Q1Report2026Page() {
               <SectionAnchor
                 id="sverige-vs-usa"
                 num="03"
-                eyebrow="Internationell benchmark"
                 title="Sverige ligger ungefär hälften så långt fram som Fortune 500"
-                subtitle="Den enklaste benchmark vi har: andelen sajter med /llms.txt. ProGEO.ai mätte amerikanska Fortune 500 i mars 2026. Vi körde samma mätning på svenska topp-500. Olika sampling-metodik — riktning, inte exakt skillnad."
+                subtitle="Andelen sajter med /llms.txt. ProGEO.ai mätte Fortune 500 i mars 2026. Vi körde samma probe på svenska topp-500."
               />
 
               <DataBar
@@ -663,17 +648,14 @@ export default function Q1Report2026Page() {
                   Fortune 500 på den här mätningen. Inte katastrof —
                   men inte ledarskap heller.
                 </p>
-                <p className="rounded-md border border-[hsl(var(--hairline))] bg-[hsl(var(--surface-sunken))] p-4 text-[15px] leading-[1.55]">
-                  <strong className="text-[hsl(var(--foreground))]">
-                    Försiktig läsning:
-                  </strong>{" "}
-                  Fortune 500 är rankad efter omsättning, Tranco efter
-                  trafik. Populationerna överlappar inte. Siffrorna är
-                  jämförbara som riktning, inte som exakt
-                  procentuell skillnad. Bägge är ändå de mest etablerade
-                  baselines som finns publika just nu.
-                </p>
               </Prose>
+              <Sidenote label="Försiktig läsning" tone="warn">
+                Fortune 500 är rankad efter omsättning, Tranco efter
+                trafik. Populationerna överlappar inte. Siffrorna är
+                jämförbara som riktning, inte som exakt procentuell
+                skillnad. Bägge är ändå de mest etablerade baselines
+                som finns publika just nu.
+              </Sidenote>
 
               <PullQuote
                 attribution="Q1 2026 · § 03"
@@ -720,10 +702,9 @@ export default function Q1Report2026Page() {
               </Prose>
 
               {/* ── Section 4 · Sektor för sektor ── */}
-              <SectionAnchor
+              <DenseSectionHeader
                 id="sektor-breakdown"
                 num="04"
-                eyebrow="Per-sektor-analys"
                 title="500 sajter, sju mönster"
               />
 
@@ -813,12 +794,11 @@ export default function Q1Report2026Page() {
               </Prose>
 
               {/* ── Section 5 · Sveriges 16 pionjärer ── */}
-              <SectionAnchor
+              <DenseSectionHeader
                 id="pionjarer"
                 num="05"
                 eyebrow="Hela listan"
                 title="Sveriges 16 llms.txt-pionjärer"
-                subtitle="Alla 16 svenska sajter i topp-500 med faktisk markdown-llms.txt per 12 maj 2026 (live-verifierat). Sorterade efter bransch."
               />
 
               <div className="mt-8 grid gap-px overflow-hidden rounded-md border border-[hsl(var(--hairline))] bg-[hsl(var(--hairline))] sm:grid-cols-2">
@@ -936,12 +916,11 @@ export default function Q1Report2026Page() {
               </Prose>
 
               {/* ── Section 6 · Metod ── */}
-              <SectionAnchor
+              <DenseSectionHeader
                 id="metod"
                 num="06"
                 eyebrow="Reproducerbarhet"
                 title="Metod och begränsningar"
-                subtitle="All probe-kod är open source. All rådata är CC-BY-4.0. Du ska kunna köra om mätningen själv och få samma siffror."
               />
 
               <h3
