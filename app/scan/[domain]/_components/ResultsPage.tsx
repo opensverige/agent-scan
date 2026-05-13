@@ -532,10 +532,28 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
               ) : (
                 <div className="px-6 py-12 text-center">
                   <Code2 className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-                  <p className="font-medium mb-1">Inget publikt API hittat</p>
-                  <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                    Vi hittade ingen developer portal, OpenAPI-spec eller publika API-endpoints för {domain}.
+                  <p className="font-medium mb-1">Ingen publik API-yta hittad på huvuddomänen</p>
+                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                    Vi hittade ingen developer portal, OpenAPI-spec eller publika
+                    API-endpoints på <code className="font-mono text-[12px]">{domain}</code>.
+                    API kan finnas på subdomän (t.ex. <code className="font-mono text-[12px]">docs.{domain}</code>,{" "}
+                    <code className="font-mono text-[12px]">{domain.split(".")[0]}.readme.io</code>)
+                    eller bakom sales-onboarding — vi probar bara huvuddomänen i nuläget.
                   </p>
+                  <div className="mt-4 flex items-center justify-center gap-4 text-xs">
+                    <Link
+                      href="/methodology/openapi-spec"
+                      className="text-muted-foreground hover:text-foreground underline font-mono transition-colors"
+                    >
+                      Läs metodologi →
+                    </Link>
+                    <a
+                      href={`mailto:info@opensverige.se?subject=Rättelse%20${encodeURIComponent(domain)}&body=API-yta%20finns%20på%3A%20%5Burl%5D`}
+                      className="text-muted-foreground hover:text-foreground underline font-mono transition-colors"
+                    >
+                      Rapportera rättelse →
+                    </a>
+                  </div>
                 </div>
               )}
             </TabsContent>
