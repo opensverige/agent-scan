@@ -42,10 +42,7 @@ export const metadata: Metadata = {
     "robots.txt",
     "myndigheter",
   ],
-  authors: [
-    { name: "Gustaf Garnow" },
-    { name: "Felipe Otarola" },
-  ],
+  authors: [{ name: "Gustaf Garnow" }],
   alternates: { canonical: REPORT_URL },
   openGraph: {
     type: "article",
@@ -56,7 +53,7 @@ export const metadata: Metadata = {
     siteName: "opensverige",
     locale: "sv_SE",
     publishedTime: "2026-05-15T08:00:00.000Z",
-    authors: ["Gustaf Garnow", "Felipe Otarola"],
+    authors: ["Gustaf Garnow"],
   },
   twitter: {
     card: "summary_large_image",
@@ -88,10 +85,7 @@ const REPORT_JSONLD = {
   datePublished: "2026-05-15",
   dateModified: "2026-05-15",
   url: REPORT_URL,
-  author: [
-    { "@type": "Person", name: "Gustaf Garnow" },
-    { "@type": "Person", name: "Felipe Otarola" },
-  ],
+  author: [{ "@type": "Person", name: "Gustaf Garnow" }],
   publisher: {
     "@type": "Organization",
     name: "opensverige",
@@ -158,7 +152,7 @@ export default function Q1Report2026Page() {
           meta={{
             publishedAt: "2026-05-15",
             version: "1.0",
-            authors: "Garnow · Otarola",
+            authors: "Garnow",
           }}
         />
 
@@ -1156,17 +1150,13 @@ npm run probe:sweden -- --output probe_results.csv`}</code>
                     name: "Gustaf Garnow",
                     href: "https://linkedin.com/in/gustafgarnow",
                   },
-                  {
-                    name: "Felipe Otarola",
-                    href: "https://linkedin.com/in/felipe-otarola",
-                  },
                 ]}
                 publishedAt="15 maj 2026"
-                lastReviewed="12 maj 2026"
+                lastReviewed="13 maj 2026"
                 version="1.0"
                 license="CC-BY-4.0 (text + data) · FSL-1.1-MIT (kod)"
                 doi="pending Zenodo upload"
-                citationApa="Garnow, G., & Otarola, F. (2026). Svensk AI-Readiness Index Q1 2026. opensverige. https://agent.opensverige.se/rapport/q1-2026"
+                citationApa="Garnow, G. (2026). Svensk AI-Readiness Index Q1 2026. opensverige. https://agent.opensverige.se/rapport/q1-2026"
                 repoUrl="https://github.com/opensverige/agent-scan"
               />
             </article>
