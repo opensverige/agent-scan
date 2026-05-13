@@ -305,7 +305,7 @@ export function checkOpenApiSpec(probes: ProbeResult[]): CheckResult {
     pass: !!hit,
     label: hit
       ? 'OpenAPI-spec hittad - agenter kan mappa ditt API'
-      : 'Ingen OpenAPI-spec - agenter kan inte mappa ditt API automatiskt',
+      : 'Ingen OpenAPI-spec på huvuddomänen - kan finnas på subdomän',
     category: 'builder',
     severity: 'important',
   };
@@ -331,7 +331,7 @@ export function checkApiDocs(probes: ProbeResult[]): CheckResult {
     pass: !!hit,
     label: hit
       ? 'API-dokumentation tillgänglig'
-      : 'Ingen API-dokumentation hittad',
+      : 'Ingen API-dokumentation hittad på huvuddomänen',
     category: 'builder',
     severity: 'info',
   };
