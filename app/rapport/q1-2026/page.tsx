@@ -780,10 +780,9 @@ export default function Q1Report2026Page() {
                 <p>
                   I topp-500 finns ungefär 40 underhållnings-,
                   spel- och kasino-sajter (StarVegas, LeoVegas, MrGreen,
-                  med flera). Noll har <code>/llms.txt</code>. Det är
-                  konsistent: de vill inte att en AI-rekommendation som
-                  leder till deras sajt loggas av Google eller en
-                  konkurrent.
+                  med flera). Noll har <code>/llms.txt</code>. Adoptionen
+                  är obefintlig — sannolikt en branschspecifik
+                  distributionslogik som ligger utanför AI-search.
                 </p>
               </Prose>
 
@@ -937,6 +936,12 @@ export default function Q1Report2026Page() {
                   . Tranco aggregerar Alexa Internet Top Sites, Cisco
                   Umbrella Popularity List, Majestic Million och
                   Cloudflare Radar — och filtrerar bort manipulation.
+                  Citation: Le Pochat, V. et al. (2019).{" "}
+                  <em>
+                    Tranco: A Research-Oriented Top Sites Ranking
+                    Hardened Against Manipulation.
+                  </em>{" "}
+                  NDSS.
                 </p>
                 <p>
                   Fortune 500-siffran <strong>7,4 %</strong> kommer från{" "}
@@ -1030,14 +1035,17 @@ export default function Q1Report2026Page() {
                     >
                       agent.opensverige.se/scan
                     </a>{" "}
-                    avförde tre sajter:{" "}
-                    <code>sportadmin.se/llms.txt</code> returnerar 200
-                    OK men body är &ldquo;Fel!&rdquo;,{" "}
-                    <code>skolplus.se/llms.txt</code> serverar HTML
+                    avförde tre sajter (mätt 12 maj 2026, 06:00–18:00
+                    UTC — tekniska konfigurationer kan ha ändrats
+                    därefter):{" "}
+                    <code>sportadmin.se/llms.txt</code> returnerade 200
+                    OK men body var &ldquo;Fel!&rdquo;,{" "}
+                    <code>skolplus.se/llms.txt</code> serverade HTML
                     (catch-all/homepage), och{" "}
-                    <code>bitdefender.se/llms.txt</code> returnerar
+                    <code>bitdefender.se/llms.txt</code> returnerade
                     Cloudflare-challenge — filen kan finnas bakom
-                    bot-skyddet men är inte programmatiskt verifierbar.
+                    bot-skyddet men var inte programmatiskt
+                    verifierbar.
                     Riktig siffra:{" "}
                     <strong>16 av 500 (3,2 %)</strong>, inte 19 av 500
                     (3,8 %) som original-proben rapporterade utan
@@ -1113,6 +1121,61 @@ npm run probe:sweden -- --output probe_results.csv`}</code>
                 <p className="mt-6">
                   Probe-script + data + analys är CC-BY-4.0 (text och
                   data) + FSL-1.1-MIT (kod).
+                </p>
+              </Prose>
+
+              {/* ── Friskrivning ── */}
+              <h3
+                id="friskrivning"
+                className="mt-12 font-serif text-[clamp(22px,2.6vw,30px)] font-normal leading-[1.2] tracking-[-0.015em] text-[hsl(var(--foreground))]"
+              >
+                Friskrivning och rättelser
+              </h3>
+              <Prose>
+                <p>
+                  Denna rapport publiceras &ldquo;som-är&rdquo; utan
+                  garanti för riktighet, fullständighet eller
+                  aktualitet. Datan är insamlad 10 maj 2026 och
+                  scanner-verifierad 12–13 maj 2026 — tekniska
+                  konfigurationer kan ha ändrats därefter. Vi
+                  rekommenderar att läsare verifierar aktuell status
+                  via{" "}
+                  <a
+                    href="https://agent.opensverige.se/scan"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    agent.opensverige.se/scan
+                  </a>
+                  .
+                </p>
+                <p>
+                  Rapporten utgör inte juridisk rådgivning kring EU AI
+                  Act, GDPR eller annan reglering — konsultera
+                  kvalificerad jurist för sådana frågor. opensverige
+                  har ingen affärsmässig anknytning till någon av de
+                  namngivna myndigheterna, mediehusen eller företagen,
+                  och alla varumärken tillhör respektive
+                  rättighetshavare. Företagsnamn används i
+                  nyhetsmässigt syfte under nominativ fair use
+                  (Varumärkeslagen 1 kap 12 §).
+                </p>
+                <p>
+                  Hittar du faktafel?{" "}
+                  <strong>Vi rättar skyndsamt.</strong> Anmäl via{" "}
+                  <a href="mailto:info@opensverige.se?subject=Rättelse%20Q1%202026">
+                    info@opensverige.se
+                  </a>{" "}
+                  eller öppna ett issue på{" "}
+                  <a
+                    href="https://github.com/opensverige/agent-scan/issues"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    github.com/opensverige/agent-scan/issues
+                  </a>
+                  . Ändringshistorik publiceras öppet i repots
+                  Git-logg.
                 </p>
               </Prose>
 
