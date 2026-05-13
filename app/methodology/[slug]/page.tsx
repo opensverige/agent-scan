@@ -59,7 +59,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       ],
       images: [
         {
-          url: "https://agent.opensverige.se/assets/og-default.png",
+          url: "https://agent.opensverige.se/assets/og-crayfish-bg.png",
           width: 1200,
           height: 630,
         },

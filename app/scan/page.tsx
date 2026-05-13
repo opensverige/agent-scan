@@ -27,13 +27,13 @@ export const metadata: Metadata = {
     url: "https://agent.opensverige.se/scan",
     siteName: "agent.opensverige",
     type: "website",
-    images: [{ url: "https://agent.opensverige.se/assets/og-default.png", width: 1200, height: 630 }],
+    images: [{ url: "https://agent.opensverige.se/assets/og-crayfish-bg.png", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "AI Readiness Scanner — 17 checks · EU-jurisdiction",
     description: "Free EU-jurisdiction scanner. 17 checks. agent.opensverige.se",
-    images: ["https://agent.opensverige.se/assets/og-default.png"],
+    images: ["https://agent.opensverige.se/assets/og-crayfish-bg.png"],
   },
 };
 

@@ -96,7 +96,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   // already lives in the DM-text (Wordle-style visual bar + score),
   // which carries through DMs and posts where the link preview is
   // suppressed anyway.
-  const ogImageUrl = "https://agent.opensverige.se/assets/og-default.png";
+  const ogImageUrl = "https://agent.opensverige.se/assets/og-crayfish-bg.png";
 
   return {
     title: `${result.row.domain} · ${badgeLabel} (${data.score}/${total}) | agent.opensverige`,

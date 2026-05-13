@@ -149,7 +149,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const total = data.checks_total ?? 11;
   const description = `${domain} fick ${data.score}/${total} i AI-readiness. ${sc.critical} brister, ${sc.important} varningar, ${data.score} ok. Scanna din sajt gratis.`;
   // Static site OG until per-scan card is designed.
-  const ogImageUrl = "https://agent.opensverige.se/assets/og-default.png";
+  const ogImageUrl = "https://agent.opensverige.se/assets/og-crayfish-bg.png";
 
   return {
     title: `${domain} · ${badgeLabel} (${data.score}/${total}) | agent.opensverige`,

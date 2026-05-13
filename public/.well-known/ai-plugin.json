@@ -12,7 +12,7 @@
     "type": "openapi",
     "url": "https://agent.opensverige.se/openapi.yaml"
   },
-  "logo_url": "https://agent.opensverige.se/assets/og-default.png",
+  "logo_url": "https://agent.opensverige.se/assets/og-crayfish-bg.png",
   "contact_email": "info@opensverige.se",
   "legal_info_url": "https://agent.opensverige.se/legal/terms"
 }

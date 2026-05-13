@@ -58,7 +58,7 @@ export const metadata: Metadata = {
       "Per-check deep-dives behind every signal the EU-jurisdiction AI-readiness scanner measures.",
     images: [
       {
-        url: "https://agent.opensverige.se/assets/og-default.png",
+        url: "https://agent.opensverige.se/assets/og-crayfish-bg.png",
         width: 1200,
         height: 630,
       },
