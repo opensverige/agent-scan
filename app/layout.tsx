@@ -69,14 +69,14 @@ export const metadata: Metadata = {
     title: "EU AI Act Readiness Scanner | agent.opensverige",
     description:
       "Free EU-jurisdiction AI-agent-readiness scanner. 17 checks. Open source under FSL-1.1-MIT.",
-    images: [{ url: "/assets/og-default.png", width: 1200, height: 630 }],
+    images: [{ url: "/assets/og-crayfish-bg.png", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "EU AI Act Readiness Scanner | agent.opensverige",
     description:
       "17 checks for AI-agent readiness, EU AI Act Art. 50, GDPR. Free. Open source.",
-    images: ["/assets/og-default.png"],
+    images: ["/assets/og-crayfish-bg.png"],
   },
   robots: { index: true, follow: true },
   other: {
@@ -106,7 +106,7 @@ const organizationSchema = {
   url: "https://opensverige.se",
   logo: {
     "@type": "ImageObject",
-    url: "https://agent.opensverige.se/assets/og-default.png",
+    url: "https://agent.opensverige.se/assets/og-crayfish-bg.png",
     width: 1200,
     height: 630,
   },
