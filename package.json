@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "prebuild": "node scripts/generate-methodology-map.mjs",
     "predev": "node scripts/generate-methodology-map.mjs",
     "methodology:generate": "node scripts/generate-methodology-map.mjs"
@@ -27,7 +29,7 @@
     "gray-matter": "^4.0.3",
     "js-yaml": "^4.1.1",
     "lucide-react": "^0.460.0",
-    "next": "15.5.15",
+    "next": "^15.5.18",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-icons": "^5.6.0",
@@ -40,15 +42,20 @@
     "follow-redirects": ">=1.16.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^25.6.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.39.4",
     "eslint-config-next": "15.5.10",
+    "jsdom": "^29.1.1",
     "postcss": "^8.5.11",
     "tailwindcss": "^3.4.15",
     "tailwindcss-animate": "^1.0.7",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^3.2.4"
   }
 }

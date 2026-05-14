@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/language-context";
 
-type ScanState = "idle" | "scanning" | "not_swedish";
+type ScanState = "idle" | "scanning" | "not_swedish" | "error";
 
 // Spread evenly across the ~10s scan duration
 const MSG_DELAYS = [0, 2000, 4000, 6000, 8000];
@@ -95,6 +95,7 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
   const [domain, setDomain] = useState("");
   const [activeMsgIdx, setActiveMsgIdx] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [errorMessage, setErrorMessage] = useState<string>("");
   const rafRef = useRef<number>(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const autoStarted = useRef(false);
@@ -181,6 +182,10 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
         } else {
           setState("idle");
         }
+      } else if (res.status === 429) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        setErrorMessage(body.error ?? "");
+        setState("error");
       } else {
         setState("idle");
       }
@@ -222,6 +227,26 @@ export default function ScannerSection({ initialDomain }: { initialDomain?: stri
           <p className="text-xs text-muted-foreground max-w-[400px]">
             {t.scanner.notSwedishFootnote}
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── ERROR (e.g. rate-limited) ─────────────────────────────────
+  if (state === "error") {
+    return (
+      <div>
+        <style>{CSS}</style>
+        <div className="px-6 pt-14 pb-16 max-w-[580px] mx-auto" style={{ animation: `ss-fadeup 0.35s ${EASE} both` }}>
+          <h1 className="font-serif text-[clamp(28px,6vw,44px)] font-normal leading-[1.1] tracking-[-1px] mb-4">
+            {t.scanner.errorHeading}
+          </h1>
+          <p className="text-base text-muted-foreground leading-relaxed max-w-[420px] mb-6">
+            {errorMessage}
+          </p>
+          <Button type="button" onClick={() => setState("idle")} size="lg">
+            {t.scanner.tryAnother}
+          </Button>
         </div>
       </div>
     );

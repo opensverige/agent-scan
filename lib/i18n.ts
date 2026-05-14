@@ -34,6 +34,7 @@ export const I18N = {
       contactUs: "Är detta fel? Kontakta oss →",
       notSwedishFootnote:
         "Om ditt bolag är grundat i Sverige men inte känns igen, hör av dig på Discord så lägger vi till det.",
+      errorHeading: "Vänta en stund",
       privacyCopy: "Anonym · ingen registrering · hashad IP + resultat lagras · radering på begäran",
     },
 
@@ -509,6 +510,7 @@ export const I18N = {
       contactUs: "Is this wrong? Contact us →",
       notSwedishFootnote:
         "If your company was founded in Sweden but isn't recognized, reach out on Discord and we'll add it.",
+      errorHeading: "Hold on",
       privacyCopy: "Anonymous · no sign-up · hashed IP + results stored · deletion on request",
     },
 
