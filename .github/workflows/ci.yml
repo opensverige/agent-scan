@@ -22,7 +22,13 @@ jobs:
           cache: npm
 
       - name: Install
-        run: npm ci
+        # Drop lockfile + `npm install` so platform-specific optional deps
+        # (rollup native bindings) resolve correctly on the linux runner
+        # even when the committed lockfile was generated on macOS.
+        # See npm/cli#4828.
+        run: |
+          rm -f package-lock.json
+          npm install
 
       - name: Audit dependencies (HIGH+)
         run: npm audit --audit-level=high
@@ -32,6 +38,9 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Test
+        run: npm test
 
       - name: Build
         run: npm run build
