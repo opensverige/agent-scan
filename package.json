@@ -15,12 +15,12 @@
     "methodology:generate": "node scripts/generate-methodology-map.mjs"
   },
   "dependencies": {
-    "@mendable/firecrawl-js": "^1.21.1",
+    "@mendable/firecrawl-js": "^1.29.3",
     "@radix-ui/react-accordion": "^1.2.1",
     "@radix-ui/react-collapsible": "^1.1.12",
     "@radix-ui/react-progress": "^1.1.8",
     "@radix-ui/react-separator": "^1.1.8",
-    "@radix-ui/react-slot": "^1.1.0",
+    "@radix-ui/react-slot": "^1.3.0",
     "@radix-ui/react-tabs": "^1.1.13",
     "@types/js-yaml": "^4.0.9",
     "@vercel/analytics": "^2.0.1",
