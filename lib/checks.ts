@@ -678,7 +678,7 @@ const RECOMMENDATION_MAP: Record<CheckId, string> = {
   crawler_access: 'Verifiera WAF-config, robots.txt säger Allow men Cloudflare/Akamai-regel kan blockera User-Agent. Vanligaste produktionsfelet 2026.',
   privacy_automation: 'Uppdatera integritetspolicyn med info om automatiserad behandling (GDPR Art. 22).',
   mcp_server:
-    'Vi hittade ingen MCP-koppling, agenter når er inte direkt utan manuell integration. Vill ni bolla nästa steg? Boka möte 15 min om ni vill.',
+    'Vi hittade ingen MCP-koppling, agenter når er inte direkt utan manuell integration. Vill ni bolla nästa steg? Fråga i vår Discord.',
   mcp_well_known: 'Publicera /.well-known/mcp (SEP-1960) så MCP-klienter (Claude, ChatGPT, Cursor) kan auto-konfigurera.',
   mcp_server_card: 'Publicera /.well-known/mcp/server-card.json (SEP-1649) så agenter kan se kapabiliteter innan de ansluter.',
   openapi_spec: 'Publicera en OpenAPI-spec så agenter och builders kan mappa ditt API automatiskt.',

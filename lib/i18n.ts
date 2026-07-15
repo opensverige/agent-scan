@@ -137,11 +137,9 @@ export const I18N = {
       ctaLowHeadline: "Du ligger före de flesta. Vad är nästa steg?",
       ctaLowSubtext: (domain: string) =>
         `Prata med en builder om vad agenter kan bygga mot ${domain}.`,
-      ctaBookFree: "Boka 15 min gratis med en builder →",
-      ctaBook: "Boka 15 min med en builder →",
-      ctaBookCall: "Boka samtal →",
-      bookingBullets: ["Personlig builder", "Samma data som din scan", "Konkreta nästa steg"],
-      communityMatch: "Matchning med rätt builder i communityn.",
+      ctaDiscord: "Gå med i Discord →",
+      communityBullets: ["300+ svenska builders", "Ställ frågor, få svar", "Dela din scan"],
+      communityMatch: "Prata med andra builders i vår Discord.",
       builderAvatarLabel: "Exempel på builders i communityn",
 
       // Sharing
@@ -602,11 +600,9 @@ export const I18N = {
       ctaLowHeadline: "You're ahead of most. What's the next step?",
       ctaLowSubtext: (domain: string) =>
         `Talk to a builder about what agents can build against ${domain}.`,
-      ctaBookFree: "Book 15 min free with a builder →",
-      ctaBook: "Book 15 min with a builder →",
-      ctaBookCall: "Book a call →",
-      bookingBullets: ["Personal builder", "Same data as your scan", "Concrete next steps"],
-      communityMatch: "Matched with the right builder in the community.",
+      ctaDiscord: "Join Discord →",
+      communityBullets: ["300+ Swedish builders", "Ask questions, get answers", "Share your scan"],
+      communityMatch: "Talk to other builders in our Discord.",
       builderAvatarLabel: "Example builders in the community",
 
       shareResult: "Share your result",

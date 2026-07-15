@@ -5,26 +5,29 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-const PLAN_BOOKING_PHRASE = "Boka möte 15 min";
+const PLAN_DISCORD_PHRASE = "Fråga i vår Discord";
+const DISCORD_INVITE_URL = "https://discord.gg/CSphbTk8En";
 
 /**
- * Renders plan-card text with the booking phrase auto-linked to #boka-mote.
- * Used in the "Din plan" section to upsell community-builder bookings.
+ * Renders plan-card text with the Discord phrase auto-linked to the community
+ * invite. Used in the "Din plan" section to point builders to the Discord.
  */
 function PlanCardRichText({ text }: { text: string }) {
-  if (!text.includes(PLAN_BOOKING_PHRASE)) {
+  if (!text.includes(PLAN_DISCORD_PHRASE)) {
     return <>{text}</>;
   }
-  const [before, after] = text.split(PLAN_BOOKING_PHRASE);
+  const [before, after] = text.split(PLAN_DISCORD_PHRASE);
   return (
     <>
       {before}
       <a
-        href="#boka-mote"
+        href={DISCORD_INVITE_URL}
+        target="_blank"
+        rel="noopener noreferrer"
         className="font-semibold text-primary underline decoration-primary/40 underline-offset-[3px] transition-[color,text-decoration-color] duration-200 hover:text-primary/90 hover:decoration-primary"
         style={{ transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)" }}
       >
-        {PLAN_BOOKING_PHRASE}
+        {PLAN_DISCORD_PHRASE}
       </a>
       {after}
     </>
