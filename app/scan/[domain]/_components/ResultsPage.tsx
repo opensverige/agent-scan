@@ -20,7 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/language-context";
 import {
-  AlertTriangle, Calendar, Check, CheckCircle2, ChevronDown,
+  AlertTriangle, Check, CheckCircle2, ChevronDown, MessageCircle,
   Code2, FileJson, FileText, Github, Globe, Lock, RotateCcw, Search, Share2,
   Shield, XCircle, Zap,
 } from "lucide-react";
@@ -918,9 +918,9 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
                 "flex flex-col items-center gap-3 mb-6 text-xs font-mono max-w-sm mx-auto",
                 cta.urgency === "high" ? "text-background/80" : "text-muted-foreground"
               )}
-              aria-label="Vad du får på samtalet"
+              aria-label="Vad du får i communityn"
             >
-              {t.results.bookingBullets.map(line => (
+              {t.results.communityBullets.map(line => (
                 <li key={line} className="flex items-center justify-center gap-2">
                   <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
                   <span>{line}</span>
@@ -929,15 +929,15 @@ export default function ResultsPage({ domain, initialData }: { domain: string; i
             </ul>
 
             <Button
+              asChild
               size="lg"
-              variant={cta.urgency === "high" ? "secondary" : "default"}
+              variant="discord"
               className="px-8"
-              data-cal-link="gustaf-garnow-3u8eg5/opensverige"
-              data-cal-namespace="opensverige"
-              data-cal-config='{"layout":"month_view","useSlotsViewOnSmallScreen":"true"}'
             >
-              <Calendar className="mr-2 h-4 w-4" />
-              {cta.buttonText}
+              <a href="https://discord.gg/CSphbTk8En" target="_blank" rel="noopener noreferrer">
+                <MessageCircle className="mr-2 h-4 w-4" />
+                {cta.buttonText}
+              </a>
             </Button>
 
             <BuilderAvatarStack urgency={cta.urgency} label={t.results.builderAvatarLabel} />

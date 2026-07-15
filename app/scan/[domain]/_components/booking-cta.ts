@@ -1,7 +1,8 @@
 // app/scan/[domain]/_components/booking-cta.ts
 //
-// Selects the right booking CTA copy based on which tab is active and how
-// well (or poorly) the site scored. Pure utility — no React.
+// Selects the right CTA copy (headline + subtext) based on which tab is active
+// and how well (or poorly) the site scored. The action is always the same:
+// join the Discord community and talk to other builders. Pure utility — no React.
 
 import type { ApiScoreResult } from "@/lib/api-score";
 import type { Translations } from "@/lib/i18n";
@@ -14,12 +15,13 @@ export interface BookingCTAResult {
 }
 
 /**
- * Pick CTA based on:
- *  - API tab + low score (< 30) → high urgency, "free" 15min offer
+ * Pick CTA emphasis (headline + subtext + urgency styling) based on:
+ *  - API tab + low score (< 30) → high urgency
  *  - API tab + decent score → medium urgency
  *  - Site tab + score <= 3 → high urgency
  *  - Site tab + score 4-6 → medium
  *  - Site tab + score 7+ → low (you're already ahead)
+ * The button always points to Discord.
  */
 export function getBookingCTA(
   activeTab: "sajt" | "api",
@@ -33,14 +35,14 @@ export function getBookingCTA(
       return {
         headline: tr.ctaHighApiHeadline,
         subtext: tr.ctaHighApiSubtext(domain),
-        buttonText: tr.ctaBookFree,
+        buttonText: tr.ctaDiscord,
         urgency: "high",
       };
     }
     return {
       headline: tr.ctaMedApiHeadline,
       subtext: tr.ctaMedApiSubtext(domain),
-      buttonText: tr.ctaBook,
+      buttonText: tr.ctaDiscord,
       urgency: "medium",
     };
   }
@@ -48,7 +50,7 @@ export function getBookingCTA(
     return {
       headline: tr.ctaHighSiteHeadline,
       subtext: tr.ctaHighSiteSubtext(domain),
-      buttonText: tr.ctaBookFree,
+      buttonText: tr.ctaDiscord,
       urgency: "high",
     };
   }
@@ -56,14 +58,14 @@ export function getBookingCTA(
     return {
       headline: tr.ctaMedSiteHeadline,
       subtext: tr.ctaMedSiteSubtext(domain),
-      buttonText: tr.ctaBookFree,
+      buttonText: tr.ctaDiscord,
       urgency: "medium",
     };
   }
   return {
     headline: tr.ctaLowHeadline,
     subtext: tr.ctaLowSubtext(domain),
-    buttonText: tr.ctaBookCall,
+    buttonText: tr.ctaDiscord,
     urgency: "low",
   };
 }

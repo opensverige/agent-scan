@@ -186,7 +186,7 @@ export async function runProbes(domain: string): Promise<ProbeOutput> {
     llmsRes, llmsWellKnownRes,
     llmsFullTxt, markdownNegotiation, homepageHtml,
     crawlerClaudeBot, crawlerGptBot, crawlerPerplexityBot,
-    mcpDiscovery, mcpServerCard,
+    mcpDiscoveryBare, mcpDiscoveryJson, mcpServerCard,
     ...probeResultsRaw
   ] = await Promise.all([
     fetchSafe(`${base}/robots.txt`),
@@ -206,8 +206,9 @@ export async function runProbes(domain: string): Promise<ProbeOutput> {
     fetchWithUserAgent(base, CRAWLER_USER_AGENTS.claudebot),
     fetchWithUserAgent(base, CRAWLER_USER_AGENTS.gptbot),
     fetchWithUserAgent(base, CRAWLER_USER_AGENTS.perplexitybot),
-    // G-05 .well-known/mcp + G-06 server-card.json
+    // G-05 .well-known/mcp (+ .json fallback, both exist in the wild) + G-06 server-card.json
     fetchSafe(`${base}/.well-known/mcp`),
+    fetchSafe(`${base}/.well-known/mcp.json`),
     fetchSafe(`${base}/.well-known/mcp/server-card.json`),
     ...builderUrls.map(url => fetchSafe(url).then(r => ({ url, ...r ?? { status: 0, body: "", contentType: null } } as ProbeResult))),
     ...complianceUrls.map(url => fetchSafe(url).then(r => ({ url, ...r ?? { status: 0, body: "", contentType: null } } as ProbeResult))),
@@ -249,6 +250,10 @@ export async function runProbes(domain: string): Promise<ProbeOutput> {
 
   const builderProbes = probeResultsRaw.slice(0, builderUrls.length) as ProbeResult[];
   const complianceProbes = probeResultsRaw.slice(builderUrls.length) as ProbeResult[];
+
+  // G-05: prefer the SEP-1960 path, fall back to the .json variant that
+  // MCP registries and early adopters publish instead.
+  const mcpDiscovery = mcpDiscoveryBare?.status === 200 ? mcpDiscoveryBare : mcpDiscoveryJson;
 
   return {
     robots,
