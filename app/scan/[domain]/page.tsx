@@ -139,7 +139,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!data) {
     return {
-      title: `${domain} · Scanna din sajt | OpenSverige`,
+      title: `${domain} · Scanna din sajt`,
       description: "Scanna din sajt och se hur redo du är för AI-agenter.",
     };
   }
@@ -152,7 +152,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const ogImageUrl = "https://agent.opensverige.se/assets/og-crayfish-bg.png";
 
   return {
-    title: `${domain} · ${badgeLabel} (${data.score}/${total}) | agent.opensverige`,
+    title: `${domain} · ${badgeLabel} (${data.score}/${total})`,
     description,
     openGraph: {
       title: `${domain} fick ${data.score}/${total} i AI-readiness`,

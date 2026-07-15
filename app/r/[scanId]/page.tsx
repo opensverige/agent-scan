@@ -82,7 +82,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const result = await getScanById(scanId);
   if (!result) {
     return {
-      title: "Scan hittades inte | agent.opensverige",
+      title: "Scan hittades inte",
       description: "Den här scan-länken är ogiltig eller har raderats.",
       robots: { index: false, follow: false },
     };
@@ -99,7 +99,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const ogImageUrl = "https://agent.opensverige.se/assets/og-crayfish-bg.png";
 
   return {
-    title: `${result.row.domain} · ${badgeLabel} (${data.score}/${total}) | agent.opensverige`,
+    title: `${result.row.domain} · ${badgeLabel} (${data.score}/${total})`,
     description,
     openGraph: {
       title: `${result.row.domain} fick ${data.score}/${total} i AI-readiness`,
