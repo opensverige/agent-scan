@@ -586,7 +586,13 @@ export function checkMcpWellKnown(probe: { status: number; body: string; content
     };
   }
   const obj = json as Record<string, unknown>;
-  const valid = typeof obj.mcp_version === 'string' && Array.isArray(obj.endpoints);
+  // Two manifest shapes exist in the wild: the SEP-1960 draft
+  // (mcp_version + endpoints) and the modelcontextprotocol.io well-known
+  // v1 schema (name + version, usually with $schema). Accept both.
+  const sepShape = typeof obj.mcp_version === 'string' && Array.isArray(obj.endpoints);
+  const wellKnownV1Shape = typeof obj.name === 'string' &&
+    (typeof obj.version === 'string' || typeof obj.$schema === 'string');
+  const valid = sepShape || wellKnownV1Shape;
   return {
     id: 'mcp_well_known',
     pass: valid,
