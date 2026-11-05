@@ -4,7 +4,9 @@ Quick context before you (or your agent) touch this repo. Read once. Nothing her
 
 ## What this is
 
-Sveriges öppna AI-readiness scanner. Next.js 15 + TypeScript strict + Tailwind 3 + shadcn. Supabase Postgres in eu-west-2 London. Anthropic Claude for the AI summary field. Vercel deploys.
+**Since 2026-11-05 the front door is `/synlighet`, the AI-visibility check** ("Rekommenderar AI ditt företag?"). It asks the questions a customer would put to an AI assistant, in Swedish from a Swedish location, and reports whether the company is mentioned and who is mentioned instead. It is a 14-day lead-magnet test with kill criteria, see [docs/strategy/2026-11-eval/00-BESLUT.md](docs/strategy/2026-11-eval/00-BESLUT.md). The old agent-readiness scanner at `/scan` is frozen: keep it running, no new features.
+
+Next.js 15 + TypeScript strict + Tailwind 3 + shadcn. Supabase Postgres in eu-west-2 London. Anthropic Claude for the AI summary and the visibility check. Vercel deploys.
 
 Owners: Gustaf Garnow + Felipe Otarola. License: FSL-1.1-MIT.
 
@@ -26,8 +28,17 @@ Owners: Gustaf Garnow + Felipe Otarola. License: FSL-1.1-MIT.
 
 **Score-zone glow is persistent and color-matched.** `ResultsPage.tsx:scoreLanded` fades in once, then stays. Color tracks `cfg.ringColor` so DELVIS REDO gets dark amber, not primary red. Don't add a fade-out timer.
 
+**Visibility results are "mentioned in k of n answers" with a Wilson interval, never a score or a rank.** Repeated runs of the same prompt rarely return the same brands (SparkToro, Jan 2026). A 0-100 number would claim precision we do not have. Mention detection is a deterministic string match (`lib/visibility/ask.ts:detectMention`), not the model grading itself. See [research/matbarhet-ai-synlighet.md](docs/strategy/2026-11-eval/research/matbarhet-ai-synlighet.md).
+
+**Training bots are not search bots.** `lib/scan/ai-bots.ts` keeps GPTBot/ClaudeBot/CCBot/Google-Extended (training) apart from OAI-SearchBot/Claude-SearchBot/PerplexityBot/Googlebot (search) and ChatGPT-User/Claude-User/Perplexity-User (user-triggered). Blocking training is a legitimate choice and never fails a check. Don't merge the lists again.
+
+**Visibility spend is fail-closed.** Every `/api/synlighet/*` model call is guarded by a row in `visibility_checks` written *before* the work, and a unique claim per (plan, question, run) in `visibility_claims`. If Postgres is unavailable in production the AI part switches off. Per-instance memory is not a rate limiter on Vercel. Don't "simplify" this back to in-memory maps.
+
+**Don't promise what isn't built.** The lead form promises a 30-day measurement that is delivered by hand with `scripts/visibility-monitor.ts` until there are enough leads to automate it. If you change the copy, keep it true.
+
 ## Things that look off but are intentional
 
+- `/api/notify` writes to a table that does not exist and nothing calls it. It is dead; the visibility lead route (`/api/synlighet/lead`) replaces it and reports failures instead of a silent ok.
 - `/api/og` returns 0 bytes today. Aware. We swapped to `/assets/og-default.png` everywhere. Don't delete the route, we'll fix it when per-scan OG cards land.
 - `LanguageProvider` lives in root layout, not `/scan/layout.tsx`. `/r/*` and other routes need it too.
 - `pb-20` on the result wrapper leaves space for `StickyShareButton`'s fixed pill.
