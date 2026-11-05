@@ -1,8 +1,10 @@
 // app/synlighet/_components/VisibilityChecker.tsx
 "use client";
 
+import Link from "next/link";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { toolById } from "@/lib/community-tools";
 import { cn } from "@/lib/utils";
 import type { Analysis, AnswerRun, QuestionResult } from "@/lib/visibility/ask";
 import type { TechCheck } from "@/lib/visibility/site";
@@ -74,6 +76,33 @@ function TechChecks({ checks }: { checks: TechCheck[] }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+function CommunityNudge() {
+  const tool = toolById("openaudit");
+  if (!tool) return null;
+  return (
+    <section className="rounded-2xl border border-border px-5 py-5">
+      <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+        Gratis · Open source · Från communityn
+      </p>
+      <h2 className="mt-2 font-serif text-[24px] leading-tight">
+        Bygger ni sajten själva? Granska koden också.
+      </h2>
+      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+        {tool.name} kollar säkerhetshål, läckta nycklar, fart och tillgänglighet. Sedan får er AI listan att åtgärda.
+        Det körs på er egen dator.
+      </p>
+      <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
+        <a href={tool.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+          Kom igång med {tool.name} →
+        </a>
+        <Link href="/verktyg" className="text-muted-foreground hover:text-foreground">
+          Fler gratis verktyg →
+        </Link>
+      </div>
+    </section>
   );
 }
 
@@ -523,6 +552,8 @@ export function VisibilityChecker() {
           {phase === "done" && plan.plan && (
             <LeadForm token={plan.token} domain={plan.domain} resultLine={resultLine} />
           )}
+
+          <CommunityNudge />
 
           <section className="rounded-2xl bg-muted/50 px-5 py-5 text-sm leading-relaxed text-muted-foreground">
             <h2 className="mb-2 text-sm font-semibold text-foreground">Så här mäter vi, ärligt</h2>

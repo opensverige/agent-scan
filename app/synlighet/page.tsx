@@ -1,8 +1,7 @@
 // app/synlighet/page.tsx
 import type { Metadata } from "next";
-import Link from "next/link";
-import Image from "next/image";
 import Footer from "@/app/scan/_components/Footer";
+import { SiteNav } from "@/components/site-nav";
 import { VisibilityChecker } from "./_components/VisibilityChecker";
 
 const TITLE = "Rekommenderar AI ditt företag? · AI-synlighetskollen";
@@ -47,17 +46,7 @@ export default function SynlighetPage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
-      <nav className="sticky top-0 z-[100] flex items-center justify-between border-b border-border bg-background/90 px-5 py-3 backdrop-blur-[20px]">
-        <Link href="/synlighet" className="flex items-center gap-2 text-foreground hover:opacity-90">
-          <Image src="/assets/logo_500x.png" alt="" width={26} height={26} className="rounded-sm" />
-          <span className="font-serif text-[17px] tracking-[-0.5px]">
-            agent<span className="text-primary">.opensverige</span>
-          </span>
-        </Link>
-        <Link href="/scan" className="font-mono text-[11px] text-muted-foreground hover:text-foreground">
-          Teknisk scanner
-        </Link>
-      </nav>
+      <SiteNav />
       <main>
         <VisibilityChecker />
       </main>

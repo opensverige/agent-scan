@@ -36,6 +36,8 @@ Owners: Gustaf Garnow + Felipe Otarola. License: FSL-1.1-MIT.
 
 **Don't promise what isn't built.** The lead form promises a 30-day measurement that is delivered by hand with `scripts/visibility-monitor.ts` until there are enough leads to automate it. If you change the copy, keep it true.
 
+**Community tools need a licence file to be listed.** `/verktyg` and the next-step card in `/synlighet` read `lib/community-tools.ts`. The bar is: built in the OpenSverige community, free, and an OSI-approved licence in the repo. A repo without a LICENSE is all rights reserved, so it waits (BitNomadAB/Skills, as of 2026-11-05). Only claims the tool's own site or README backs up.
+
 ## Things that look off but are intentional
 
 - `/api/notify` writes to a table that does not exist and nothing calls it. It is dead; the visibility lead route (`/api/synlighet/lead`) replaces it and reports failures instead of a silent ok.
