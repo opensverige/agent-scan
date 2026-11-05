@@ -15,7 +15,6 @@
     "methodology:generate": "node scripts/generate-methodology-map.mjs"
   },
   "dependencies": {
-    "@mendable/firecrawl-js": "^1.21.1",
     "@radix-ui/react-accordion": "^1.2.1",
     "@radix-ui/react-collapsible": "^1.1.12",
     "@radix-ui/react-progress": "^1.1.8",
@@ -38,8 +37,9 @@
     "tailwind-merge": "^2.5.4"
   },
   "overrides": {
-    "axios": ">=1.15.0",
-    "follow-redirects": ">=1.16.0"
+    "next": {
+      "postcss": "^8.5.23"
+    }
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
