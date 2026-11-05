@@ -1,14 +1,14 @@
 // lib/scan/robots.ts
 //
 // robots.txt parser focused on AI-agent allow/deny + sitemap discovery.
-// Based on RFC 9309. We only check whether known AI crawlers (or wildcard *)
-// are blocked from the root path — finer-grained access control is a future
-// check (G-04 from research).
+// `allowed` is false only when a *search* or *user-triggered* AI bot is shut
+// out of the homepage (OAI-SearchBot, ChatGPT-User, Claude-SearchBot,
+// PerplexityBot, Googlebot, ...). Blocking training crawlers such as GPTBot,
+// CCBot or Google-Extended is a legitimate choice that does not remove a
+// site from AI answers, so it no longer fails the check. RFC 9309 group and
+// longest-match semantics live in ./ai-bots.ts.
 
-const AI_AGENTS = [
-  "gptbot", "claudebot", "anthropic-ai", "ccbot",
-  "google-extended", "omgilibot",
-];
+import { evaluateRobotsForBots } from "./ai-bots";
 
 export interface RobotsParseResult {
   allowed: boolean;
@@ -17,33 +17,18 @@ export interface RobotsParseResult {
 
 export function parseRobots(body: string): RobotsParseResult {
   const lines = body.split("\n");
-  let groupUAs: string[] = [];
-  let inGroup = false;
-  let blocked = false;
   let sitemapUrl: string | null = null;
 
   for (const raw of lines) {
     const line = raw.trim();
     const lower = line.toLowerCase();
 
-    if (lower.startsWith("user-agent:")) {
-      const ua = lower.replace("user-agent:", "").trim();
-      if (!inGroup) { groupUAs = [ua]; inGroup = true; }
-      else { groupUAs.push(ua); }
-    } else if (lower.startsWith("disallow:")) {
-      const path = lower.replace("disallow:", "").trim();
-      if (path === "/" && groupUAs.some(ua => AI_AGENTS.includes(ua) || ua === "*")) {
-        blocked = true;
-      }
-      inGroup = false;
-    } else if (lower.startsWith("sitemap:")) {
+    if (lower.startsWith("sitemap:")) {
       const url = line.slice(8).trim();
       if (url) sitemapUrl = url;
-    } else if (line === "") {
-      groupUAs = [];
-      inGroup = false;
     }
   }
 
-  return { allowed: !blocked, sitemapUrl };
+  const searchBlocked = evaluateRobotsForBots(body).some(v => v.bot.purpose !== "training" && !v.allowed);
+  return { allowed: !searchBlocked, sitemapUrl };
 }

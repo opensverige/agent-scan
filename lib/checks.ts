@@ -102,8 +102,8 @@ export function checkRobots(allowed: boolean): CheckResult {
     id: 'robots_ok',
     pass: allowed,
     label: allowed
-      ? 'Sajten tillåter AI-agenter (robots.txt)'
-      : 'Sajten blockerar AI-agenter eller saknar robots.txt',
+      ? 'robots.txt släpper in AI-sökbottarna'
+      : 'robots.txt blockerar AI-sökbottar (OAI-SearchBot, Claude-SearchBot, PerplexityBot eller liknande)',
     category: 'discovery',
     severity: 'important',
   };
@@ -537,8 +537,8 @@ export function checkCrawlerAccess(probes: CrawlerAccessProbes): CheckResult {
   const allOk = claude && gpt && perplexity;
   const someOk = claude || gpt || perplexity;
   const blocked: string[] = [];
-  if (!claude) blocked.push('ClaudeBot');
-  if (!gpt) blocked.push('GPTBot');
+  if (!claude) blocked.push('Claude-SearchBot');
+  if (!gpt) blocked.push('OAI-SearchBot');
   if (!perplexity) blocked.push('PerplexityBot');
   return {
     id: 'crawler_access',
@@ -692,7 +692,7 @@ const RECOMMENDATION_MAP: Record<CheckId, string> = {
   cookie_bot_handling: 'Se över hur din cookielösning hanterar icke-mänskliga besökare.',
   ai_content_marking: 'Förbered för EU AI Act - märk AI-genererat innehåll maskinläsbart (Art. 50).',
   sandbox_available: 'Erbjud en sandbox/testmiljö så builders kan testa utan att påverka produktionsdata.',
-  robots_ok: 'Se till att robots.txt inte blockerar AI-agenter som GPTBot och ClaudeBot.',
+  robots_ok: 'Släpp in AI-sökbottarna (OAI-SearchBot, Claude-SearchBot, PerplexityBot) i robots.txt. Träningsbottar som GPTBot kan du fortfarande blockera.',
   sitemap_exists: 'Lägg till sitemap.xml så agenter kan navigera din sajt.',
   api_docs: 'Publicera API-dokumentation - utan docs kan ingen bygga mot ditt system.',
 };
