@@ -1303,6 +1303,12 @@ a.brand-link:hover {
   color: hsl(var(--foreground)) !important;
 }
 
+/* Same override for the light [data-scan] island (/synlighet uses <main>). */
+[data-scan] main {
+  background: transparent !important;
+  color: inherit !important;
+}
+
 /* The global `main { background: #0a0a0a !important }` rule on line 182
    targets every <main>. Override it inside the methodology island so the
    inner <main> inherits the light surface instead of going pure black. */

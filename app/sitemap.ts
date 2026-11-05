@@ -7,7 +7,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const methodologyArticles = await listArticles();
 
   return [
-    { url: `${BASE}/scan`, lastModified: new Date(), changeFrequency: "weekly", priority: 1 },
+    { url: `${BASE}/synlighet`, lastModified: new Date(), changeFrequency: "weekly", priority: 1 },
+    { url: `${BASE}/scan`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },
+    { url: `${BASE}/verktyg`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE}/api-docs`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE}/mcp`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
     { url: `${BASE}/methodology`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },

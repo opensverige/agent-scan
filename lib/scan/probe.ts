@@ -80,9 +80,12 @@ async function fetchWithAccept(url: string, accept: string): Promise<FetchedResp
   }
 }
 
+// Search bots, not training bots: these are the agents that fetch sources
+// for AI answers. Keys keep their historical names (claudebot/gptbot) so the
+// probe output shape stays stable; see lib/scan/ai-bots.ts for the taxonomy.
 const CRAWLER_USER_AGENTS = {
-  claudebot: "Mozilla/5.0 (compatible; ClaudeBot/1.0; +claudebot@anthropic.com)",
-  gptbot: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; GPTBot/1.2; +https://openai.com/gptbot)",
+  claudebot: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Claude-SearchBot/1.0; +https://www.anthropic.com)",
+  gptbot: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; OAI-SearchBot/1.0; +https://openai.com/searchbot",
   perplexitybot: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; PerplexityBot/1.0; +https://perplexity.ai/perplexitybot)",
 } as const;
 
