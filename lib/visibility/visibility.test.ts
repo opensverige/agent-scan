@@ -6,7 +6,8 @@ import { finalizePlan } from "./plan";
 import { buildProfile } from "./site";
 import { summarize, wilson } from "./stats";
 import { issuePlanToken, verifyPlanToken } from "./token";
-import { isBlockedAddress } from "./safe-fetch";
+import { guardedLookup, isBlockedAddress, safeFetch } from "./safe-fetch";
+import { normalizeDomain } from "./domain";
 
 const profile = buildProfile("ceciliasmaleri.se", {
   status: 200,
@@ -168,9 +169,60 @@ describe("isBlockedAddress", () => {
       expect(isBlockedAddress(ip)).toBe(true);
     }
   });
+  it("blocks IPv6 forms that embed or map a private IPv4 address", () => {
+    for (const ip of ["::ffff:7f00:1", "64:ff9b::7f00:1", "2002:7f00:1::1", "2001:0:4136:e378::1", "::127.0.0.1", "ff02::1", "fe80::1%lo0", "not-an-ip"]) {
+      expect(isBlockedAddress(ip)).toBe(true);
+    }
+  });
   it("allows public addresses", () => {
-    for (const ip of ["93.184.216.34", "2606:4700:4700::1111", "8.8.8.8"]) {
+    for (const ip of ["93.184.216.34", "2606:4700:4700::1111", "8.8.8.8", "::ffff:8.8.8.8"]) {
       expect(isBlockedAddress(ip)).toBe(false);
     }
+  });
+});
+
+describe("safeFetch", () => {
+  it("refuses a hostname that resolves to loopback inside the connecting lookup", async () => {
+    const err = await new Promise<NodeJS.ErrnoException | null>(resolve =>
+      guardedLookup("localhost", {}, e => resolve(e)),
+    );
+    expect(err?.code).toBe("EBLOCKEDADDR");
+  });
+  it("refuses literal private IPs, non-default ports and credentials before connecting", async () => {
+    const init = { headers: {}, timeoutMs: 2_000, maxBytes: 1_000, readBody: true };
+    for (const url of ["http://127.0.0.1/", "http://[::1]/", "http://169.254.169.254/latest/meta-data/", "http://example.se:8080/", "http://user:pw@example.se/", "file:///etc/passwd"]) {
+      expect(await safeFetch(url, init)).toBeNull();
+    }
+  });
+});
+
+describe("normalizeDomain", () => {
+  it("strips scheme, path, query, fragment and port", () => {
+    expect(normalizeDomain(" HTTPS://Foo.se:8080/a/b?x=1#y ")).toBe("foo.se");
+    expect(normalizeDomain("foo.se#frag")).toBe("foo.se");
+  });
+  it("stays linear on long runs of separators", () => {
+    const start = performance.now();
+    normalizeDomain("a" + "#".repeat(100_000));
+    normalizeDomain("#".repeat(100_000));
+    expect(performance.now() - start).toBeLessThan(200);
+  });
+});
+
+describe("HTML text extraction", () => {
+  const p = buildProfile("example.se", {
+    status: 200,
+    url: "https://example.se/",
+    headers: new Headers(),
+    body: `<html><head><title>A &amp;lt;b&amp;gt; &#x26; C</title></head><body><p>Synlig</p><script >var hidden = 1;</script ><style>.x{}</style
+      ><p>Fem &#8211; sex</p></body></html>`,
+  });
+  it("decodes entities exactly once", () => {
+    expect(p.title).toBe("A &lt;b&gt; & C");
+  });
+  it("drops script and style blocks whose end tag has whitespace", () => {
+    expect(p.text).toContain("Synlig");
+    expect(p.text).toContain("Fem \u2013 sex");
+    expect(p.text).not.toContain("hidden");
   });
 });

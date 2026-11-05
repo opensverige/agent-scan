@@ -65,24 +65,30 @@ function fetchRaw(url: string, userAgent: string, readBody = true): Promise<RawF
   });
 }
 
+const NAMED_ENTITIES: Record<string, string> = {
+  nbsp: " ", amp: "&", lt: "<", gt: ">", quot: '"', apos: "'",
+};
+
+// One pass, so "&amp;lt;" decodes to the text "&lt;" and is not decoded twice.
 function decodeEntities(s: string): string {
-  return s
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;|&apos;/g, "'")
-    .replace(/&#(\d+);/g, (_, n: string) => String.fromCharCode(Number(n)));
+  return s.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match: string, ref: string) => {
+    if (ref[0] === "#") {
+      const code = ref[1] === "x" || ref[1] === "X" ? parseInt(ref.slice(2), 16) : Number(ref.slice(1));
+      return Number.isInteger(code) && code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : match;
+    }
+    return NAMED_ENTITIES[ref.toLowerCase()] ?? match;
+  });
 }
 
 function stripTags(html: string): string {
   return decodeEntities(
     html
-      .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/<style[\s\S]*?<\/style>/gi, " ")
-      .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
-      .replace(/<svg[\s\S]*?<\/svg>/gi, " ")
+      // End tags may carry whitespace or junk before ">" ("</script >").
+      // This extracts text for the model; it is not an HTML sanitiser.
+      .replace(/<script\b[\s\S]*?<\/script\b[^>]*>/gi, " ")
+      .replace(/<style\b[\s\S]*?<\/style\b[^>]*>/gi, " ")
+      .replace(/<noscript\b[\s\S]*?<\/noscript\b[^>]*>/gi, " ")
+      .replace(/<svg\b[\s\S]*?<\/svg\b[^>]*>/gi, " ")
       .replace(/<!--[\s\S]*?-->/g, " ")
       .replace(/<[^>]+>/g, " "),
   )
@@ -171,7 +177,7 @@ export function buildProfile(domain: string, home: RawFetch | null): SiteProfile
     domain,
     finalUrl: home?.url ?? null,
     reachable: !!home && home.status < 400,
-    title: decodeEntities(stripTags(titleMatch?.[1] ?? "")).slice(0, 200),
+    title: stripTags(titleMatch?.[1] ?? "").slice(0, 200),
     description: (metaContent(html, "description") || metaContent(html, "og:description")).slice(0, 400),
     headings: extractHeadings(html),
     lang: langMatch?.[1]?.toLowerCase() ?? null,
