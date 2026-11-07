@@ -45,5 +45,7 @@ prod-counter-*.png
 # Local report dev screenshots — excluded from commit
 q1-*.png
 
-# visibility-monitor.ts output (per-domain measurement data)
-data/visibility/
+# visibility-monitor.ts and study output (per-domain measurement data, raw
+# answers). Study definitions are tracked; publish results deliberately.
+data/visibility/*
+!data/visibility/studies/

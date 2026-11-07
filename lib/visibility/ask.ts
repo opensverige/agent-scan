@@ -190,7 +190,7 @@ export async function extractRecommended(
   const body = runs.map((r, i) => `<svar nr="${i + 1}">\n${r.text}\n</svar>`).join("\n\n");
   const res = await createMessage({
     system:
-      "Du läser AI-svar och listar vilka företag, varumärken eller tjänster varje svar rekommenderar eller nämner som alternativ. Använd namnen som de står i svaret. Ta inte med källsajter som bara citeras, myndigheter eller jämförelsesajter om de inte rekommenderas som leverantör.",
+      "Du läser AI-svar och listar vilka företag, varumärken eller tjänster varje svar rekommenderar eller nämner som alternativ. Använd namnen som de står i svaret, i den ordning de först nämns. Ta inte med källsajter som bara citeras, myndigheter eller jämförelsesajter om de inte rekommenderas som leverantör.",
     messages: [
       {
         role: "user",

@@ -45,9 +45,31 @@ export interface GenericBlock {
 
 export type ContentBlock = TextBlock | WebSearchToolResultBlock | GenericBlock;
 
+export interface ApiUsage {
+  input_tokens?: number;
+  output_tokens?: number;
+  cache_read_input_tokens?: number;
+  server_tool_use?: { web_search_requests?: number } | null;
+}
+
 export interface MessagesResponse {
   content: ContentBlock[];
   stop_reason: string | null;
+  /** Summed over resumed `pause_turn` requests. Used by the study script for cost. */
+  usage?: ApiUsage;
+}
+
+function sumUsage(a: ApiUsage, b: ApiUsage | undefined): ApiUsage {
+  if (!b) return a;
+  return {
+    input_tokens: (a.input_tokens ?? 0) + (b.input_tokens ?? 0),
+    output_tokens: (a.output_tokens ?? 0) + (b.output_tokens ?? 0),
+    cache_read_input_tokens: (a.cache_read_input_tokens ?? 0) + (b.cache_read_input_tokens ?? 0),
+    server_tool_use: {
+      web_search_requests:
+        (a.server_tool_use?.web_search_requests ?? 0) + (b.server_tool_use?.web_search_requests ?? 0),
+    },
+  };
 }
 
 interface MessageParam {
@@ -139,6 +161,7 @@ export async function createMessage(args: CreateMessageArgs): Promise<MessagesRe
   const signal = AbortSignal.timeout(args.timeoutMs);
   let withFallbacks = process.env.VISIBILITY_FALLBACKS !== "off";
   const collected: ContentBlock[] = [];
+  let usage: ApiUsage = {};
 
   try {
     for (let attempt = 0; attempt < 3; attempt++) {
@@ -177,9 +200,10 @@ export async function createMessage(args: CreateMessageArgs): Promise<MessagesRe
 
       const data = (await res.json()) as MessagesResponse;
       collected.push(...(data.content ?? []));
+      usage = sumUsage(usage, data.usage);
       if (data.stop_reason === "refusal") return null;
       if (data.stop_reason !== "pause_turn") {
-        return { content: collected, stop_reason: data.stop_reason };
+        return { content: collected, stop_reason: data.stop_reason, usage };
       }
       // Resume: the paused assistant turn goes back unchanged. On a second
       // pause, extend that same assistant message instead of adding another.
@@ -190,7 +214,7 @@ export async function createMessage(args: CreateMessageArgs): Promise<MessagesRe
         messages.push({ role: "assistant", content: data.content ?? [] });
       }
     }
-    return { content: collected, stop_reason: "pause_turn" };
+    return { content: collected, stop_reason: "pause_turn", usage };
   } catch (err) {
     console.error("[visibility] request failed:", err instanceof Error ? err.message : String(err));
     return null;
