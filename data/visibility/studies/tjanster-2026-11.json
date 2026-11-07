@@ -1,0 +1,36 @@
+{
+  "id": "tjanster-2026-11",
+  "title": "Vem rekommenderar AI när du letar hantverkare, tandläkare eller redovisningsbyrå?",
+  "description": "Lokala tjänsteföretag i Stockholm, Göteborg och Malmö. Samma fråga ställd flera gånger per stad. Frågorna ändras inte mellan städer eller mellan omgångar, annars går siffrorna inte att jämföra.",
+  "runs": 10,
+  "templates": {
+    "cities": ["Stockholm", "Göteborg", "Malmö"],
+    "services": [
+      {
+        "id": "redovisning",
+        "label": "Redovisningsbyrå",
+        "question": "Kan du rekommendera en bra redovisningsbyrå i {stad} för ett litet aktiebolag?"
+      },
+      {
+        "id": "elektriker",
+        "label": "Elektriker",
+        "question": "Jag behöver en elektriker i {stad} som kan dra om elen i en lägenhet. Vilken firma rekommenderar du?"
+      },
+      {
+        "id": "vvs",
+        "label": "Rörmokare",
+        "question": "Jag behöver en rörmokare i {stad}. Vilken VVS-firma rekommenderar du?"
+      },
+      {
+        "id": "tandlakare",
+        "label": "Tandläkare",
+        "question": "Jag har flyttat till {stad} och behöver en ny tandläkare. Vilken klinik rekommenderar du?"
+      },
+      {
+        "id": "bilverkstad",
+        "label": "Bilverkstad",
+        "question": "Vilken bilverkstad i {stad} är bra och prisvärd för vanlig service?"
+      }
+    ]
+  }
+}
